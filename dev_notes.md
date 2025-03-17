@@ -17,7 +17,8 @@ This document provides comprehensive technical documentation of the CMMC Complia
 7. [Development Workflow](#development-workflow)
 8. [Docker Configuration](#docker-configuration)
 9. [Database Initialization](#database-initialization)
-10. [Testing](#testing)
+10. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
+11. [Testing](#testing)
 
 ## Architecture Overview
 
@@ -155,8 +156,8 @@ The application uses Flask Blueprints to organize routes:
 - Task completion and review workflow
 
 #### Admin Routes (`routes/admin.py`)
-- User management for administrators
-- System configuration
+- User management for administrators (`/admin/users` and `/admin/users/create` endpoints)
+- Admin dashboard for system monitoring
 
 #### Reports Routes (`routes/reports.py`)
 - Compliance reporting and dashboards
@@ -207,11 +208,11 @@ Areas for enhancement:
 1. Clone the repository
 2. Use Docker Compose for local development:
    ```
-   docker-compose up -d
+   docker compose up -d
    ```
 3. Initialize the database:
    ```
-   docker-compose exec web python seed_db.py
+   docker compose exec web python seed_db.py
    ```
 
 ### Making Changes
@@ -243,6 +244,27 @@ Environment variables in docker-compose.yml allow configuration of:
 - Email settings
 - Secret keys
 
+### Python Path and Module Imports
+
+The application uses Python's import system with some specific considerations:
+
+1. The `run.py` script adds both the current directory and parent directory to Python's path:
+   ```python
+   # Add the parent directory to the Python path
+   parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+   sys.path.insert(0, parent_dir)
+   
+   # Add the current directory to the Python path
+   sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+   ```
+
+2. The Dockerfile sets the `PYTHONPATH` environment variable:
+   ```Dockerfile
+   ENV PYTHONPATH=/app:/app/cmmc_tracker
+   ```
+
+This configuration allows imports both from within the `cmmc_tracker` package and from the project root.
+
 ## Database Initialization
 
 The `seed_db.py` script handles database initialization:
@@ -254,10 +276,56 @@ The `seed_db.py` script handles database initialization:
 
 To reset the database:
 ```
-docker-compose down -v
-docker-compose up -d
-docker-compose exec web python seed_db.py
+docker compose down -v
+docker compose up -d
+docker compose exec web python seed_db.py
 ```
+
+## Common Issues and Troubleshooting
+
+### Circular Import Dependencies
+
+The application has potential circular dependencies between modules that need to be carefully managed:
+
+1. **Email and Utils**: There's a circular dependency risk between `app/services/email.py` and `app/utils/__init__.py`. The utils module should not directly import from the email service.
+
+2. **Models and Services**: Models often need to use services, while services need to use models. To avoid circular imports:
+   - Break out shared functionality into separate utility modules
+   - Use function-level imports rather than module-level imports where appropriate
+   - Ensure proper layering of dependencies
+
+### URL Routing Issues
+
+Common URL routing problems and solutions:
+
+1. **Missing Routes**: Ensure all URLs referenced in templates correspond to defined routes in the blueprint files.
+
+2. **Blueprint Naming**: Each blueprint has a unique name and URL prefix. Make sure they are consistent throughout the application.
+
+3. **CSRF Error Handling**: The CSRF error handler should redirect to a valid endpoint:
+   ```python
+   @app.errorhandler(CSRFError)
+   def handle_csrf_error(e):
+       app.logger.error(f"CSRF error: {e}")
+       flash('The form you submitted is invalid or has expired. Please try again.', 'danger')
+       return redirect(url_for('controls.index'))
+   ```
+
+### Database Connection Issues
+
+If you encounter database connection problems:
+
+1. Verify the database container is running: `docker compose ps`
+2. Check database logs: `docker compose logs db`
+3. Ensure the database credentials in `docker-compose.yml` match the ones expected by the application
+
+### Template Rendering Errors
+
+Common template issues include:
+
+1. **Undefined variables**: Always provide all required variables to `render_template()`
+2. **URL building errors**: Verify all `url_for()` calls reference valid endpoints
+3. **CSRF token issues**: Ensure all forms include the CSRF token: `<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">`
 
 ## Testing
 

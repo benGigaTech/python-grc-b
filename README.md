@@ -45,20 +45,46 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 2. Start the application using Docker Compose:
    ```
-   docker-compose up -d
+   docker compose up -d
    ```
 
 3. Initialize the database:
    ```
-   docker-compose exec web python seed_db.py
+   docker compose exec web python seed_db.py
    ```
 
 4. Access the application at http://localhost:80
 
 ### Default Credentials
 
-- **Username**: admin
-- **Password**: admin123
+- **Admin User**:
+  - Username: admin
+  - Password: adminpassword
+
+- **Regular User**:
+  - Username: user
+  - Password: userpassword
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Web container exits after startup**:
+   - Check logs with `docker compose logs web`
+   - Common causes include Python import errors or missing dependencies
+   - Solution: Ensure PYTHONPATH is correctly set in the Dockerfile
+
+2. **Circular dependencies**:
+   - Symptoms: Import errors related to circular imports
+   - Solution: Refactor imports or move them into functions
+
+3. **URL building errors**:
+   - Symptoms: Errors like `Could not build url for endpoint 'X'`
+   - Solution: Ensure routes are correctly named in both route definitions and templates
+
+4. **CSRF errors when submitting forms**:
+   - Symptoms: 400 Bad Request - The CSRF token is missing
+   - Solution: Ensure forms include the csrf_token field
 
 ## Environment Variables
 

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Import Controls{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Import Controls from CSV</h1>
+    
+    <div class="alert-info">
+        <h3>CSV Format Instructions</h3>
+        <p>Your CSV file should include the following columns with appropriate headers:</p>
+        <ul>
+            <li><strong>Control ID</strong> (required): Unique identifier for the control</li>
+            <li><strong>Control Name</strong> (required): Name of the control</li>
+            <li><strong>Control Description</strong> (optional): Detailed description of the control</li>
+            <li><strong>NIST Mapping</strong> (optional): NIST SP 800-171 mapping reference</li>
+            <li><strong>Review Frequency</strong> (optional): How often the control should be reviewed (e.g., "Annually")</li>
+            <li><strong>Last Review Date</strong> (optional): Date of last review (YYYY-MM-DD format)</li>
+            <li><strong>Next Review Date</strong> (optional): Date of next review (YYYY-MM-DD format)</li>
+        </ul>
+    </div>
+    
+    <div class="form-container">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-field">
+                <label for="file">Select CSV File:</label>
+                <input type="file" id="file" name="file" accept=".csv" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="button-primary">Upload and Import</button>
+                <a href="{{ url_for('controls.index') }}" class="button-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+    
+    <div class="export-section">
+        <h3>Export Current Controls</h3>
+        <p>You can also export all current controls to use as a template or for backup:</p>
+        <a href="{{ url_for('controls.export_csv') }}" class="button-primary">Export Controls to CSV</a>
+    </div>
+</div>
+
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .alert-info {
+        background-color: #e3f2fd;
+        border-left: 5px solid #2196f3;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 4px;
+    }
+    
+    .form-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+    }
+    
+    .form-field {
+        margin-bottom: 15px;
+    }
+    
+    .form-field label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .form-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    
+    .export-section {
+        background-color: #f0f0f0;
+        padding: 15px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %} 

@@ -44,6 +44,14 @@ class Config:
         'PENDING': 'Pending Confirmation',
         'COMPLETED': 'Completed'
     }
+    
+    # Email notification settings
+    NOTIFICATION_ENABLED = os.environ.get('NOTIFICATION_ENABLED', 'true').lower() in ['true', 'yes', '1']
+    NOTIFICATION_HOUR = int(os.environ.get('NOTIFICATION_HOUR', 8))  # Default to 8 AM
+    
+    # Flask-APScheduler settings
+    SCHEDULER_API_ENABLED = False
+    SCHEDULER_TIMEZONE = "UTC"
 
 class DevelopmentConfig(Config):
     """Development configuration."""

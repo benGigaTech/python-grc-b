@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}CMMC Compliance Dashboard{% endblock %}
+
+{% block content %}
+<h1>CMMC Compliance Dashboard</h1>
+
+<!-- Summary Cards -->
+<div class="dashboard-summary">
+    <div class="summary-card">
+        <div class="summary-count">{{ control_metrics.total }}</div>
+        <div class="summary-label">Total Controls</div>
+    </div>
+    
+    <div class="summary-card {% if task_metrics.overdue > 0 %}red-alert{% endif %}">
+        <div class="summary-count">{{ task_metrics.overdue }}</div>
+        <div class="summary-label">Overdue Tasks</div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-count">{{ task_metrics.pending }}</div>
+        <div class="summary-label">Pending Tasks</div>
+    </div>
+    
+    <div class="summary-card">
+        <div class="summary-count">{{ control_metrics.upcoming_reviews }}</div>
+        <div class="summary-label">Controls Due for Review</div>
+    </div>
+</div>
+
+<!-- Compliance Status Chart -->
+<div class="dashboard-row">
+    <div class="dashboard-column">
+        <div class="dashboard-card">
+            <h2>Compliance Status</h2>
+            <div class="chart-container">
+                <canvas id="complianceStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-column">
+        <div class="dashboard-card">
+            <h2>Task Status</h2>
+            <div class="chart-container">
+                <canvas id="taskStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities and Tasks Tables -->
+<div class="dashboard-row">
+    <div class="dashboard-column">
+        <div class="dashboard-card">
+            <h2>Recent Activities</h2>
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_activities %}
+                    <tr>
+                        <td>{{ log.timestamp }}</td>
+                        <td>{{ log.username }}</td>
+                        <td>{{ log.action }}</td>
+                        <td>{{ log.details }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not recent_activities %}
+                    <tr>
+                        <td colspan="4">No recent activities found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            <div class="view-all">
+                <a href="{{ url_for('reports.reports') }}" class="button-link">View All Reports</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-column">
+        <div class="dashboard-card">
+            <h2>My Tasks</h2>
+            <table class="dashboard-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Control</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in my_tasks %}
+                    <tr class="{% if task.is_overdue %}overdue{% endif %}">
+                        <td><a href="{{ url_for('tasks.edit_task', task_id=task.task_id) }}">{{ task.task_description }}</a></td>
+                        <td>{{ task.control_id }}</td>
+                        <td>{{ task.due_date }}</td>
+                        <td>{{ task.status }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% if not my_tasks %}
+                    <tr>
+                        <td colspan="4">No assigned tasks found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+            <div class="view-all">
+                <a href="{{ url_for('tasks.calendar') }}" class="button-link">View Task Calendar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Chart.js for visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Compliance Status Chart
+    const complianceCtx = document.getElementById('complianceStatusChart').getContext('2d');
+    const complianceChart = new Chart(complianceCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Compliant', 'In Progress', 'Non-Compliant', 'Not Assessed'],
+            datasets: [{
+                data: [{{ control_metrics.compliant }}, {{ control_metrics.in_progress }}, {{ control_metrics.non_compliant }}, {{ control_metrics.not_assessed }}],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#94a3b8'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Task Status Chart
+    const taskCtx = document.getElementById('taskStatusChart').getContext('2d');
+    const taskChart = new Chart(taskCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Open', 'In Progress', 'Completed', 'Overdue'],
+            datasets: [{
+                data: [{{ task_metrics.open }}, {{ task_metrics.in_progress }}, {{ task_metrics.completed }}, {{ task_metrics.overdue }}],
+                backgroundColor: ['#60a5fa', '#f59e0b', '#10b981', '#ef4444'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+
+<!-- Add custom styles for dashboard -->
+<style>
+    .dashboard-summary {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .summary-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        flex: 1;
+        min-width: 180px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        border-top: 4px solid #3b82f6;
+    }
+    
+    .summary-card.red-alert {
+        border-top-color: #ef4444;
+    }
+    
+    .summary-count {
+        font-size: 32px;
+        font-weight: bold;
+        color: #1e40af;
+        margin-bottom: 5px;
+    }
+    
+    .summary-label {
+        color: #64748b;
+        font-size: 14px;
+    }
+    
+    .dashboard-row {
+        display: flex;
+        margin-bottom: 20px;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    
+    .dashboard-column {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    .dashboard-card {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        height: 100%;
+    }
+    
+    .dashboard-card h2 {
+        margin-top: 0;
+        font-size: 18px;
+        color: #1e3a8a;
+    }
+    
+    .chart-container {
+        height: 200px;
+        position: relative;
+    }
+    
+    .dashboard-table {
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .dashboard-table th {
+        background-color: #f1f5f9;
+        color: #1e3a8a;
+    }
+    
+    .dashboard-table td, .dashboard-table th {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+    
+    .view-all {
+        text-align: center;
+        margin-top: 15px;
+    }
+    
+    tr.overdue {
+        background-color: #fee2e2;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-row {
+            flex-direction: column;
+        }
+        
+        .dashboard-column {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %} 

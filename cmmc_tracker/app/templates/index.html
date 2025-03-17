@@ -8,6 +8,10 @@
 <div class="top-controls">
     <div class="form-container" style="margin-right: 15px; margin-left:0px">
         <a href="{{ url_for('controls.create_control') }}" class="button-link create-button">Create New Control</a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('controls.import_csv') }}" class="button-link">Import Controls</a>
+        {% endif %}
+        <a href="{{ url_for('controls.export_csv') }}" class="button-link">Export Controls</a>
         <form method="GET" action="{{ url_for('controls.control_detail', control_id='placeholder') }}" id="view_details_form" style = "display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="control_select">Select Control:</label>

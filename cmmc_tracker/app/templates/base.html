@@ -504,11 +504,12 @@
     <header class="site-header">
         <div class="header-content">
             <div class="logo">
-                <a href="{{ url_for('controls.index') }}">CMMC Compliance Tracker</a>
+                <a href="{{ url_for('controls.dashboard') }}">CMMC Compliance Tracker</a>
             </div>
             <nav class="navbar">
                 <div class="navbar-left">
-                    <a href="{{ url_for('controls.index') }}">Home</a>
+                    <a href="{{ url_for('controls.dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('controls.index') }}">Controls</a>
                     <a href="{{ url_for('tasks.calendar') }}">Calendar</a>
                     <a href="{{ url_for('reports.reports') }}">Reports</a>
                 </div>

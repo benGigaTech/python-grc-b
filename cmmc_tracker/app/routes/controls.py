@@ -1,18 +1,126 @@
 """Control management routes for the CMMC Tracker application."""
 
 import logging
-from flask import Blueprint, render_template, redirect, url_for, request, flash
+from datetime import date, timedelta, datetime
+from flask import Blueprint, render_template, redirect, url_for, request, flash, Response, jsonify
 from flask_login import login_required, current_user
 from app.models.control import Control
+from app.models.task import Task
 from app.models.user import User
-from app.services.audit import add_audit_log
+from app.services.audit import add_audit_log, get_audit_logs_for_object
 from app.utils.date import is_date_valid, format_date, parse_date, is_past_date
 from app.services.database import execute_query
+from app.services.auth import admin_required
+import csv
+import io
 
 logger = logging.getLogger(__name__)
 
 # Create blueprint
 controls_bp = Blueprint('controls', __name__)
+
+@controls_bp.route('/dashboard')
+@login_required
+def dashboard():
+    """Display the dashboard with compliance metrics and visualizations."""
+    try:
+        # Get system date
+        today = date.today()
+        
+        # Calculate control metrics
+        control_total_query = "SELECT COUNT(*) FROM controls"
+        control_total = execute_query(control_total_query, fetch_one=True)[0]
+        
+        # Get counts for compliance status
+        compliant_query = "SELECT COUNT(*) FROM controls WHERE controlid IN (SELECT DISTINCT controlid FROM tasks WHERE status = 'Completed' AND confirmed = 1)"
+        compliant = execute_query(compliant_query, fetch_one=True)[0]
+        
+        in_progress_query = "SELECT COUNT(*) FROM controls WHERE controlid IN (SELECT DISTINCT controlid FROM tasks WHERE status IN ('Open', 'Pending Confirmation'))"
+        in_progress = execute_query(in_progress_query, fetch_one=True)[0]
+        
+        # Assume controls with no tasks are not assessed
+        not_assessed_query = "SELECT COUNT(*) FROM controls WHERE controlid NOT IN (SELECT DISTINCT controlid FROM tasks)"
+        not_assessed = execute_query(not_assessed_query, fetch_one=True)[0]
+        
+        # Calculate non-compliant as remainder
+        non_compliant = control_total - compliant - in_progress - not_assessed
+        if non_compliant < 0:
+            non_compliant = 0
+        
+        # Get upcoming reviews (next 30 days)
+        thirty_days_later = (today + timedelta(days=30)).isoformat()
+        upcoming_reviews_query = """
+            SELECT COUNT(*) FROM controls 
+            WHERE nextreviewdate IS NOT NULL AND nextreviewdate != '' 
+            AND nextreviewdate BETWEEN %s AND %s
+        """
+        upcoming_reviews = execute_query(upcoming_reviews_query, (today.isoformat(), thirty_days_later), fetch_one=True)[0]
+        
+        # Calculate task metrics
+        open_tasks_query = "SELECT COUNT(*) FROM tasks WHERE status = 'Open'"
+        open_tasks = execute_query(open_tasks_query, fetch_one=True)[0]
+        
+        in_progress_tasks_query = "SELECT COUNT(*) FROM tasks WHERE status = 'Pending Confirmation'"
+        in_progress_tasks = execute_query(in_progress_tasks_query, fetch_one=True)[0]
+        
+        completed_tasks_query = "SELECT COUNT(*) FROM tasks WHERE status = 'Completed'"
+        completed_tasks = execute_query(completed_tasks_query, fetch_one=True)[0]
+        
+        overdue_tasks_query = """
+            SELECT COUNT(*) FROM tasks 
+            WHERE status != 'Completed' AND duedate IS NOT NULL AND duedate != '' 
+            AND duedate < %s
+        """
+        overdue_tasks = execute_query(overdue_tasks_query, (today.isoformat(),), fetch_one=True)[0]
+        
+        # Get recent activities (last 10)
+        recent_activities_query = """
+            SELECT * FROM auditlogs 
+            ORDER BY logid DESC 
+            LIMIT 10
+        """
+        recent_activities = execute_query(recent_activities_query, fetch_all=True)
+        
+        # Get user's tasks (max 10)
+        my_tasks_query = """
+            SELECT t.*, 
+                   CASE WHEN t.duedate < %s THEN 1 ELSE 0 END as is_overdue
+            FROM tasks t
+            WHERE t.assignedto = %s AND t.status != 'Completed'
+            ORDER BY t.duedate ASC NULLS LAST
+            LIMIT 10
+        """
+        my_tasks = execute_query(my_tasks_query, (today.isoformat(), current_user.username), fetch_all=True)
+        
+        # Compile metrics
+        control_metrics = {
+            'total': control_total,
+            'compliant': compliant,
+            'in_progress': in_progress,
+            'non_compliant': non_compliant,
+            'not_assessed': not_assessed,
+            'upcoming_reviews': upcoming_reviews
+        }
+        
+        task_metrics = {
+            'open': open_tasks,
+            'in_progress': in_progress_tasks,
+            'completed': completed_tasks,
+            'overdue': overdue_tasks,
+            'pending': open_tasks + in_progress_tasks
+        }
+        
+        return render_template(
+            'dashboard.html',
+            control_metrics=control_metrics,
+            task_metrics=task_metrics,
+            recent_activities=recent_activities,
+            my_tasks=my_tasks
+        )
+    except Exception as e:
+        logger.error(f"Error generating dashboard: {e}")
+        flash('An error occurred while generating the dashboard.', 'danger')
+        return redirect(url_for('controls.index'))
 
 @controls_bp.route('/')
 @login_required
@@ -283,3 +391,123 @@ def update_review_dates(control_id):
         flash('An error occurred while updating review dates.', 'danger')
     
     return redirect(url_for('controls.control_detail', control_id=control_id))
+
+@controls_bp.route('/export-csv')
+@login_required
+def export_csv():
+    """Export controls to CSV."""
+    try:
+        # Get all controls
+        controls = Control.get_all()
+        
+        if not controls:
+            flash('No controls to export', 'error')
+            return redirect(url_for('controls.index'))
+        
+        # Create a CSV string
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write header
+        writer.writerow(['Control ID', 'Control Name', 'Control Description', 'NIST Mapping', 
+                         'Review Frequency', 'Last Review Date', 'Next Review Date'])
+        
+        # Write data
+        for control in controls:
+            writer.writerow([
+                control.control_id,
+                control.control_name,
+                control.control_description,
+                control.nist_mapping,
+                control.review_frequency,
+                format_date(control.last_review_date) if control.last_review_date else '',
+                format_date(control.next_review_date) if control.next_review_date else ''
+            ])
+        
+        # Create the response
+        response = Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment;filename=cmmc_controls_export_{datetime.now().strftime("%Y%m%d")}.csv'}
+        )
+        
+        return response
+    except Exception as e:
+        logger.error(f"Error exporting controls: {e}")
+        flash('Error exporting controls', 'error')
+        return redirect(url_for('controls.index'))
+
+@controls_bp.route('/import-csv', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_csv():
+    """Import controls from CSV."""
+    if request.method == 'GET':
+        return render_template('import_controls.html')
+    
+    try:
+        if 'file' not in request.files:
+            flash('No file part', 'error')
+            return redirect(request.url)
+            
+        file = request.files['file']
+        
+        if file.filename == '':
+            flash('No selected file', 'error')
+            return redirect(request.url)
+            
+        if not file.filename.endswith('.csv'):
+            flash('File must be a CSV', 'error')
+            return redirect(request.url)
+        
+        # Process the CSV file
+        csv_content = file.read().decode('utf-8')
+        csv_file = io.StringIO(csv_content)
+        reader = csv.DictReader(csv_file)
+        
+        imported_count = 0
+        updated_count = 0
+        error_count = 0
+        
+        for row in reader:
+            try:
+                # Check if control exists
+                existing_control = Control.get_by_id(row['Control ID'])
+                
+                # Format dates correctly
+                last_review_date = parse_date(row.get('Last Review Date', '')) if row.get('Last Review Date') else None
+                next_review_date = parse_date(row.get('Next Review Date', '')) if row.get('Next Review Date') else None
+                
+                # Create control object
+                control = Control(
+                    control_id=row['Control ID'],
+                    control_name=row['Control Name'],
+                    control_description=row.get('Control Description', ''),
+                    nist_mapping=row.get('NIST Mapping', ''),
+                    review_frequency=row.get('Review Frequency', ''),
+                    last_review_date=last_review_date,
+                    next_review_date=next_review_date
+                )
+                
+                if existing_control:
+                    # Update existing control
+                    control.save()
+                    updated_count += 1
+                else:
+                    # Insert new control
+                    control.save()
+                    imported_count += 1
+            except Exception as e:
+                logger.error(f"Error importing row {row}: {e}")
+                error_count += 1
+        
+        if error_count:
+            flash(f'Imported {imported_count} new controls, updated {updated_count} existing controls with {error_count} errors', 'warning')
+        else:
+            flash(f'Successfully imported {imported_count} new controls and updated {updated_count} existing controls', 'success')
+        
+        return redirect(url_for('controls.index'))
+    except Exception as e:
+        logger.error(f"Error importing controls: {e}")
+        flash('Error importing controls', 'error')
+        return redirect(url_for('controls.index'))

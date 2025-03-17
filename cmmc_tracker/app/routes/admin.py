@@ -7,6 +7,9 @@ from flask_login import login_required, current_user
 from app.models.task import Task
 from app.services.database import execute_query
 from app.utils.date import parse_date, format_date
+from werkzeug.security import generate_password_hash
+from app.services.email import check_and_notify_task_deadlines
+from app.services.auth import admin_required
 
 logger = logging.getLogger(__name__)
 
@@ -145,3 +148,110 @@ def reports():
         logger.error(f"Error generating reports: {e}")
         flash('An error occurred while generating reports.', 'danger')
         return redirect(url_for('controls.index'))
+
+@admin_bp.route('/users')
+@login_required
+def admin_users():
+    """Display list of users for administration."""
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    try:
+        # Get all users
+        users_query = 'SELECT userid, username, isadmin, email FROM users ORDER BY username'
+        users = execute_query(users_query, fetch_all=True)
+        
+        return render_template('admin_users.html', users=users)
+    
+    except Exception as e:
+        logger.error(f"Error accessing user list: {e}")
+        flash('An error occurred while accessing the user list.', 'danger')
+        return redirect(url_for('controls.index'))
+
+@admin_bp.route('/users/create', methods=['GET', 'POST'])
+@login_required
+def admin_create_user():
+    """Create a new user."""
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        email = request.form.get('email')
+        is_admin = 1 if request.form.get('is_admin') else 0
+        
+        # Basic validation
+        if not username or not password:
+            flash('Username and password are required.', 'danger')
+            return render_template('admin_create_user.html')
+        
+        try:
+            # Check if username already exists
+            check_query = 'SELECT COUNT(*) FROM users WHERE username = %s'
+            count = execute_query(check_query, (username,), fetch_one=True)[0]
+            
+            if count > 0:
+                flash('Username already exists.', 'danger')
+                return render_template('admin_create_user.html')
+            
+            # Create new user
+            password_hash = generate_password_hash(password)
+            insert_query = '''
+                INSERT INTO users (username, password, isadmin, email)
+                VALUES (%s, %s, %s, %s)
+                RETURNING userid
+            '''
+            user_id = execute_query(
+                insert_query, 
+                (username, password_hash, is_admin, email),
+                fetch_one=True,
+                commit=True
+            )[0]
+            
+            # Add audit log
+            now = date.today().isoformat()
+            audit_query = '''
+                INSERT INTO auditlogs (timestamp, username, action, objecttype, objectid, details)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            '''
+            execute_query(
+                audit_query,
+                (now, current_user.username, 'Create User', 'User', str(user_id), f'User {username} created'),
+                commit=True
+            )
+            
+            flash(f'User {username} created successfully.', 'success')
+            return redirect(url_for('admin.admin_users'))
+            
+        except Exception as e:
+            logger.error(f"Error creating user: {e}")
+            flash('An error occurred while creating the user.', 'danger')
+            return render_template('admin_create_user.html')
+    
+    return render_template('admin_create_user.html')
+
+@admin_bp.route('/notifications/send-test', methods=['POST'])
+@login_required
+@admin_required
+def send_test_notifications():
+    """
+    Manually trigger task deadline email notifications.
+    This is for testing purposes.
+    """
+    try:
+        # Call the notification function
+        notification_count = check_and_notify_task_deadlines()
+        
+        if notification_count > 0:
+            flash(f'Successfully sent {notification_count} notifications', 'success')
+        else:
+            flash('No notifications were sent - there may be no tasks due soon or overdue', 'info')
+        
+        return redirect(url_for('admin.admin_users'))
+    except Exception as e:
+        logger.error(f"Error sending test notifications: {e}")
+        flash('Error sending test notifications', 'error')
+        return redirect(url_for('admin.admin_users'))

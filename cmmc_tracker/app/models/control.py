@@ -221,6 +221,37 @@ class Control:
             logger.error(f"Error deleting control: {e}")
             return False
 
+    def save(self):
+        """
+        Save the control to the database.
+        If the control exists, it will be updated. Otherwise, it will be created.
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Check if control exists
+            existing_control = Control.get_by_id(self.control_id)
+            
+            if existing_control:
+                # Update existing control
+                return self.update()
+            else:
+                # Create new control
+                control_data = insert('controls', {
+                    'controlid': self.control_id,
+                    'controlname': self.control_name,
+                    'controldescription': self.control_description,
+                    'nist_sp_800_171_mapping': self.nist_mapping,
+                    'policyreviewfrequency': self.review_frequency,
+                    'lastreviewdate': self.last_review_date,
+                    'nextreviewdate': self.next_review_date
+                })
+                return bool(control_data)
+        except Exception as e:
+            logger.error(f"Error saving control: {e}")
+            return False
+
     def update_review_dates(self, last_review_date, next_review_date):
         """
         Update the review dates for the control.

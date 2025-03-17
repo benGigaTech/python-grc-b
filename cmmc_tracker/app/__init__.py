@@ -35,6 +35,12 @@ def create_app(config_name=None):
     # Register blueprints
     register_blueprints(app)
     
+    # Initialize scheduler for email notifications
+    if not app.config.get('TESTING', False):
+        from app.services.scheduler import init_scheduler
+        with app.app_context():
+            init_scheduler(app)
+    
     return app
 
 def configure_logging(app):
@@ -66,7 +72,7 @@ def register_error_handlers(app):
     def handle_csrf_error(e):
         app.logger.error(f"CSRF error: {e}")
         flash('The form you submitted is invalid or has expired. Please try again.', 'danger')
-        return redirect(url_for('index'))
+        return redirect(url_for('controls.index'))
 
 def register_blueprints(app):
     """Register blueprints with the app."""

@@ -1,0 +1,662 @@
+[
+{
+"ControlID": "AC.1.001",
+"ControlName": "Limit information system access to authorized users, processes acting on behalf of authorized users, or devices (including other information systems).",
+"ControlDescription": "Control who has access to your systems and what they can do.",
+"NIST_SP_800_171_Mapping": "3.1.1"
+},
+{
+"ControlID": "AC.1.002",
+"ControlName": "Limit information system access to the types of transactions and functions that authorized users are permitted to execute.",
+"ControlDescription": "Restrict user actions to only those necessary for their job.",
+"NIST_SP_800_171_Mapping": "3.1.2"
+},
+{
+"ControlID": "AC.1.003",
+"ControlName": "Verify and control/limit connections to and use of external information systems.",
+"ControlDescription": "Manage connections to systems outside your control.",
+"NIST_SP_800_171_Mapping": "3.1.3"
+},
+{
+"ControlID": "AC.2.001",
+"ControlName": "Separate duties of individuals to reduce the risk of malevolent activity without collusion.",
+"ControlDescription": "Divide critical tasks among different people to prevent fraud or misuse.",
+"NIST_SP_800_171_Mapping": "3.1.4"
+},
+{
+"ControlID": "AC.2.002",
+"ControlName": "Employ the principle of least privilege, including for specific security functions and privileged accounts.",
+"ControlDescription": "Grant users and processes only the necessary privileges to do their jobs.",
+"NIST_SP_800_171_Mapping": "3.1.5"
+},
+{
+"ControlID": "AC.2.003",
+"ControlName": "Use non-privileged accounts or roles when accessing nonsecurity functions.",
+"ControlDescription": "Don’t use powerful accounts for everyday tasks to limit potential damage.",
+"NIST_SP_800_171_Mapping": "3.1.6"
+},
+{
+"ControlID": "AC.2.004",
+"ControlName": "Prevent non-privileged users from executing privileged functions and capture the execution of such functions in audit logs.",
+"ControlDescription": "Regular users should not be able to do administrator tasks.",
+"NIST_SP_800_171_Mapping": "3.1.7"
+},
+{
+"ControlID": "AC.2.005",
+"ControlName": "Limit unsuccessful logon attempts.",
+"ControlDescription": "Protect against attackers repeatedly trying to guess passwords.",
+"NIST_SP_800_171_Mapping": "3.1.8"
+},
+{
+"ControlID": "AC.2.006",
+"ControlName": "Provide privacy and security notices consistent with applicable CUI rules.",
+"ControlDescription": "Inform users of the rules and restrictions for using systems with CUI.",
+"NIST_SP_800_171_Mapping": "3.1.9"
+},
+{
+"ControlID": "AC.2.007",
+"ControlName": "Use session lock with pattern-hiding displays to prevent access and viewing of data after a period of inactivity.",
+"ControlDescription": "Quickly lock your screen to prevent unauthorized access.",
+"NIST_SP_800_171_Mapping": "3.1.10"
+},
+{
+"ControlID": "AC.2.008",
+"ControlName": "Terminate (automatically) a user session after a defined condition.",
+"ControlDescription": "Log users off automatically after a certain condition (e.g. inactivity).",
+"NIST_SP_800_171_Mapping": "3.1.11"
+},
+{
+"ControlID": "AC.2.009",
+"ControlName": "Control remote access sessions.",
+"ControlDescription": "Keep an eye on who is connecting to your network remotely.",
+"NIST_SP_800_171_Mapping": "3.1.12"
+},
+{
+"ControlID": "AC.2.010",
+"ControlName": "Employ cryptographic mechanisms to protect the confidentiality of remote access sessions.",
+"ControlDescription": "Use encryption to protect remote access connections.",
+"NIST_SP_800_171_Mapping": "3.1.13"
+},
+{
+"ControlID": "AC.2.011",
+"ControlName": "Route remote access via managed access control points.",
+"ControlDescription": "Control remote access through a limited number of points.",
+"NIST_SP_800_171_Mapping": "3.1.14"
+},
+{
+"ControlID": "AC.2.012",
+"ControlName": "Authorize remote execution of privileged commands and remote access to security-relevant information.",
+"ControlDescription": "Control the use of powerful commands and sensitive information remotely.",
+"NIST_SP_800_171_Mapping": "3.1.15"
+},
+{
+"ControlID": "AC.2.013",
+"ControlName": "Authorize wireless access prior to allowing such connections.",
+"ControlDescription": "Control the use of wireless networks and devices.",
+"NIST_SP_800_171_Mapping": "3.1.16"
+},
+{
+"ControlID": "AC.2.014",
+"ControlName": "Protect wireless access using authentication and encryption.",
+"ControlDescription": "Secure wireless connections with strong passwords and encryption.",
+"NIST_SP_800_171_Mapping": "3.1.17"
+},
+{
+"ControlID": "AC.2.015",
+"ControlName": "Control connection of mobile devices.",
+"ControlDescription": "Manage the use of mobile devices like phones and tablets.",
+"NIST_SP_800_171_Mapping": "3.1.18"
+},
+{
+"ControlID": "AC.2.016",
+"ControlName": "Encrypt CUI on mobile devices and mobile computing platforms.",
+"ControlDescription": "Protect CUI on mobile devices with encryption.",
+"NIST_SP_800_171_Mapping": "3.1.19"
+},
+{
+"ControlID": "AC.2.017",
+"ControlName": "Verify and control/limit connections to and use of external systems.",
+"ControlDescription": "Manage connections between your network and external systems.",
+"NIST_SP_800_171_Mapping": "3.1.20"
+},
+{
+"ControlID": "AC.2.018",
+"ControlName": "Limit use of portable storage devices on external systems.",
+"ControlDescription": "Control the use of portable storage devices like USB drives.",
+"NIST_SP_800_171_Mapping": "3.1.21"
+},
+{
+"ControlID": "AC.2.019",
+"ControlName": "Control CUI posted or processed on publicly accessible systems.",
+"ControlDescription": "Safeguard CUI on public systems.",
+"NIST_SP_800_171_Mapping": "3.1.22"
+},
+{
+"ControlID": "AT.1.001",
+"ControlName": "Ensure that managers, systems administrators, and users of organizational systems are made aware of the security risks associated with their activities and of the applicable policies, standards, and procedures related to the security of those systems.",
+"ControlDescription": "Train staff on security awareness and their roles.",
+"NIST_SP_800_171_Mapping": "3.2.1"
+},
+{
+"ControlID": "AT.2.001",
+"ControlName": "Ensure that personnel are trained to carry out their assigned information security-related duties and responsibilities.",
+"ControlDescription": "Provide role-based training to staff.",
+"NIST_SP_800_171_Mapping": "3.2.2"
+},
+{
+"ControlID": "AT.3.001",
+"ControlName": "Provide security awareness training on recognizing and reporting potential indicators of insider threat.",
+"ControlDescription": "Train staff on insider threat awareness.",
+"NIST_SP_800_171_Mapping": "3.2.3"
+},
+{
+"ControlID": "AU.1.001",
+"ControlName": "Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, investigation, and reporting of unlawful or unauthorized system activity.",
+"ControlDescription": "Create and keep audit logs.",
+"NIST_SP_800_171_Mapping": "3.3.1"
+},
+{
+"ControlID": "AU.2.001",
+"ControlName": "Ensure that the actions of individual system users can be uniquely traced to those users so they can be held accountable for their actions.",
+"ControlDescription": "Trace user actions for accountability.",
+"NIST_SP_800_171_Mapping": "3.3.2"
+},
+{
+"ControlID": "AU.3.001",
+"ControlName": "Review and update logged events.",
+"ControlDescription": "Regularly check and update what events are being logged.",
+"NIST_SP_800_171_Mapping": "3.3.3"
+},
+{
+"ControlID": "AU.3.002",
+"ControlName": "Alert in the event of an audit logging process failure.",
+"ControlDescription": "Set up alerts for audit log failures.",
+"NIST_SP_800_171_Mapping": "3.3.4"
+},
+{
+"ControlID": "AU.3.003",
+"ControlName": "Correlate audit record review, analysis, and reporting processes for investigation and response to indications of unlawful, unauthorized, suspicious, or unusual activity.",
+"ControlDescription": "Analyze audit records for signs of suspicious activity.",
+"NIST_SP_800_171_Mapping": "3.3.5"
+},
+{
+"ControlID": "AU.3.004",
+"ControlName": "Provide audit record reduction and report generation to support on-demand analysis and reporting.",
+"ControlDescription": "Make audit records easier to analyze and report on.",
+"NIST_SP_800_171_Mapping": "3.3.6"
+},
+{
+"ControlID": "AU.3.005",
+"ControlName": "Provide a system capability that compares and synchronizes internal system clocks with an authoritative source to generate time stamps for audit records.",
+"ControlDescription": "Synchronize system clocks with an accurate time source.",
+"NIST_SP_800_171_Mapping": "3.3.7"
+},
+{
+"ControlID": "AU.3.006",
+"ControlName": "Protect audit information and audit logging tools from unauthorized access, modification, and deletion.",
+"ControlDescription": "Secure audit logs and tools.",
+"NIST_SP_800_171_Mapping": "3.3.8"
+},
+{
+"ControlID": "AU.3.007",
+"ControlName": "Limit management of audit logging functionality to a subset of privileged users.",
+"ControlDescription": "Restrict access to audit log management functions.",
+"NIST_SP_800_171_Mapping": "3.3.9"
+},
+{
+"ControlID": "CM.1.001",
+"ControlName": "Establish and maintain baseline configurations and inventories of organizational systems (including hardware, software, firmware, and documentation) throughout the respective system development life cycles.",
+"ControlDescription": "Establish and maintain secure configurations.",
+"NIST_SP_800_171_Mapping": "3.4.1"
+},
+{
+"ControlID": "CM.1.002",
+"ControlName": "Establish and enforce security configuration settings for information technology products employed in organizational systems.",
+"ControlDescription": "Set and enforce secure configurations for IT products.",
+"NIST_SP_800_171_Mapping": "3.4.2"
+},
+{
+"ControlID": "CM.2.001",
+"ControlName": "Track, review, approve or disapprove, and log changes to organizational systems.",
+"ControlDescription": "Manage changes to systems.",
+"NIST_SP_800_171_Mapping": "3.4.3"
+},
+{
+"ControlID": "CM.2.002",
+"ControlName": "Analyze the security impact of changes prior to implementation.",
+"ControlDescription": "Review changes for security impacts.",
+"NIST_SP_800_171_Mapping": "3.4.4"
+},
+{
+"ControlID": "CM.2.003",
+"ControlName": "Define, document, approve, and enforce physical and logical access restrictions associated with changes to organizational systems.",
+"ControlDescription": "Control access to systems during changes.",
+"NIST_SP_800_171_Mapping": "3.4.5"
+},
+{
+"ControlID": "CM.2.004",
+"ControlName": "Employ the principle of least functionality by configuring organizational systems to provide only essential capabilities.",
+"ControlDescription": "Use the principle of least functionality.",
+"NIST_SP_800_171_Mapping": "3.4.6"
+},
+{
+"ControlID": "CM.2.005",
+"ControlName": "Restrict, disable, or prevent the use of nonessential programs, functions, ports, protocols, and services.",
+"ControlDescription": "Limit unnecessary programs and services.",
+"NIST_SP_800_171_Mapping": "3.4.7"
+},
+{
+"ControlID": "CM.2.006",
+"ControlName": "Apply deny-by-exception (blacklisting) policy to prevent the use of unauthorized software or deny-all, permit-by-exception (whitelisting) policy to allow the execution of authorized software.",
+"ControlDescription": "Use blacklisting or whitelisting to control software execution.",
+"NIST_SP_800_171_Mapping": "3.4.8"
+},
+{
+"ControlID": "CM.2.007",
+"ControlName": "Control and monitor user-installed software.",
+"ControlDescription": "Manage user-installed software.",
+"NIST_SP_800_171_Mapping": "3.4.9"
+},
+{
+"ControlID": "IA.1.001",
+"ControlName": "Identify system users, processes acting on behalf of users, and devices.",
+"ControlDescription": "Assign unique IDs to users, processes, and devices.",
+"NIST_SP_800_171_Mapping": "3.5.1"
+},
+{
+"ControlID": "IA.1.002",
+"ControlName": "Authenticate (or verify) the identities of those users, processes, or devices, as a prerequisite to allowing access to organizational systems.",
+"ControlDescription": "Verify identities before granting access.",
+"NIST_SP_800_171_Mapping": "3.5.2"
+},
+{
+"ControlID": "IA.1.003",
+"ControlName": "Use multifactor authentication for local and network access to privileged accounts and for network access to non-privileged accounts.",
+"ControlDescription": "Use multiple authentication factors.",
+"NIST_SP_800_171_Mapping": "3.5.3"
+},
+{
+"ControlID": "IA.1.004",
+"ControlName": "Employ replay-resistant authentication mechanisms for network access to privileged and non-privileged accounts.",
+"ControlDescription": "Use authentication methods that resist replay attacks.",
+"NIST_SP_800_171_Mapping": "3.5.4"
+},
+{
+"ControlID": "IA.1.005",
+"ControlName": "Prevent reuse of identifiers for a defined period.",
+"ControlDescription": "Don't reuse user IDs for a certain time.",
+"NIST_SP_800_171_Mapping": "3.5.5"
+},
+{
+"ControlID": "IA.2.006",
+"ControlName": "Identifier Handling",
+"ControlDescription": "Disable inactive user IDs.",
+"NIST_SP_800_171_Mapping": "3.5.6"
+},
+{
+"ControlID": "IA.2.007",
+"ControlName": "Employ strong password composition.",
+"ControlDescription": "Use strong passwords.",
+"NIST_SP_800_171_Mapping": "3.5.7"
+},
+{
+"ControlID": "IA.2.008",
+"ControlName": "Prevent password reuse.",
+"ControlDescription": "Don't reuse old passwords.",
+"NIST_SP_800_171_Mapping": "3.5.8"
+},
+{
+"ControlID": "IA.2.009",
+"ControlName": "Use one-time passwords.",
+"ControlDescription": "Use passwords that are valid for only one login session or a short period of time.",
+"NIST_SP_800_171_Mapping": "3.5.9"
+},
+{
+"ControlID": "IA.2.010",
+"ControlName": "Protect (i.e., encrypt) stored passwords.",
+"ControlDescription": "Store passwords securely.",
+"NIST_SP_800_171_Mapping": "3.5.10"
+},
+{
+"ControlID": "IA.2.011",
+"ControlName": "Mask (i.e., obscure) authentication information.",
+"ControlDescription": "Hide passwords and other authentication information.",
+"NIST_SP_800_171_Mapping": "3.5.11"
+},
+{
+"ControlID": "IR.1.001",
+"ControlName": "Create an incident response plan.",
+"ControlDescription": "Develop a plan for responding to security incidents.",
+"NIST_SP_800_171_Mapping": "3.6.1"
+},
+{
+"ControlID": "IR.2.001",
+"ControlName": "Report incidents.",
+"ControlDescription": "Report security incidents to the appropriate people.",
+"NIST_SP_800_171_Mapping": "3.6.2"
+},
+{
+"ControlID": "IR.3.001",
+"ControlName": "Test incident response plan.",
+"ControlDescription": "Regularly test your incident response plan.",
+"NIST_SP_800_171_Mapping": "3.6.3"
+},
+{
+"ControlID": "MA.1.001",
+"ControlName": "Perform maintenance.",
+"ControlDescription": "Regularly maintain your systems.",
+"NIST_SP_800_171_Mapping": "3.7.1"
+},
+{
+"ControlID": "MA.2.001",
+"ControlName": "Control maintenance tools.",
+"ControlDescription": "Manage the tools used for maintenance.",
+"NIST_SP_800_171_Mapping": "3.7.2"
+},
+{
+"ControlID": "MA.2.002",
+"ControlName": "Sanitize media.",
+"ControlDescription": "Clean or destroy media before reusing or discarding it.",
+"NIST_SP_800_171_Mapping": "3.7.3"
+},
+{
+"ControlID": "MA.2.003",
+"ControlName": "Inspect media.",
+"ControlDescription": "Check media for malicious code before using it.",
+"NIST_SP_800_171_Mapping": "3.7.4"
+},
+{
+"ControlID": "MA.2.004",
+"ControlName": "Use multi-factor authentication for remote maintenance.",
+"ControlDescription": "Use strong authentication for remote maintenance sessions.",
+"NIST_SP_800_171_Mapping": "3.7.5"
+},
+{
+"ControlID": "MA.2.005",
+"ControlName": "Supervise maintenance personnel.",
+"ControlDescription": "Supervise maintenance activities.",
+"NIST_SP_800_171_Mapping": "3.7.6"
+},
+{
+"ControlID": "MP.1.001",
+"ControlName": "Protect CUI.",
+"ControlDescription": "Protect the confidentiality of CUI.",
+"NIST_SP_800_171_Mapping": "3.8.1"
+},
+{
+"ControlID": "MP.2.001",
+"ControlName": "Limit CUI access.",
+"ControlDescription": "Limit access to CUI to authorized users.",
+"NIST_SP_800_171_Mapping": "3.8.2"
+},
+{
+"ControlID": "MP.2.002",
+"ControlName": "Sanitize or destroy CUI media.",
+"ControlDescription": "Clean or destroy media containing CUI before disposal or reuse.",
+"NIST_SP_800_171_Mapping": "3.8.3"
+},
+{
+"ControlID": "MP.3.001",
+"ControlName": "Mark CUI media.",
+"ControlDescription": "Mark media containing CUI with appropriate labels.",
+"NIST_SP_800_171_Mapping": "3.8.4"
+},
+{
+"ControlID": "MP.4.001",
+"ControlName": "Control CUI media.",
+"ControlDescription": "Control access to media containing CUI.",
+"NIST_SP_800_171_Mapping": "3.8.5"
+},
+{
+"ControlID": "MP.5.001",
+"ControlName": "Encrypt CUI.",
+"ControlDescription": "Encrypt CUI on portable storage devices.",
+"NIST_SP_800_171_Mapping": "3.8.6"
+},
+{
+"ControlID": "MP.6.001",
+"ControlName": "Control removable media.",
+"ControlDescription": "Control the use of removable media.",
+"NIST_SP_800_171_Mapping": "3.8.7"
+},
+{
+"ControlID": "MP.7.001",
+"ControlName": "Prohibit shared media.",
+"ControlDescription": "Do not allow the use of portable storage devices that have no identifiable owner.",
+"NIST_SP_800_171_Mapping": "3.8.8"
+},
+{
+"ControlID": "MP.8.001",
+"ControlName": "Protect backups.",
+"ControlDescription": "Protect the confidentiality of CUI backups.",
+"NIST_SP_800_171_Mapping": "3.8.9"
+},
+{
+"ControlID": "PS.1.001",
+"ControlName": "Screen personnel.",
+"ControlDescription": "Screen individuals before allowing them access to CUI.",
+"NIST_SP_800_171_Mapping": "3.9.1"
+},
+{
+"ControlID": "PS.2.001",
+"ControlName": "Protect CUI during personnel actions.",
+"ControlDescription": "Protect CUI when employees are terminated or transferred.",
+"NIST_SP_800_171_Mapping": "3.9.2"
+},
+{
+"ControlID": "PE.1.001",
+"ControlName": "Limit physical access.",
+"ControlDescription": "Limit physical access to organizational systems, equipment, and operating environments to authorized individuals.",
+"NIST_SP_800_171_Mapping": "3.10.1"
+},
+{
+"ControlID": "PE.2.001",
+"ControlName": "Monitor physical access.",
+"ControlDescription": "Monitor physical access to facilities and infrastructure.",
+"NIST_SP_800_171_Mapping": "3.10.2"
+},
+{
+"ControlID": "PE.2.002",
+"ControlName": "Escort visitors.",
+"ControlDescription": "Escort visitors and monitor their activity.",
+"NIST_SP_800_171_Mapping": "3.10.3"
+},
+{
+"ControlID": "PE.2.003",
+"ControlName": "Maintain physical access logs.",
+"ControlDescription": "Keep records of physical access.",
+"NIST_SP_800_171_Mapping": "3.10.4"
+},
+{
+"ControlID": "PE.2.004",
+"ControlName": "Manage physical access devices.",
+"ControlDescription": "Control and manage physical access devices.",
+"NIST_SP_800_171_Mapping": "3.10.5"
+},
+{
+"ControlID": "PE.2.005",
+"ControlName": "Enforce safeguarding measures.",
+"ControlDescription": "Enforce safeguards for CUI at alternate work sites.",
+"NIST_SP_800_171_Mapping": "3.10.6"
+},
+{
+"ControlID": "RA.1.001",
+"ControlName": "Conduct risk assessments.",
+"ControlDescription": "Regularly assess risk to organizational operations, assets, and individuals.",
+"NIST_SP_800_171_Mapping": "3.11.1"
+},
+{
+"ControlID": "RA.2.001",
+"ControlName": "Scan for vulnerabilities.",
+"ControlDescription": "Regularly scan for vulnerabilities in systems and applications.",
+"NIST_SP_800_171_Mapping": "3.11.2"
+},
+{
+"ControlID": "RA.3.001",
+"ControlName": "Remediate vulnerabilities.",
+"ControlDescription": "Fix vulnerabilities based on risk assessments.",
+"NIST_SP_800_171_Mapping": "3.11.3"
+},
+{
+"ControlID": "CA.1.001",
+"ControlName": "Assess security controls.",
+"ControlDescription": "Regularly assess security controls to ensure they are effective.",
+"NIST_SP_800_171_Mapping": "3.12.1"
+},
+{
+"ControlID": "CA.2.001",
+"ControlName": "Develop and implement a plan of action.",
+"ControlDescription": "Create and implement plans to fix security issues.",
+"NIST_SP_800_171_Mapping": "3.12.2"
+},
+{
+"ControlID": "CA.3.001",
+"ControlName": "Monitor security controls.",
+"ControlDescription": "Continuously monitor security controls.",
+"NIST_SP_800_171_Mapping": "3.12.3"
+},
+{
+"ControlID": "CA.4.001",
+"ControlName": "Develop and update a system security plan.",
+"ControlDescription": "Create and maintain a system security plan.",
+"NIST_SP_800_171_Mapping": "3.12.4"
+},
+{
+"ControlID": "SC.1.001",
+"ControlName": "Protect CUI.",
+"ControlDescription": "Protect the confidentiality of CUI.",
+"NIST_SP_800_171_Mapping": "3.13.1"
+},
+{
+"ControlID": "SC.2.001",
+"ControlName": "Employ security engineering.",
+"ControlDescription": "Use secure design principles when building and updating systems.",
+"NIST_SP_800_171_Mapping": "3.13.2"
+},
+{
+"ControlID": "SC.3.001",
+"ControlName": "Separate user functionality.",
+"ControlDescription": "Separate user functions from system management functions.",
+"NIST_SP_800_171_Mapping": "3.13.3"
+},
+{
+"ControlID": "SC.3.002",
+"ControlName": "Prevent information transfer.",
+"ControlDescription": "Prevent unauthorized information transfer via shared system resources.",
+"NIST_SP_800_171_Mapping": "3.13.4"
+},
+{
+"ControlID": "SC.3.003",
+"ControlName": "Implement subnetworks.",
+"ControlDescription": "Use separate subnetworks for publicly accessible systems.",
+"NIST_SP_800_171_Mapping": "3.13.5"
+},
+{
+"ControlID": "SC.3.004",
+"ControlName": "Deny network communications traffic.",
+"ControlDescription": "Block network traffic by default and allow only authorized traffic.",
+"NIST_SP_800_171_Mapping": "3.13.6"
+},
+{
+"ControlID": "SC.3.005",
+"ControlName": "Prevent split tunneling.",
+"ControlDescription": "Prevent remote devices from connecting to both internal and external networks simultaneously.",
+"NIST_SP_800_171_Mapping": "3.13.7"
+},
+{
+"ControlID": "SC.3.006",
+"ControlName": "Encrypt CUI.",
+"ControlDescription": "Encrypt CUI during transmission.",
+"NIST_SP_800_171_Mapping": "3.13.8"
+},
+{
+"ControlID": "SC.3.007",
+"ControlName": "Terminate network connections.",
+"ControlDescription": "End network connections after a period of inactivity.",
+"NIST_SP_800_171_Mapping": "3.13.9"
+},
+{
+"ControlID": "SC.3.008",
+"ControlName": "Establish cryptographic keys.",
+"ControlDescription": "Establish and manage cryptographic keys.",
+"NIST_SP_800_171_Mapping": "3.13.10"
+},
+{
+"ControlID": "SC.3.009",
+"ControlName": "Use FIPS-validated cryptography.",
+"ControlDescription": "Use FIPS-validated cryptography to protect CUI.",
+"NIST_SP_800_171_Mapping": "3.13.11"
+},
+{
+"ControlID": "SC.3.010",
+"ControlName": "Control collaborative devices.",
+"ControlDescription": "Control and monitor the use of collaborative computing devices.",
+"NIST_SP_800_171_Mapping": "3.13.12"
+},
+{
+"ControlID": "SC.3.011",
+"ControlName": "Control mobile code.",
+"ControlDescription": "Control and monitor the use of mobile code.",
+"NIST_SP_800_171_Mapping": "3.13.13"
+},
+{
+"ControlID": "SC.3.012",
+"ControlName": "Control VoIP.",
+"ControlDescription": "Control and monitor the use of Voice over Internet Protocol (VoIP) technologies.",
+"NIST_SP_800_171_Mapping": "3.13.14"
+},
+{
+"ControlID": "SC.3.013",
+"ControlName": "Protect communications sessions.",
+"ControlDescription": "Protect the authenticity of communications sessions.",
+"NIST_SP_800_171_Mapping": "3.13.15"
+},
+{
+"ControlID": "SC.3.014",
+"ControlName": "Protect CUI.",
+"ControlDescription": "Protect the confidentiality of CUI at rest.",
+"NIST_SP_800_171_Mapping": "3.13.16"
+},
+{
+"ControlID": "SI.1.001",
+"ControlName": "Correct system flaws.",
+"ControlDescription": "Identify, report, and correct system flaws.",
+"NIST_SP_800_171_Mapping": "3.14.1"
+},
+{
+"ControlID": "SI.1.002",
+"ControlName": "Identify malicious code.",
+"ControlDescription": "Identify malicious code.",
+"NIST_SP_800_171_Mapping": "3.14.2"
+},
+{
+"ControlID": "SI.1.003",
+"ControlName": "Quarantine malicious code.",
+"ControlDescription": "Isolate malicious code.",
+"NIST_SP_800_171_Mapping": "3.14.3"
+},
+{
+"ControlID": "SI.1.004",
+"ControlName": "Remove malicious code.",
+"ControlDescription": "Remove malicious code.",
+"NIST_SP_800_171_Mapping": "3.14.4"
+},
+{
+"ControlID": "SI.1.005",
+"ControlName": "Report malicious code.",
+"ControlDescription": "Report malicious code.",
+"NIST_SP_800_171_Mapping": "3.14.5"
+},
+{
+"ControlID": "SI.1.006",
+"ControlName": "Update malicious code protection mechanisms.",
+"ControlDescription": "Update malicious code protection mechanisms.",
+"NIST_SP_800_171_Mapping": "3.14.6"
+},
+{
+"ControlID": "SI.1.007",
+"ControlName": "Monitor for malicious code.",
+"ControlDescription": "Monitor for malicious code.",
+"NIST_SP_800_171_Mapping": "3.14.7"
+}
+]

@@ -1,0 +1,40 @@
+services:
+  web:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - FLASK_CONFIG=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-cmmc_db}
+      - DB_USER=${DB_USER:-cmmc_user}
+      - DB_PASSWORD=${DB_PASSWORD:-password}
+      - SECRET_KEY=${SECRET_KEY:-default_dev_key_change_in_production}
+      # Email configuration
+      - MAIL_SERVER=${MAIL_SERVER:-sandbox.smtp.mailtrap.io}
+      - MAIL_PORT=${MAIL_PORT:-2525}
+      - MAIL_USE_TLS=${MAIL_USE_TLS:-true}
+      - MAIL_USERNAME=${MAIL_USERNAME:-bc366ad3b451bc}
+      - MAIL_PASSWORD=${MAIL_PASSWORD:-8d801eecf49e5a}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER:-cmmc-tracker@example.com}
+      - PYTHONPATH=/app/cmmc_tracker
+    depends_on:
+      - db
+    volumes:
+      - ./:/app
+
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USER:-cmmc_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-password}
+      - POSTGRES_DB=${DB_NAME:-cmmc_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+
+volumes:
+  postgres_data:

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Control{% endblock %}
+
+{% block content %}
+<h1>Edit Control: {{ control.controlid }}</h1>  {# Lowercase #}
+<div class="form-container">
+    <form method="post" action="{{ url_for('edit_control', control_id=control.controlid) }}">  {#Added Action#}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="control_name">Control Name:</label><br>
+            <input type="text" id="control_name" name="control_name" value="{{ control.controlname }}" required>  {# Lowercase #}
+        </div>
+        <div>
+            <label for="control_description">Control Description:</label><br>
+            <textarea id="control_description" name="control_description" rows="4" required>{{ control.controldescription }}</textarea> {# Lowercase #}
+        </div>
+        <div>
+            <label for="nist_mapping">NIST SP 800-171 Mapping:</label><br>
+            <input type="text" id="nist_mapping" name="nist_mapping" value="{{ control.nist_sp_800_171_mapping }}" required>  {# Lowercase #}
+        </div>
+        <div>
+            <label for="review_frequency">Policy Review Frequency:</label><br>
+            <input type="text" id="review_frequency" name="review_frequency" value="{{ control.policyreviewfrequency }}">  {# Lowercase #}
+        </div>
+        <div>
+            <input type="submit" value="Update Control" class = "form-button">
+        </div>
+    </form>
+</div>
+<a href="{{ url_for('control_detail', control_id=control.controlid) }}" class="button-link">Back to Control Detail</a>  {# Lowercase and consistent styling #}
+{% endblock %}

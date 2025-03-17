@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Edit User{% endblock %}
+
+{% block content %}
+<h1>Admin - Edit User</h1>
+<div class="form-container">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+        </div>
+        <div>
+            <label for="email">Email:</label><br>
+            <input type="text" id="email" name="email" value = "{{user.email}}" required>
+        </div>
+        <div>
+            <label for="password">New Password (leave blank to keep unchanged):</label><br>
+            <input type="password" id="password" name="password">
+        </div>
+        <div>
+            <label for="is_admin">Admin:</label>
+            <input type="checkbox" id="is_admin" name="is_admin" value="1" {% if user.is_admin %}checked{% endif %}>
+        </div>
+        <div>
+            <input type="submit" value="Update User">
+        </div>
+    </form>
+</div>
+<a href="{{ url_for('admin.admin_users') }}" class="button-link" style="margin-top: 1em;">Back to User List</a>
+{% endblock %}

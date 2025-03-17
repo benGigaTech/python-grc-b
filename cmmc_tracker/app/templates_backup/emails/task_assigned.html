@@ -1,0 +1,39 @@
+<!-- templates/emails/task_assigned.html -->
+{% extends "emails/base_email.html" %}
+
+{% block title %}New Task Assigned{% endblock %}
+
+{% block content %}
+<h2>New Task Assigned</h2>
+<p>Hello {{ task.assignedto }},</p>
+<p>You have been assigned a new task:</p>
+
+<table>
+    <tr>
+        <th>Control ID:</th>
+        <td>{{ task.controlid }}</td>
+    </tr>
+    <tr>
+        <th>Control Name:</th>
+        <td>{{ task.controlname }}</td>
+    </tr>
+    <tr>
+        <th>Task Description:</th>
+        <td>{{ task.taskdescription }}</td>
+    </tr>
+    <tr>
+        <th>Due Date:</th>
+        <td>{{ task.duedate }}</td>
+    </tr>
+    <tr>
+        <th>Reviewer:</th>
+        <td>{{ task.reviewer }}</td>
+    </tr>
+</table>
+
+<p>Please complete this task before the due date.</p>
+
+<a href="{{ url_for('control_detail', control_id=task.controlid, _external=True) }}" class="button">View Task Details</a>
+
+<p>Thank you for your attention to this matter.</p>
+{% endblock %}

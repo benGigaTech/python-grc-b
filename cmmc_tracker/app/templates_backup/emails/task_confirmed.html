@@ -1,0 +1,37 @@
+<!-- templates/emails/task_confirmed.html -->
+{% extends "emails/base_email.html" %}
+
+{% block title %}Task Confirmed{% endblock %}
+
+{% block content %}
+<h2 style="color: #10b981;">Task Confirmed</h2>
+<p>Hello {{ task.assignedto }},</p>
+<p>The following task has been reviewed and confirmed as complete:</p>
+
+<table>
+    <tr>
+        <th>Control ID:</th>
+        <td>{{ task.controlid }}</td>
+    </tr>
+    <tr>
+        <th>Control Name:</th>
+        <td>{{ task.controlname }}</td>
+    </tr>
+    <tr>
+        <th>Task Description:</th>
+        <td>{{ task.taskdescription }}</td>
+    </tr>
+    <tr>
+        <th>Status:</th>
+        <td style="color: #10b981;">Completed</td>
+    </tr>
+    <tr>
+        <th>Reviewer:</th>
+        <td>{{ task.reviewer }}</td>
+    </tr>
+</table>
+
+<p>Thank you for your contribution to maintaining our compliance posture.</p>
+
+<a href="{{ url_for('control_detail', control_id=task.controlid, _external=True) }}" class="button" style="background-color: #10b981;">View Task Details</a>
+{% endblock %}

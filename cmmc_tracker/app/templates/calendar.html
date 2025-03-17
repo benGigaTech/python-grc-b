@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}CMMC Review Calendar{% endblock %}
+
+{% block content %}
+<h1>CMMC Review Calendar</h1>
+
+<div id='calendar'></div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+
+    if (!calendarEl) {
+      console.error("Error: Could not find the 'calendar' element.");
+      return;
+    }
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      events: [
+        // --- Control Events ---
+        {% for control in controls %}
+            {% if control.nextreviewdate %}
+            {
+              title: '{{ control.controlname|escape }} ({{ control.controlid|escape }})',
+              start: '{{ control.nextreviewdate }}',
+              allDay: true,
+              extendedProps: {
+                  controlId: '{{ control.controlid|escape }}'
+              },
+              {% if control.status == 'past-due' %}
+                color: '#F8D7DA',
+                textColor: '#721C24',
+              {% elif control.status == 'upcoming' %}
+                color: '#D4EDDA',
+                textColor: '#155724',
+              {% endif %}
+            },  {# Corrected: Comma was in the wrong place #}
+            {% endif %}
+        {% endfor %}
+
+        // --- Task Events ---
+        {% for task in tasks %}
+            {
+                title: '{{ task.taskdescription|escape }} ({{ task.controlid|escape }})',
+                start: '{{ task.duedate }}',
+                allDay: true,
+                extendedProps: {
+                    taskId: '{{ task.taskid|escape }}',
+                    controlId: '{{ task.controlid|escape }}'
+                },
+                {% if task.status == 'Completed' %}
+                    color: '#D4EDDA',
+                    textColor: '#155724',
+                {% elif task.status == 'Pending Confirmation' %}
+                    color: '#FFF3CD',
+                    textColor: '#856404',
+                {% else %}
+                    color: '#003859',
+                    textColor: '#eee',
+                {% endif %}
+            },  {# Corrected: No extra comma needed here #}
+        {% endfor %}
+      ],
+        eventClick: function(info) {
+            if (info.event.extendedProps.controlId) {
+                // Redirect to control detail
+                var url = "{{ url_for('controls.control_detail', control_id='PLACEHOLDER') }}";
+                window.location.href = url.replace('PLACEHOLDER', info.event.extendedProps.controlId);
+            }
+            else if (info.event.extendedProps.taskId){
+                // Redirect to the edit task page.
+                var url =  "{{ url_for('tasks.edit_task', task_id='PLACEHOLDER')}}";
+                window.location.href = url.replace('PLACEHOLDER', info.event.extendedProps.taskId);
+            }
+        }
+    });
+
+    try {
+      calendar.render();
+    } catch (error) {
+      console.error("Error rendering FullCalendar:", error);
+    }
+  });
+</script>
+<a href="{{ url_for('controls.index') }}" class = "button-link">Back to Control List</a>
+{% endblock %}

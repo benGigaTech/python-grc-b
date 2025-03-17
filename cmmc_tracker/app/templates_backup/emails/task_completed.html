@@ -1,0 +1,43 @@
+<!-- templates/emails/task_completed.html -->
+{% extends "emails/base_email.html" %}
+
+{% block title %}Task Completed{% endblock %}
+
+{% block content %}
+<h2>Task Completed - Review Required</h2>
+<p>Hello {{ task.reviewer }},</p>
+<p>A task has been marked as complete and is awaiting your review:</p>
+
+<table>
+    <tr>
+        <th>Control ID:</th>
+        <td>{{ task.controlid }}</td>
+    </tr>
+    <tr>
+        <th>Control Name:</th>
+        <td>{{ task.controlname }}</td>
+    </tr>
+    <tr>
+        <th>Task Description:</th>
+        <td>{{ task.taskdescription }}</td>
+    </tr>
+    <tr>
+        <th>Assigned To:</th>
+        <td>{{ task.assignedto }}</td>
+    </tr>
+    <tr>
+        <th>Due Date:</th>
+        <td>{{ task.duedate }}</td>
+    </tr>
+    <tr>
+        <th>Status:</th>
+        <td>Pending Confirmation</td>
+    </tr>
+</table>
+
+<p>Please review and confirm this task as soon as possible.</p>
+
+<a href="{{ url_for('control_detail', control_id=task.controlid, _external=True) }}" class="button">View Task Details</a>
+
+<p>Thank you for your attention to this matter.</p>
+{% endblock %}

@@ -1,0 +1,39 @@
+<!-- templates/emails/task_due_soon.html -->
+{% extends "emails/base_email.html" %}
+
+{% block title %}Task Due Soon{% endblock %}
+
+{% block content %}
+<h2>Task Due Soon</h2>
+<p>Hello {{ task.assignedto }},</p>
+<p>You have a task that is due soon:</p>
+
+<table>
+    <tr>
+        <th>Control ID:</th>
+        <td>{{ task.controlid }}</td>
+    </tr>
+    <tr>
+        <th>Control Name:</th>
+        <td>{{ task.controlname }}</td>
+    </tr>
+    <tr>
+        <th>Task Description:</th>
+        <td>{{ task.taskdescription }}</td>
+    </tr>
+    <tr>
+        <th>Due Date:</th>
+        <td>{{ task.duedate }}</td>
+    </tr>
+    <tr>
+        <th>Days Until Due:</th>
+        <td>{{ task.days_until_due }}</td>
+    </tr>
+</table>
+
+<p>Please complete this task as soon as possible.</p>
+
+<a href="{{ url_for('control_detail', control_id=task.controlid, _external=True) }}" class="button">View Task Details</a>
+
+<p>Thank you for your attention to this matter.</p>
+{% endblock %}

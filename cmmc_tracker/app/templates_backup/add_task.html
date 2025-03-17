@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Add Task{% endblock %}
+
+{% block content %}
+<h1>Add Task for Control {{ control_id }}</h1>
+<form action="{{ url_for('add_task', control_id=control_id) }}" method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div>
+        <label for="task_description">Task Description:</label><br>
+        <textarea id="task_description" name="task_description" rows="4" cols="50" required></textarea>
+    </div>
+    <div>
+        <label for="assigned_to">Assigned To:</label><br>
+        <select id="assigned_to" name="assigned_to" required>
+            {% for user in users %}
+                <option value="{{ user.username }}">{{ user.username }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="due_date">Due Date:</label><br>
+        <input type="date" id="due_date" name="due_date" required>
+    </div>
+    <div>
+        <label for="reviewer">Reviewer:</label><br>
+        <select id="reviewer" name="reviewer" required>
+            {% for user in users %}
+                <option value="{{ user.username }}">{{ user.username }}</option>
+            {% endfor %}
+        </select> 
+    </div>
+    <div>
+        <br>
+        <input type="submit" value="Add Task">
+    </div>
+</form>
+<a href="{{ url_for('control_detail', control_id=control_id) }}" class="button-link" style="margin-top: 1em;">Back To Control Details</a>
+{% endblock %}

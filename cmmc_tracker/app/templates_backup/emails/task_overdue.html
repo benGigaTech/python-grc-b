@@ -1,0 +1,39 @@
+<!-- templates/emails/task_overdue.html -->
+{% extends "emails/base_email.html" %}
+
+{% block title %}Task Overdue{% endblock %}
+
+{% block content %}
+<h2 style="color: #ef4444;">Task Overdue</h2>
+<p>Hello {{ task.assignedto }},</p>
+<p>The following task is <strong style="color: #ef4444;">overdue</strong>:</p>
+
+<table>
+    <tr>
+        <th>Control ID:</th>
+        <td>{{ task.controlid }}</td>
+    </tr>
+    <tr>
+        <th>Control Name:</th>
+        <td>{{ task.controlname }}</td>
+    </tr>
+    <tr>
+        <th>Task Description:</th>
+        <td>{{ task.taskdescription }}</td>
+    </tr>
+    <tr>
+        <th>Due Date:</th>
+        <td style="color: #ef4444;">{{ task.duedate }}</td>
+    </tr>
+    <tr>
+        <th>Days Overdue:</th>
+        <td style="color: #ef4444;">{{ task.days_until_due|abs }}</td>
+    </tr>
+</table>
+
+<p>Please complete this task immediately to maintain compliance.</p>
+
+<a href="{{ url_for('control_detail', control_id=task.controlid, _external=True) }}" class="button" style="background-color: #ef4444;">View Task Details</a>
+
+<p>If you have already completed this task, please mark it as complete in the system.</p>
+{% endblock %}

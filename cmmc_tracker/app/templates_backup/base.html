@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+
+    <style>
+        /* --- Base Styles --- */
+        body {
+            background-color: #f5f7fa; /* Light gray-blue background */
+            color: #334155; /* Dark gray-blue for text */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        a {
+            color: #3b82f6; /* Bright blue for links */
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #1d4ed8; /* Darker blue on hover */
+            text-decoration: underline;
+        }
+
+        h1, h2, h3 {
+            color: #1e40af; /* Navy blue headings */
+            margin-bottom: 0.8em;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid #dbeafe; /* Very light blue border */
+            padding-bottom: 0.3em;
+        }
+
+        /* --- Flash Messages --- */
+        .flash-messages {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 14px 20px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            font-weight: 500;
+            border-left: 4px solid transparent;
+        }
+
+        .flash-success {
+            background-color: #ecfdf5; /* Light green */
+            border-color: #10b981; /* Medium green */
+            color: #065f46; /* Dark green for text */
+        }
+
+        .flash-danger {
+            background-color: #fef2f2; /* Light red */
+            border-color: #ef4444; /* Medium red */
+            color: #991b1b; /* Dark red for text */
+        }
+
+        .flash-warning {
+            background-color: #fffbeb; /* Light yellow */
+            border-color: #f59e0b; /* Medium yellow */
+            color: #92400e; /* Dark yellow/brown for text */
+        }
+
+        /* --- Table Styles --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #dbeafe; /* Very light blue header */
+            color: #1e40af; /* Navy blue text */
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc; /* Very light gray-blue */
+        }
+
+        tr:hover {
+            background-color: #f1f5f9; /* Slightly darker on hover */
+        }
+
+        .past-due {
+            background-color: #fef2f2; /* Light red */
+            color: #991b1b; /* Dark red */
+            font-weight: 500;
+        }
+
+        .upcoming {
+            background-color: #ecfdf5; /* Light green */
+            color: #065f46; /* Dark green */
+            font-weight: 500;
+        }
+
+        .invalid-date {
+            background-color: #fffbeb; /* Light yellow */
+            color: #92400e; /* Dark yellow/brown */
+            font-weight: 500;
+        }
+
+        .completed {
+            background-color: #f0f9ff; /* Very light blue */
+            color: #0c4a6e; /* Dark blue */
+            font-weight: 500;
+        }
+
+        /* --- Form Element Styles --- */
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="date"],
+        textarea,
+        select {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: white;
+            color: #334155;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+            display: block;
+            margin-bottom: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #1e40af;
+        }
+
+        /*--- Task List Styles ---*/
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background-color: white;
+            border-left: 4px solid #94a3b8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .task-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-description {
+            font-weight: 600;
+            flex-grow: 1;
+            margin-right: 15px;
+            color: #334155;
+        }
+
+        .task-details {
+            font-size: 0.9em;
+            margin-right: 15px;
+            flex-grow: 1;
+            color: #64748b;
+        }
+
+        .task-actions {
+            white-space: nowrap;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .open {
+            border-left-color: #94a3b8; /* Slate gray */
+        }
+
+        .pending {
+            border-left-color: #f59e0b; /* Amber */
+            background-color: #fffbeb;
+        }
+
+        .completed {
+            border-left-color: #10b981; /* Emerald */
+            background-color: #ecfdf5;
+        }
+
+        /* --- Button Styles --- */
+        .button-link,
+        .form-button {
+            background-color: #3b82f6; /* Bright blue */
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s, transform 0.1s;
+            line-height: 1.4;
+        }
+
+        .button-link:hover,
+        .form-button:hover {
+            background-color: #2563eb; /* Slightly darker blue */
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .button-link:active,
+        .form-button:active {
+            transform: translateY(0);
+        }
+
+        .button-link.secondary,
+        .form-button.secondary {
+            background-color: #e2e8f0; /* Light gray */
+            color: #334155; /* Dark gray text */
+        }
+
+        .button-link.secondary:hover,
+        .form-button.secondary:hover {
+            background-color: #cbd5e1; /* Slightly darker gray */
+        }
+
+        .button-link.danger,
+        .form-button.danger {
+            background-color: #ef4444; /* Red */
+        }
+
+        .button-link.danger:hover,
+        .form-button.danger:hover {
+            background-color: #dc2626; /* Darker red */
+        }
+
+        form.inline-form {
+            display: inline;
+        }
+
+        /* --- Header --- */
+        .site-header {
+            background-color: #1e40af; /* Navy blue header */
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo a {
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo a:hover {
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo a:before {
+            content: "🔒"; /* Lock emoji for security theme */
+            margin-right: 8px;
+            font-size: 24px;
+        }
+
+        /* --- Navigation Bar --- */
+        .navbar {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .navbar-left {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .navbar a {
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+        }
+
+        .navbar span {
+            color: rgba(255, 255, 255, 0.8);
+            margin-right: 10px;
+        }
+
+        .navbar .button-link {
+            background-color: #3b82f6; /* Bright blue */
+            font-weight: 500;
+            padding: 8px 12px;
+        }
+
+        .navbar .button-link:hover {
+            background-color: #2563eb; /* Slightly darker blue */
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            padding: 25px;
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #1e40af; /* Navy blue footer */
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+        }
+
+        /* --- Form Container Styles --- */
+        .form-container {
+            max-width: 600px;
+            margin: 20px 0;
+            padding: 25px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* --- Top Controls Layout --- */
+        .top-controls {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* --- Sort Link Styles --- */
+        .sort-links a {
+            color: #3b82f6;
+            margin: 0 5px;
+            font-weight: normal;
+            text-decoration: none;
+        }
+
+        .sort-links a.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .sort-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Pagination --- */
+        .pagination {
+            margin-top: 25px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .pagination a {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .pagination a:hover {
+            background-color: #2563eb;
+            text-decoration: none;
+        }
+
+        .pagination span {
+            color: #334155;
+            font-weight: 500;
+        }
+
+        /* Adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .navbar {
+                margin-top: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .navbar-left {
+                margin-bottom: 10px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .top-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-container {
+                padding: 15px;
+                margin: 10px 0;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-content">
+            <div class="logo">
+                <a href="{{ url_for('index') }}">CMMC Compliance Tracker</a>
+            </div>
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <a href="{{ url_for('index') }}">Home</a>
+                    <a href="{{ url_for('calendar') }}">Calendar</a>
+                    <a href="{{ url_for('reports') }}">Reports</a>
+                </div>
+                <div>
+                    {% if current_user.is_authenticated %}
+                        <span>Logged in as: <strong>{{ current_user.username }}</strong></span>
+                        <a href="{{ url_for('logout') }}" class="button-link">Logout</a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="button-link">Login</a>
+                    {% endif %}
+                    {% if current_user.is_admin %}
+                        <a href="{{ url_for('admin_users') }}" class="button-link">Manage Users</a>
+                        <a href="{{ url_for('admin_create_user') }}" class="button-link">Create User</a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        &copy; <script>document.write(new Date().getFullYear())</script> CMMC Compliance Tracker | 
+        Version 1.0 | <a href="#" onclick="alert('Contact your system administrator for support.')">Support</a>
+    </footer>
+</body>
+</html>

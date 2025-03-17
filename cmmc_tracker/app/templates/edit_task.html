@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task{% endblock %}
+
+{% block content %}
+<h1>Edit Task</h1>
+<div class="form-container">
+    <form method="post" action="{{ url_for('tasks.edit_task', task_id=task.taskid) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="task_description">Task Description:</label><br>
+            <textarea id="task_description" name="task_description" rows="4" required>{{ task.taskdescription }}</textarea>
+        </div>
+        <div>
+            <label for="assigned_to">Assigned To:</label><br>
+            <select id="assigned_to" name="assigned_to" required>
+                {% for user in users %}
+                    <option value="{{ user.username }}" {% if user.username == task.assignedto %}selected{% endif %}>{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="due_date">Due Date:</label><br>
+            <input type="date" id="due_date" name="due_date" value="{{ task.duedate }}" required>
+        </div>
+        <div>
+            <label for="reviewer">Reviewer:</label><br>
+            <select id="reviewer" name="reviewer" required>
+                {% for user in users %}
+                    <option value="{{ user.username }}" {% if user.username == task.reviewer %}selected{% endif %}>{{ user.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <input type="submit" value="Update Task" class="form-button">
+        </div>
+    </form>
+</div>
+<a href="{{ url_for('controls.control_detail', control_id=task.controlid) }}" class="button-link">Back to Control Detail</a>
+{% endblock %}

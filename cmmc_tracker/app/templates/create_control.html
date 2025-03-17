@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Create Control{% endblock %}
+
+{% block content %}
+<h1>Create New Control</h1>
+<div class="form-container">
+    <form action="{{ url_for('controls.create_control') }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="control_id">Control ID:</label><br>
+            <input type="text" id="control_id" name="control_id" required>
+        </div>
+        <div>
+            <label for="control_name">Control Name:</label><br>
+            <input type="text" id="control_name" name="control_name" required>
+        </div>
+        <div>
+            <label for="control_description">Control Description:</label><br>
+            <textarea id="control_description" name="control_description" rows="4" required></textarea>
+        </div>
+        <div>
+            <label for="nist_mapping">NIST SP 800-171 Mapping:</label><br>
+            <input type="text" id="nist_mapping" name="nist_mapping" required>
+        </div>
+        <div>
+            <label for="review_frequency">Policy Review Frequency:</label><br>
+            <input type="text" id="review_frequency" name="review_frequency" placeholder="e.g., Annual, Quarterly" required>
+        </div>
+        <div>
+            <input type="submit" value="Create Control" class="form-button">
+        </div>
+    </form>
+</div>
+<a href="{{ url_for('controls.index') }}" class="button-link">Back to Control List</a>
+{% endblock %}

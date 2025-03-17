@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Control Detail - {{ control.controlid }}{% endblock %}
+
+{% block content %}
+<h1>Control Detail: {{ control.controlid }}</h1>
+<p><strong>Control Name:</strong> {{ control.controlname }}</p>
+<p><strong>Control Description:</strong> {{ control.controldescription }}</p>
+<p><strong>NIST SP 800-171 Mapping:</strong> {{ control.nist_sp_800_171_mapping }}</p>
+<p><strong>Policy Review Frequency:</strong> {{ control.policyreviewfrequency }}</p>
+<p><strong>Last Review Date:</strong> {{ control.lastreviewdate }}</p>
+<p><strong>Next Review Date:</strong> {{ control.nextreviewdate }}</p>
+
+<a href="{{ url_for('controls.edit_control', control_id=control.controlid) }}" class="button-link">Edit Control</a>
+{% if current_user.is_admin %}
+    <form action="{{ url_for('controls.delete_control', control_id=control.controlid) }}" method="post" style="display: inline;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type = "submit" onclick = "return confirm('Are you sure you want to delete this control?')" class = "form-button">Delete Control</button>
+    </form>
+{% endif %}
+<hr>
+
+<h2>Tasks
+    <span class="sort-links" style="font-size: smaller;">
+        (Sort By:
+        <a href="{{ url_for('controls.control_detail', control_id=control.controlid, sort_by='duedate', sort_order='asc' if sort_by != 'duedate' or sort_order == 'desc' else 'desc') }}"
+          class="{% if sort_by == 'duedate' %}active{% endif %}">Due Date</a>,
+        <a href="{{ url_for('controls.control_detail', control_id=control.controlid, sort_by='assignedto', sort_order='asc' if sort_by != 'assignedto' or sort_order == 'desc' else 'desc') }}"
+          class="{% if sort_by == 'assignedto' %}active{% endif %}">Assigned To</a>,
+        <a href="{{ url_for('controls.control_detail', control_id=control.controlid, sort_by='status', sort_order='asc' if sort_by != 'status' or sort_order == 'desc' else 'desc') }}"
+           class="{% if sort_by == 'status' %}active{% endif %}">Status</a>)
+    </span>
+</h2>
+<ul class="task-list">
+{% for task in tasks %}
+    <li class="task-item {% if task.status == 'Completed' %}completed{% elif task.status == 'Pending Confirmation' %}pending{% elif task.status == 'Open' %}open{% endif %}">
+        <span class="task-description">{{ task.taskdescription }}</span>
+        <span class="task-details">
+            (Assigned to: {{ task.assignedto }},
+            Due: {{ task.duedate }},
+            Status: {{ task.status }},
+            Reviewer: {{ task.reviewer }})
+        </span>
+        <div class="task-actions">
+            {% if task.status == 'Open' %}
+            <form action="{{ url_for('tasks.complete_task', task_id=task.taskid) }}" method="post" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type = "submit" class="form-button">Complete Task</button>
+            </form>
+            {% elif task.status == 'Pending Confirmation' and current_user.username == task.reviewer %}
+            <form action="{{ url_for('tasks.confirm_task', task_id=task.taskid) }}" method="post" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type = "submit" class="form-button">Confirm Task</button>
+            </form>
+            {% endif %}
+            <a href="{{ url_for('tasks.edit_task', task_id=task.taskid) }}" class="button-link">Edit</a>
+            <form action="{{ url_for('tasks.delete_task', task_id=task.taskid) }}" method="post" class="inline-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="form-button" onclick="return confirm('Are you sure you want to delete this task?');">Delete</button>
+            </form>
+        </div>
+    </li>
+{% else %}
+    <li>No tasks yet.</li>
+{% endfor %}
+</ul>
+
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="{{ url_for('controls.control_detail', control_id=control.controlid, page=page-1, sort_by=sort_by, sort_order=sort_order) }}" class = "button-link">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('controls.control_detail', control_id=control.controlid, page=page+1, sort_by=sort_by, sort_order=sort_order) }}" class = "button-link">Next</a>
+    {% endif %}
+</div>
+
+<hr>
+
+<h2>Update Review Dates</h2>
+<div class="form-container">
+    <form action="{{ url_for('controls.update_review_dates', control_id=control.controlid) }}" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="last_review_date">Last Review Date:</label><br>
+            <input type="date" id="last_review_date" name="last_review_date" value="{{ control.lastreviewdate }}">
+        </div>
+        <div>
+            <label for="next_review_date">Next Review Date:</label><br>
+            <input type="date" id="next_review_date" name="next_review_date" value="{{ control.nextreviewdate }}">
+        </div>
+        <div>
+            <input type="submit" value="Update Dates">
+        </div>
+    </form>
+</div>
+
+<a href="{{ url_for('controls.index') }}" class = "button-link">Back to Control List</a>
+{% endblock %}

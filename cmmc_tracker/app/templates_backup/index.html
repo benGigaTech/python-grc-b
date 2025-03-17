@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}CMMC Control List{% endblock %}
+
+{% block content %}
+<h1>CMMC Level 2 Controls</h1>
+
+<div class="top-controls">
+    <div class="form-container" style="margin-right: 15px; margin-left:0px">
+        <a href="{{ url_for('create_control') }}" class="button-link create-button">Create New Control</a>
+        <form method="GET" action="{{ url_for('control_detail', control_id='placeholder') }}" id="view_details_form" style = "display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="control_select">Select Control:</label>
+            <select id="control_select" name="control_id" required>
+                <option value="">-- Select a Control --</option>
+                {% for control in controls %}
+                    <option value="{{ control.controlid }}">{{ control.controlid }} - {{ control.controlname }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class = "form-button">View Details</button>
+        </form>
+        <form method="GET" action="{{ url_for('edit_control', control_id='placeholder') }}" style = "display: inline;" id="edit_control_form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class = "form-button" id="edit_button" disabled>Edit Control</button>
+        </form>
+    </div>
+    <div class = "form-container" style="margin-right: 0px; margin-left:0px">
+        <form method="GET" action="{{ url_for('index') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <label for="search">Search:</label>
+            <input type="text" id="search" name="q" placeholder="Search controls..." value="{{ search_term }}">
+            <button type="submit" class = "form-button">Search</button>
+            <a href="{{ url_for('index') }}" class = "button-link">Clear</a>
+        </form>
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th><a href="{{ url_for('index', sort_by='controlid', sort_order='asc' if sort_by != 'controlid' or sort_order == 'desc' else 'desc', q=search_term, page=1) }}" class="{% if sort_by == 'controlid' %}active{% endif %}">Control ID</a></th>
+            <th><a href="{{ url_for('index', sort_by='controlname', sort_order='asc' if sort_by != 'controlname' or sort_order == 'desc' else 'desc', q=search_term, page=1) }}" class="{% if sort_by == 'controlname' %}active{% endif %}">Control Name</a></th>
+            <th><a href="{{ url_for('index', sort_by='nextreviewdate', sort_order='asc' if sort_by != 'nextreviewdate' or sort_order == 'desc' else 'desc', q=search_term, page=1) }}" class="{% if sort_by == 'nextreviewdate' %}active{% endif %}">Next Review Date</a></th>
+            <th>Add Task</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for control in controls %}
+            <tr>
+                <td><a href="{{ url_for('control_detail', control_id=control.controlid) }}" class="button-link">{{ control.controlid }}</a></td>
+                <td>{{ control.controlname }}</td>
+                <td>{{ control.nextreviewdate }}</td>
+                <td><a href="{{url_for('add_task', control_id = control.controlid)}}" class = "button-link">Add Task</a></td>
+            </tr>
+        {% endfor %}
+        {% if not controls %}
+        <tr>
+           <td colspan="4">No controls found.</td>
+        </tr>
+        {% endif %}
+    </tbody>
+</table>
+<div class="pagination">
+    {% if page > 1 %}
+        <a href="{{ url_for('index', page=page-1, q=search_term, sort_by=sort_by, sort_order=sort_order) }}" class = "button-link">Previous</a>
+    {% endif %}
+
+    <span>Page {{ page }} of {{ total_pages }}</span>
+
+    {% if page < total_pages %}
+        <a href="{{ url_for('index', page=page+1, q=search_term, sort_by=sort_by, sort_order=sort_order) }}" class = "button-link">Next</a>
+    {% endif %}
+</div>
+<script>
+    const controlSelect = document.getElementById('control_select');
+    const editButton = document.getElementById('edit_button');
+    const viewDetailsForm = document.getElementById('view_details_form');
+    const editControlForm = document.getElementById('edit_control_form');
+
+    controlSelect.addEventListener('change', function() {
+        editButton.disabled = !controlSelect.value;
+
+        if (controlSelect.value) {
+            viewDetailsForm.action = "{{ url_for('control_detail', control_id='PLACEHOLDER') }}".replace('PLACEHOLDER', controlSelect.value);
+            editControlForm.action = "{{ url_for('edit_control', control_id='PLACEHOLDER') }}".replace('PLACEHOLDER', controlSelect.value)
+        }
+    });
+</script>
+{% endblock %}

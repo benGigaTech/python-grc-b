@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h1>Register</h1>
+<div class="form-container">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div>
+            <label for="email">Email:</label><br>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div>
+            <label for="confirm_password">Confirm Password:</label><br>
+            <input type="password" id="confirm_password" name="confirm_password" required>
+        </div>
+        <div>
+            <input type="submit" value="Register">
+        </div>
+    </form>
+</div>
+<script>
+    const passwordField = document.getElementById('password');
+    const confirmPasswordField = document.getElementById('confirm_password');
+    const form = document.querySelector('form');
+
+    form.addEventListener('submit', (event) => {
+        if (passwordField.value !== confirmPasswordField.value) {
+            alert('Passwords do not match!');
+            event.preventDefault(); // Prevent form submission
+        }
+    });
+</script>
+{% endblock %}

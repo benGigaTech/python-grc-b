@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Request Password Reset{% endblock %}
+
+{% block content %}
+<h1>Request Password Reset</h1>
+<div class="form-container">
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="email">Email:</label><br>
+            <input type="text" id="email" name="email" required>
+        </div>
+        <div>
+            <input type="submit" value="Request Reset">
+        </div>
+    </form>
+</div>
+{% endblock %}

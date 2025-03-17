@@ -14,19 +14,22 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 ## Features
 
+- **Interactive Dashboard**: Visual overview of compliance status with metrics and charts
 - **Control Management**: Create, update, and track cybersecurity controls
+- **Bulk Import/Export**: Easily import or export controls in CSV format
 - **Task Assignment**: Assign tasks to team members with due dates and status tracking
 - **User Management**: Role-based access control with admin capabilities
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
-- **Email Notifications**: Automated alerts for task assignments and due dates
+- **Email Notifications**: Automated alerts for task assignments and upcoming deadlines
 
 ## Technology Stack
 
 - **Backend**: Python, Flask
 - **Database**: PostgreSQL
 - **Authentication**: Flask-Login
-- **Frontend**: Bootstrap, Jinja2 templates
+- **Frontend**: Bootstrap, Jinja2 templates, Chart.js
+- **Task Scheduling**: Flask-APScheduler
 - **Deployment**: Docker, Docker Compose
 
 ## Getting Started
@@ -48,12 +51,9 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
    docker compose up -d
    ```
 
-3. Initialize the database:
-   ```
-   docker compose exec web python seed_db.py
-   ```
+3. Access the application at http://localhost:80
 
-4. Access the application at http://localhost:80
+The database will be automatically initialized with sample data on first startup. No manual initialization is required.
 
 ### Default Credentials
 
@@ -86,6 +86,10 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
    - Symptoms: 400 Bad Request - The CSRF token is missing
    - Solution: Ensure forms include the csrf_token field
 
+5. **Email notification issues**:
+   - Symptoms: No emails being sent for task notifications
+   - Solution: Check mail server configuration in config.py and ensure the scheduler is running
+
 ## Environment Variables
 
 The application can be configured using the following environment variables:
@@ -94,6 +98,8 @@ The application can be configured using the following environment variables:
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`: Database connection settings
 - `SECRET_KEY`: Flask secret key
 - `MAIL_*`: Email server configuration settings
+- `NOTIFICATION_ENABLED`: Enable/disable email notifications (true/false)
+- `NOTIFICATION_HOUR`: Hour of the day to send daily notifications (0-23)
 
 ## License
 

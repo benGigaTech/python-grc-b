@@ -13,23 +13,27 @@ This document provides comprehensive technical documentation of the CMMC Complia
    - [Routes](#routes)
    - [Utilities](#utilities)
 5. [Authentication System](#authentication-system)
-6. [Security Considerations](#security-considerations)
-7. [Development Workflow](#development-workflow)
-8. [Docker Configuration](#docker-configuration)
-9. [Database Initialization](#database-initialization)
-10. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
-11. [Testing](#testing)
+6. [Dashboard and Visualization](#dashboard-and-visualization)
+7. [Import/Export System](#import-export-system)
+8. [Task Notifications](#task-notifications)
+9. [Security Considerations](#security-considerations)
+10. [Development Workflow](#development-workflow)
+11. [Docker Configuration](#docker-configuration)
+12. [Database Initialization](#database-initialization)
+13. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
+14. [Testing](#testing)
 
 ## Architecture Overview
 
 The CMMC Tracker is a Flask-based web application following a layered architecture pattern:
 
-- **Presentation Layer**: Flask routes and Jinja2 templates
+- **Presentation Layer**: Flask routes and Jinja2 templates with Chart.js visualizations
 - **Business Logic Layer**: Models and Services
 - **Data Access Layer**: Database service abstraction over PostgreSQL
 - **Infrastructure**: Docker containers for the web app and PostgreSQL database
+- **Background Processing**: Flask-APScheduler for automated email notifications
 
-The application uses the Blueprint pattern to organize routes and follows a factory pattern for application creation, allowing different configurations based on the environment.
+The application uses the Blueprint pattern to organize routes and follows a factory pattern for application creation, allowing different configurations based on the environment. It implements a responsive dashboard with real-time metrics and automated task notification system.
 
 ## Application Structure
 
@@ -186,6 +190,132 @@ Security features include:
 - Session management with Flask-Login
 - Audit logging of authentication events
 
+## Dashboard and Visualization
+
+The application implements a responsive dashboard that provides real-time metrics and visualizations for compliance status.
+
+### Dashboard Components
+
+1. **Summary Cards**:
+   - Total Controls
+   - Overdue Tasks
+   - Pending Tasks
+   - Controls Due for Review
+
+2. **Charts and Visualizations**:
+   - Compliance Status Doughnut Chart (Compliant, In Progress, Non-Compliant, Not Assessed)
+   - Task Status Pie Chart (Open, In Progress, Completed, Overdue)
+   - Recent Activities Table
+   - My Tasks Table
+
+### Implementation Details
+
+1. **Routes**:
+   - The dashboard endpoint is defined in `app/routes/controls.py` under the `/dashboard` route
+   - It aggregates data from multiple models and database queries
+
+2. **Template**:
+   - Dashboard template: `app/templates/dashboard.html`
+   - Uses Chart.js for rendering charts
+   - Responsive layout using CSS Grid and Flexbox
+
+3. **Data Flow**:
+   - Control metrics collected via SQL aggregation
+   - Task metrics filtered by status and due dates
+   - Recently completed activities pulled from audit logs
+   - User-specific tasks filtered from the tasks table
+
+4. **Entry Point**:
+   - Primary application navigation starts at the dashboard
+   - Navigation bar updated to highlight dashboard as main entry point
+
+## Import/Export System
+
+The application supports bulk operations for compliance controls through CSV import and export functionality.
+
+### Export System
+
+1. **Implementation**:
+   - Export functionality is implemented in `app/routes/controls.py` under the `/export-csv` route
+   - Uses Python's CSV module and Flask's Response class
+
+2. **Features**:
+   - Generates a CSV file containing all control information
+   - Includes headers for user-friendly parsing
+   - Names the file with a timestamp for version tracking
+
+3. **Usage**:
+   - Export button added to the controls list page
+   - Direct URL access: `/export-csv`
+
+### Import System
+
+1. **Implementation**:
+   - Import functionality is implemented in `app/routes/controls.py` under the `/import-csv` route
+   - Uses the `Control.save()` method to handle both new and existing controls
+
+2. **Features**:
+   - Validates uploaded CSV files
+   - Parses CSV header to map to database fields
+   - Handles both creation and updating of controls
+   - Reports success/error counts
+   - Admin permission required
+
+3. **Template**:
+   - Import form: `app/templates/import_controls.html`
+   - Includes documentation for CSV format
+
+4. **Security Considerations**:
+   - File type validation (CSV only)
+   - Admin-only access
+   - Input sanitization for CSV contents
+
+## Task Notifications
+
+The application implements automated email notifications for task deadlines to improve user awareness and compliance task completion rates.
+
+### Notification System Components
+
+1. **Email Service**:
+   - Located in `app/services/email.py`
+   - Provides functions for sending various types of notifications
+   - Uses Flask-Mail for SMTP operations
+   - Templates stored in `app/templates/emails/`
+
+2. **Scheduler Service**:
+   - Located in `app/services/scheduler.py`
+   - Uses Flask-APScheduler for background tasks
+   - Initializes with the Flask application
+
+3. **Configuration**:
+   - Email notification settings in config.py
+   - NOTIFICATION_ENABLED controls whether notifications are active
+   - NOTIFICATION_HOUR sets the daily time for notification sending
+
+### Notification Types
+
+1. **Task Assignment**: When a task is assigned to a user
+2. **Due Soon**: For tasks approaching their deadline (within 3 days)
+3. **Overdue**: For tasks that have passed their deadline
+4. **Task Completed**: When a task is marked as completed
+5. **Task Confirmation**: When a reviewer confirms a completed task
+
+### Testing Notifications
+
+1. **Manual Testing**:
+   - Admin interface includes a button to manually trigger notifications
+   - Available at admin users page
+   - Useful for verifying email configuration
+
+2. **Scheduled Execution**:
+   - Default: Runs daily at 8 AM (configurable)
+   - Checks for tasks due soon or overdue
+   - Logs notification activity
+
+### Implementation Note
+
+The notification system is designed to be non-blocking, with email operations occurring in background threads to prevent impact on the main application performance.
+
 ## Security Considerations
 
 The application implements several security measures:
@@ -225,61 +355,67 @@ Areas for enhancement:
 
 ## Docker Configuration
 
-The application uses Docker Compose with two services:
+The application is containerized using Docker with the following components:
 
-1. **Web Service**:
-   - Built from the project's Dockerfile
-   - Runs the Flask application with Gunicorn
-   - Connects to the database service
-   - Exposes port 80
+1. **Web Application Container**:
+   - Base image: Python 3.13 slim
+   - Dependencies installed from requirements.txt
+   - Uses gunicorn as the WSGI server
+   - Contains the entrypoint script for automatic database initialization
 
-2. **Database Service**:
-   - Uses PostgreSQL 15
-   - Persists data in a named volume
-   - Initialized with scripts from db/ directory
+2. **Database Container**:
+   - PostgreSQL 15 database
+   - Persistent volume for data storage
+   - Port 5432 exposed for external connections
 
-Environment variables in docker-compose.yml allow configuration of:
-- Database credentials
-- Flask configuration mode
-- Email settings
-- Secret keys
+The `docker-compose.yml` file coordinates these containers and provides the networking setup.
 
-### Python Path and Module Imports
+Notable Docker configurations:
 
-The application uses Python's import system with some specific considerations:
-
-1. The `run.py` script adds both the current directory and parent directory to Python's path:
-   ```python
-   # Add the parent directory to the Python path
-   parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-   sys.path.insert(0, parent_dir)
-   
-   # Add the current directory to the Python path
-   sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-   ```
-
-2. The Dockerfile sets the `PYTHONPATH` environment variable:
+1. The `PYTHONPATH` environment variable in the Dockerfile ensures proper Python module resolution:
    ```Dockerfile
    ENV PYTHONPATH=/app:/app/cmmc_tracker
    ```
 
-This configuration allows imports both from within the `cmmc_tracker` package and from the project root.
+2. The Docker entrypoint script (`docker-entrypoint.sh`) handles:
+   - Waiting for the database to be ready before starting the application
+   - Checking if the database needs initialization
+   - Running the seed script if needed
+   - Starting the web application
+
+3. Data persistence is managed through a named volume:
+   ```yaml
+   volumes:
+     postgres_data:
+   ```
 
 ## Database Initialization
 
-The `seed_db.py` script handles database initialization:
+The database initialization is automated through the `docker-entrypoint.sh` script and `seed_db.py`:
 
-1. Creates database tables if they don't exist
-2. Imports CMMC controls from cmmc_controls.json
-3. Creates default admin user
-4. Generates sample tasks for demonstration
+1. **Automatic Seeding**:
+   - When the application starts, `docker-entrypoint.sh` checks if the database is empty
+   - If empty or if tables don't exist, it runs the seed script
+   - If data exists, it skips initialization
 
-To reset the database:
-```
-docker compose down -v
-docker compose up -d
-docker compose exec web python seed_db.py
-```
+2. **Seed Script (`seed_db.py`)**:
+   - Creates database tables if they don't exist
+   - Imports CMMC controls from cmmc_controls.json
+   - Creates default admin and regular user accounts
+   - Generates sample tasks for demonstration
+
+3. **Reset Process**:
+   To completely reset the database and start fresh:
+   ```
+   docker compose down -v  # The -v flag removes volumes
+   docker compose up -d    # Database will be automatically initialized
+   ```
+
+4. **Database Schema Evolution**:
+   Currently, the application doesn't include formal migrations. Schema changes should be managed by:
+   - Updating the table creation logic in `seed_db.py`
+   - Documenting the changes for manual application to existing databases
+   - Future enhancement: Implement proper database migrations
 
 ## Common Issues and Troubleshooting
 
@@ -293,6 +429,8 @@ The application has potential circular dependencies between modules that need to
    - Break out shared functionality into separate utility modules
    - Use function-level imports rather than module-level imports where appropriate
    - Ensure proper layering of dependencies
+
+3. **Scheduler and Email Service**: The scheduler service imports the email service's notification function. Ensure the email service doesn't directly import the scheduler to avoid circular dependencies.
 
 ### URL Routing Issues
 
@@ -318,6 +456,7 @@ If you encounter database connection problems:
 1. Verify the database container is running: `docker compose ps`
 2. Check database logs: `docker compose logs db`
 3. Ensure the database credentials in `docker-compose.yml` match the ones expected by the application
+4. Check that database initialization completed successfully in the logs: `docker compose logs web`
 
 ### Template Rendering Errors
 
@@ -326,6 +465,25 @@ Common template issues include:
 1. **Undefined variables**: Always provide all required variables to `render_template()`
 2. **URL building errors**: Verify all `url_for()` calls reference valid endpoints
 3. **CSRF token issues**: Ensure all forms include the CSRF token: `<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">`
+4. **Chart.js rendering**: If charts aren't displaying, check the console for JavaScript errors and ensure data is properly formatted
+
+### Notification System Issues
+
+If email notifications aren't working:
+
+1. **Configuration**: Verify MAIL_* settings in config.py match your mail server
+2. **Scheduler**: Check if the scheduler initialized correctly in the logs
+3. **Manual Test**: Use the admin interface to manually trigger notifications
+4. **Flask-APScheduler**: Ensure the package is installed and properly configured
+
+### Import/Export Issues
+
+Common problems with the import/export functionality:
+
+1. **CSV Format**: Exported CSV files should be compatible with the import functionality
+2. **Headers**: Ensure CSV headers match the expected column names
+3. **Date Formats**: Dates should be in YYYY-MM-DD format for proper parsing
+4. **File Size**: Large imports might require adjusting the maximum file size in the Flask configuration
 
 ## Testing
 
@@ -336,6 +494,14 @@ Recommended testing strategy:
 2. Implement integration tests for routes and user flows
 3. Set up CI/CD pipeline with automated testing
 4. Add end-to-end tests for critical user journeys
+
+### Priority Testing Areas
+
+For the new features, prioritize testing of:
+1. Dashboard data aggregation accuracy
+2. CSV import validation and error handling
+3. Email notification scheduling and delivery
+4. Automatic database initialization
 
 ---
 

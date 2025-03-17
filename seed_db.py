@@ -31,8 +31,8 @@ DB_NAME = os.environ.get('DB_NAME', 'cmmc_db')
 DB_USER = os.environ.get('DB_USER', 'cmmc_user')
 DB_PASSWORD = os.environ.get('DB_PASSWORD', 'password')
 
-# Path to controls JSON file
-CONTROLS_JSON_FILE = os.environ.get('CONTROLS_JSON_FILE', 'cmmc_controls.json')
+# Path to controls JSON file - use absolute path
+CONTROLS_JSON_FILE = os.environ.get('CONTROLS_JSON_FILE', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cmmc_controls.json'))
 
 def get_db_connection():
     """Connect to the application database"""

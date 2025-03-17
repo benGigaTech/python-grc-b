@@ -1,4 +1,4 @@
-"""Reports routes for the CMMC Tracker application."""
+"""Admin routes for the CMMC Tracker application."""
 
 import logging
 from datetime import date, timedelta
@@ -11,9 +11,9 @@ from app.utils.date import parse_date, format_date
 logger = logging.getLogger(__name__)
 
 # Create blueprint
-reports_bp = Blueprint('reports', __name__)
+admin_bp = Blueprint('admin', __name__)
 
-@reports_bp.route('/reports')
+@admin_bp.route('/dashboard')
 @login_required
 def reports():
     """Generate compliance reports."""

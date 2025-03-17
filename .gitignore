@@ -1,7 +1,5 @@
 # .gitignore
 
-# Ignore .env files (sensitive data)
-.env
 
 # Ignore Python cache files
 __pycache__/
@@ -10,10 +8,3 @@ __pycache__/
 # Ignore virtual environments (if you're using them outside Docker)
 venv/
 
-# Ignore SQLite databases (if you ever switch back)
-*.db
-*.sqlite3
-
-# Ignore IDE-specific files (optional, add as needed)
-.idea/
-.vscode/

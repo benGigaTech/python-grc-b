@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Make port 80 available to the world outside this container
 EXPOSE 80
 
-# Set environment variables
-ENV PYTHONPATH=/app
+# Set environment variables - add parent directory to PYTHONPATH
+ENV PYTHONPATH=/app:/app/cmmc_tracker
 
 # Run with gunicorn from the correct directory
 WORKDIR /app/cmmc_tracker

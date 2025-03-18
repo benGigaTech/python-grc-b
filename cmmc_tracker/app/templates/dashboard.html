@@ -66,10 +66,10 @@
                 <tbody>
                     {% for log in recent_activities %}
                     <tr>
-                        <td>{{ log.timestamp }}</td>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') if log.timestamp else log.timestamp }}</td>
                         <td>{{ log.username }}</td>
                         <td>{{ log.action }}</td>
-                        <td>{{ log.details }}</td>
+                        <td>{{ log.objecttype }} {{ log.objectid }}</td>
                     </tr>
                     {% endfor %}
                     {% if not recent_activities %}
@@ -249,8 +249,13 @@
         margin-top: 15px;
     }
     
-    tr.overdue {
-        background-color: #fee2e2;
+    .overdue {
+        background-color: rgba(239, 68, 68, 0.1);
+        font-weight: bold;
+    }
+    
+    .overdue td {
+        color: #ef4444;
     }
     
     @media (max-width: 768px) {

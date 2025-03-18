@@ -5,89 +5,181 @@
 {% block content %}
 <h1>CMMC Review Calendar</h1>
 
-<div id='calendar'></div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-
-    if (!calendarEl) {
-      console.error("Error: Could not find the 'calendar' element.");
-      return;
-    }
-
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth,timeGridWeek,timeGridDay'
-      },
-      events: [
-        // --- Control Events ---
-        {% for control in controls %}
+<div class="calendar-view">
+    <div class="calendar-actions">
+        <h2 class="month-display">Upcoming Events</h2>
+    </div>
+    
+    {% if controls %}
+    <h3>Control Reviews</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Control ID</th>
+                <th>Control Name</th>
+                <th>Review Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for control in controls %}
             {% if control.nextreviewdate %}
-            {
-              title: '{{ control.controlname|escape }} ({{ control.controlid|escape }})',
-              start: '{{ control.nextreviewdate }}',
-              allDay: true,
-              extendedProps: {
-                  controlId: '{{ control.controlid|escape }}'
-              },
-              {% if control.status == 'past-due' %}
-                color: '#F8D7DA',
-                textColor: '#721C24',
-              {% elif control.status == 'upcoming' %}
-                color: '#D4EDDA',
-                textColor: '#155724',
-              {% endif %}
-            },  {# Corrected: Comma was in the wrong place #}
+            <tr>
+                <td>{{ control.controlid }}</td>
+                <td>{{ control.controlname }}</td>
+                <td>{{ control.nextreviewdate }}</td>
+                <td>
+                    {% if control.status == 'past-due' %}
+                    <span class="badge bg-danger">Past Due</span>
+                    {% elif control.status == 'upcoming' %}
+                    <span class="badge bg-success">Upcoming</span>
+                    {% else %}
+                    <span class="badge bg-primary">Scheduled</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary">View</a>
+                </td>
+            </tr>
             {% endif %}
-        {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+    
+    {% if tasks %}
+    <h3>Tasks</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Task Description</th>
+                <th>Control ID</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr>
+                <td>{{ task.taskdescription }}</td>
+                <td>{{ task.controlid }}</td>
+                <td>{{ task.duedate }}</td>
+                <td>
+                    {% if task.status == 'Completed' %}
+                    <span class="badge bg-success">Completed</span>
+                    {% elif task.status == 'Pending Confirmation' %}
+                    <span class="badge bg-warning">Pending</span>
+                    {% else %}
+                    <span class="badge bg-primary">Open</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('tasks.edit_task', task_id=task.taskid) }}" class="btn btn-sm btn-primary">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
 
-        // --- Task Events ---
-        {% for task in tasks %}
-            {
-                title: '{{ task.taskdescription|escape }} ({{ task.controlid|escape }})',
-                start: '{{ task.duedate }}',
-                allDay: true,
-                extendedProps: {
-                    taskId: '{{ task.taskid|escape }}',
-                    controlId: '{{ task.controlid|escape }}'
-                },
-                {% if task.status == 'Completed' %}
-                    color: '#D4EDDA',
-                    textColor: '#155724',
-                {% elif task.status == 'Pending Confirmation' %}
-                    color: '#FFF3CD',
-                    textColor: '#856404',
-                {% else %}
-                    color: '#003859',
-                    textColor: '#eee',
-                {% endif %}
-            },  {# Corrected: No extra comma needed here #}
-        {% endfor %}
-      ],
-        eventClick: function(info) {
-            if (info.event.extendedProps.controlId) {
-                // Redirect to control detail
-                var url = "{{ url_for('controls.control_detail', control_id='PLACEHOLDER') }}";
-                window.location.href = url.replace('PLACEHOLDER', info.event.extendedProps.controlId);
-            }
-            else if (info.event.extendedProps.taskId){
-                // Redirect to the edit task page.
-                var url =  "{{ url_for('tasks.edit_task', task_id='PLACEHOLDER')}}";
-                window.location.href = url.replace('PLACEHOLDER', info.event.extendedProps.taskId);
-            }
-        }
-    });
+<style>
+  .calendar-view {
+    max-width: 1100px;
+    margin: 20px auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .month-display {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #1e3a8a;
+  }
+  
+  .calendar-actions {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+    position: relative;
+  }
+  
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .table th {
+    background-color: #f1f5f9;
+    padding: 10px;
+    text-align: left;
+    font-weight: 600;
+    color: #1e3a8a;
+  }
+  
+  .table td {
+    padding: 10px;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .badge {
+    display: inline-block;
+    padding: 0.25em 0.6em;
+    font-size: 75%;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.25rem;
+    color: white;
+  }
+  
+  .bg-danger {
+    background-color: #ef4444;
+  }
+  
+  .bg-warning {
+    background-color: #f59e0b;
+  }
+  
+  .bg-success {
+    background-color: #10b981;
+  }
+  
+  .bg-primary {
+    background-color: #3b82f6;
+  }
+  
+  .btn {
+    display: inline-block;
+    font-weight: 400;
+    text-align: center;
+    vertical-align: middle;
+    user-select: none;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.25rem;
+    text-decoration: none;
+  }
+  
+  .btn-primary {
+    color: #fff;
+    background-color: #3b82f6;
+    border: 1px solid #3b82f6;
+  }
+  
+  .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+</style>
 
-    try {
-      calendar.render();
-    } catch (error) {
-      console.error("Error rendering FullCalendar:", error);
-    }
-  });
-</script>
-<a href="{{ url_for('controls.index') }}" class = "button-link">Back to Control List</a>
+<a href="{{ url_for('controls.index') }}" class="button-link mt-3">Back to Control List</a>
 {% endblock %}

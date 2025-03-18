@@ -16,6 +16,7 @@ from psycopg2.extras import DictCursor
 from werkzeug.security import generate_password_hash
 from datetime import datetime, date, timedelta, timezone
 import logging
+import sys
 
 # Set up logging
 logging.basicConfig(
@@ -36,14 +37,65 @@ CONTROLS_JSON_FILE = os.environ.get('CONTROLS_JSON_FILE', os.path.join(os.path.d
 
 def get_db_connection():
     """Connect to the application database"""
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        port=DB_PORT,
-        dbname=DB_NAME,
-        user=DB_USER,
-        password=DB_PASSWORD
-    )
-    return conn
+    max_retries = 5
+    retry_delay = 2
+    
+    for attempt in range(max_retries):
+        try:
+            conn = psycopg2.connect(
+                host=DB_HOST,
+                port=DB_PORT,
+                dbname=DB_NAME,
+                user=DB_USER,
+                password=DB_PASSWORD
+            )
+            logger.info("Database connection successful")
+            return conn
+        except psycopg2.OperationalError as e:
+            if attempt < max_retries - 1:
+                logger.warning(f"Connection attempt {attempt + 1} failed: {e}. Retrying in {retry_delay} seconds...")
+                import time
+                time.sleep(retry_delay)
+            else:
+                logger.error(f"Failed to connect to database after {max_retries} attempts: {e}")
+                raise
+
+def check_db_initialized():
+    """Check if database is already initialized by checking for users table with data"""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if tables exist
+        cursor.execute("""
+            SELECT table_name FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name IN ('users', 'controls', 'tasks', 'auditlogs')
+        """)
+        existing_tables = [row[0] for row in cursor.fetchall()]
+        
+        if len(existing_tables) < 4:
+            logger.info(f"Found {len(existing_tables)} of 4 required tables. Database needs initialization.")
+            cursor.close()
+            conn.close()
+            return False
+            
+        # Check if user data exists
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        
+        cursor.close()
+        conn.close()
+        
+        if user_count > 0:
+            logger.info(f"Database already contains {user_count} users. Skipping initialization.")
+            return True
+        else:
+            logger.info("Tables exist but no users found. Need to populate with data.")
+            return False
+            
+    except psycopg2.Error as e:
+        logger.info(f"Database structure check failed: {e}. Database needs initialization.")
+        return False
 
 def create_tables():
     """Create database tables if they don't exist"""
@@ -255,66 +307,64 @@ def import_controls():
                         details
                     ) VALUES (%s, %s, %s, %s, %s, %s)
                 ''', (
-                    now, 
-                    'SYSTEM', 
-                    'Create Control', 
-                    'Control', 
+                    now,
+                    'SYSTEM',
+                    'Create Control',
+                    'Control',
                     control.get("ControlID", ""),
-                    'Control imported from JSON file during database seeding'
+                    f"Control imported during database seeding: {control.get('ControlName', '')}"
                 ))
                 
-            except Exception as e:
-                logger.warning(f"Error importing control {control.get('ControlID', 'unknown')}: {e}")
-                # Continue with next control
+            except psycopg2.Error as e:
+                logger.error(f"Error importing control {control.get('ControlID', '')}: {e}")
         
-        # Add review dates to three random controls
-        cursor.execute("SELECT controlid FROM controls ORDER BY RANDOM() LIMIT 3")
-        random_controls = [row[0] for row in cursor.fetchall()]
+        # Add review dates for a subset of controls
+        today = date.today()
         
-        if len(random_controls) >= 3:
-            today = date.today()
-            
-            # One control with review in the future
-            next_review = today + timedelta(days=30)
-            last_review = today - timedelta(days=335)
-            cursor.execute('''
-                UPDATE controls 
-                SET lastreviewdate = %s, nextreviewdate = %s
-                WHERE controlid = %s
-            ''', (last_review, next_review, random_controls[0]))
-            
-            # One control with review soon
-            next_review = today + timedelta(days=7)
-            last_review = today - timedelta(days=358)
-            cursor.execute('''
-                UPDATE controls 
-                SET lastreviewdate = %s, nextreviewdate = %s
-                WHERE controlid = %s
-            ''', (last_review, next_review, random_controls[1]))
-            
-            # One control past due
-            next_review = today - timedelta(days=15)
-            last_review = today - timedelta(days=380)
-            cursor.execute('''
-                UPDATE controls 
-                SET lastreviewdate = %s, nextreviewdate = %s
-                WHERE controlid = %s
-            ''', (last_review, next_review, random_controls[2]))
-            
-            logger.info("Added review dates to sample controls")
+        # Set some controls as recently reviewed
+        cursor.execute('''
+            UPDATE controls 
+            SET lastreviewdate = %s, nextreviewdate = %s 
+            WHERE controlid IN (SELECT controlid FROM controls LIMIT 20)
+        ''', (
+            (today - timedelta(days=30)).isoformat(),
+            (today + timedelta(days=335)).isoformat()
+        ))
+        
+        # Set some controls as due for review soon
+        cursor.execute('''
+            UPDATE controls 
+            SET lastreviewdate = %s, nextreviewdate = %s 
+            WHERE controlid IN (SELECT controlid FROM controls OFFSET 20 LIMIT 5)
+        ''', (
+            (today - timedelta(days=350)).isoformat(),
+            (today + timedelta(days=15)).isoformat()
+        ))
+        
+        # Set some controls as overdue for review
+        cursor.execute('''
+            UPDATE controls 
+            SET lastreviewdate = %s, nextreviewdate = %s 
+            WHERE controlid IN (SELECT controlid FROM controls OFFSET 25 LIMIT 3)
+        ''', (
+            (today - timedelta(days=400)).isoformat(),
+            (today - timedelta(days=35)).isoformat()
+        ))
+        
+        logger.info("Added review dates to sample controls")
         
         conn.commit()
         cursor.close()
         conn.close()
         
-        logger.info(f"Successfully imported controls from {CONTROLS_JSON_FILE}")
+        logger.info(f"Successfully imported controls from {CONTROLS_JSON_FILE}\n")
         
     except Exception as e:
         logger.error(f"Error importing controls: {e}")
         raise
 
 def create_sample_tasks():
-    """Create sample tasks for demonstration purposes"""
+    """Create sample tasks for demonstration"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -327,120 +377,119 @@ def create_sample_tasks():
             logger.info("Tasks already exist in the database. Skipping sample task creation.")
             conn.close()
             return
-        
-        # Get 3 random control IDs
-        cursor.execute("SELECT controlid FROM controls ORDER BY RANDOM() LIMIT 3")
-        control_ids = [row[0] for row in cursor.fetchall()]
-        
-        if not control_ids:
-            logger.warning("No controls found in database. Cannot create sample tasks.")
-            conn.close()
-            return
-        
+            
         logger.info("Creating sample tasks...")
         
         today = date.today()
         
-        # Sample tasks to create
-        sample_tasks = [
-            {
-                "controlid": control_ids[0] if len(control_ids) > 0 else None,
-                "taskdescription": "Review access control policies and ensure compliance",
-                "assignedto": "user",
-                "duedate": today + timedelta(days=15),
-                "status": "Open",
-                "confirmed": 0,
-                "reviewer": "admin"
-            },
-            {
-                "controlid": control_ids[0] if len(control_ids) > 0 else None,
-                "taskdescription": "Document current access control implementation",
-                "assignedto": "user",
-                "duedate": today - timedelta(days=10),
-                "status": "Open",
-                "confirmed": 0,
-                "reviewer": "admin"
-            },
-            {
-                "controlid": control_ids[1] if len(control_ids) > 1 else control_ids[0],
-                "taskdescription": "Update system security plan",
-                "assignedto": "user",
-                "duedate": today - timedelta(days=30),
-                "status": "Completed",
-                "confirmed": 1,
-                "reviewer": "admin"
-            }
-        ]
+        # Get some control IDs to assign tasks to
+        cursor.execute("SELECT controlid FROM controls LIMIT 15")
+        control_ids = [row[0] for row in cursor.fetchall()]
         
-        for i, task in enumerate(sample_tasks):
-            if task["controlid"]:
-                cursor.execute('''
-                    INSERT INTO tasks (
-                        controlid, 
-                        taskdescription, 
-                        assignedto, 
-                        duedate, 
-                        status, 
-                        confirmed, 
-                        reviewer
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    RETURNING taskid
-                ''', (
-                    task["controlid"],
-                    task["taskdescription"],
-                    task["assignedto"],
-                    task["duedate"],
-                    task["status"],
-                    task["confirmed"],
-                    task["reviewer"]
-                ))
-                
-                task_id = cursor.fetchone()[0]
-                
-                # Add audit log
-                now = datetime.now(timezone.utc).isoformat()
-                cursor.execute('''
-                    INSERT INTO auditlogs (
-                        timestamp, 
-                        username, 
-                        action, 
-                        objecttype, 
-                        objectid, 
-                        details
-                    ) VALUES (%s, %s, %s, %s, %s, %s)
-                ''', (
-                    now, 
-                    'SYSTEM', 
-                    'Create Task', 
-                    'Task', 
-                    str(task_id),
-                    'Sample task created during database seeding'
-                ))
+        if not control_ids:
+            logger.warning("No controls found to assign tasks to.")
+            conn.close()
+            return
+        
+        # Create some open tasks
+        for i, control_id in enumerate(control_ids[:5]):
+            task_due_date = (today + timedelta(days=10 + i)).isoformat()
+            cursor.execute('''
+                INSERT INTO tasks (
+                    controlid, taskdescription, assignedto, duedate, status, confirmed
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                control_id,
+                f"Review and update documentation for {control_id}",
+                "user",
+                task_due_date,
+                "Open",
+                0
+            ))
+        
+        # Create some tasks pending confirmation
+        for i, control_id in enumerate(control_ids[5:8]):
+            task_due_date = (today + timedelta(days=5 + i)).isoformat()
+            cursor.execute('''
+                INSERT INTO tasks (
+                    controlid, taskdescription, assignedto, duedate, status, confirmed
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                control_id,
+                f"Implement controls specified in {control_id}",
+                "user",
+                task_due_date,
+                "Pending Confirmation",
+                0
+            ))
+        
+        # Create some completed tasks
+        for i, control_id in enumerate(control_ids[8:12]):
+            task_due_date = (today - timedelta(days=5 + i)).isoformat()
+            cursor.execute('''
+                INSERT INTO tasks (
+                    controlid, taskdescription, assignedto, duedate, status, confirmed, reviewer
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
+            ''', (
+                control_id,
+                f"Update risk assessment for {control_id}",
+                "user",
+                task_due_date,
+                "Completed",
+                1,
+                "admin"
+            ))
+        
+        # Create some overdue tasks
+        for i, control_id in enumerate(control_ids[12:]):
+            task_due_date = (today - timedelta(days=3 + i)).isoformat()
+            cursor.execute('''
+                INSERT INTO tasks (
+                    controlid, taskdescription, assignedto, duedate, status, confirmed
+                ) VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (
+                control_id,
+                f"Complete security assessment for {control_id}",
+                "admin",
+                task_due_date,
+                "Open",
+                0
+            ))
+        
+        # Add audit logs for task creation
+        now = datetime.now(timezone.utc).isoformat()
+        cursor.execute('''
+            INSERT INTO auditlogs (
+                timestamp, username, action, objecttype, objectid, details
+            ) VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (
+            now,
+            'SYSTEM',
+            'Create Tasks',
+            'Task',
+            '0',
+            'Sample tasks created during database seeding'
+        ))
         
         conn.commit()
+        logger.info("Sample tasks created successfully")
+        
         cursor.close()
         conn.close()
-        
-        logger.info("Sample tasks created successfully")
         
     except Exception as e:
         logger.error(f"Error creating sample tasks: {e}")
         raise
 
 def main():
-    """Main function to initialize the database"""
+    """Initialize and seed the database"""
     try:
         logger.info("Starting database initialization...")
         
-        # First check database connection
-        try:
-            conn = get_db_connection()
-            conn.close()
-            logger.info("Database connection successful")
-        except Exception as e:
-            logger.error(f"Database connection failed: {e}")
-            logger.info("Make sure the database is running and environment variables are correctly set")
-            return 1
+        # Check if database is already initialized
+        if check_db_initialized():
+            logger.info("Database already initialized. Skipping.")
+            return
         
         # Create tables
         create_tables()
@@ -448,7 +497,7 @@ def main():
         # Seed users
         seed_users()
         
-        # Import controls from JSON
+        # Import controls
         import_controls()
         
         # Create sample tasks
@@ -458,11 +507,11 @@ def main():
         logger.info("Default admin credentials: username=admin, password=adminpassword")
         logger.info("Default user credentials: username=user, password=userpassword")
         
-        return 0
-        
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         return 1
+    
+    return 0
 
 if __name__ == "__main__":
-    exit(main())
+    sys.exit(main())

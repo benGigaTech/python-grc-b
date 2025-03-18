@@ -27,7 +27,7 @@ This document provides comprehensive technical documentation of the CMMC Complia
 
 The CMMC Tracker is a Flask-based web application following a layered architecture pattern:
 
-- **Presentation Layer**: Flask routes and Jinja2 templates with Chart.js visualizations
+- **Presentation Layer**: Flask routes and Jinja2 templates with responsive progress bars and table-based visualizations
 - **Business Logic Layer**: Models and Services
 - **Data Access Layer**: Database service abstraction over PostgreSQL
 - **Infrastructure**: Docker containers for the web app and PostgreSQL database
@@ -192,42 +192,75 @@ Security features include:
 
 ## Dashboard and Visualization
 
-The application implements a responsive dashboard that provides real-time metrics and visualizations for compliance status.
+The application features a comprehensive dashboard with visualizations to provide insights into compliance status and task management.
 
-### Dashboard Components
+### Main Dashboard
 
-1. **Summary Cards**:
-   - Total Controls
-   - Overdue Tasks
-   - Pending Tasks
-   - Controls Due for Review
+The main dashboard displays:
 
-2. **Charts and Visualizations**:
-   - Compliance Status Doughnut Chart (Compliant, In Progress, Non-Compliant, Not Assessed)
-   - Task Status Pie Chart (Open, In Progress, Completed, Overdue)
-   - Recent Activities Table
-   - My Tasks Table
+1. **Summary Cards**: Present key metrics in a quickly scannable format
+   - Total Controls Count
+   - Overdue Tasks Count
+   - Pending Tasks Count
+   - Controls Due for Review Count
 
-### Implementation Details
+2. **Compliance Status Visualization**: 
+   - Uses responsive progress bars to show compliance metrics
+   - Color-coded indicators for different compliance statuses
+   - Shows percentages for Compliant, In Progress, Non-Compliant, and Not Assessed controls
+   - Implemented with HTML/CSS for maximum reliability
 
-1. **Routes**:
-   - The dashboard endpoint is defined in `app/routes/controls.py` under the `/dashboard` route
-   - It aggregates data from multiple models and database queries
+3. **Task Status Visualization**:
+   - Displays distribution of tasks by status
+   - Uses simple progress bars for reliable visualization
+   - Color-coded indicators for different task statuses
+   - JavaScript-enhanced but with progressive enhancement
 
-2. **Template**:
-   - Dashboard template: `app/templates/dashboard.html`
-   - Uses Chart.js for rendering charts
-   - Responsive layout using CSS Grid and Flexbox
+4. **Recent Activities**: 
+   - Table showing recent activity logs
+   - Helps track changes in the system
 
-3. **Data Flow**:
-   - Control metrics collected via SQL aggregation
-   - Task metrics filtered by status and due dates
-   - Recently completed activities pulled from audit logs
-   - User-specific tasks filtered from the tasks table
+5. **My Tasks**:
+   - Personalized view of assigned tasks
+   - Prioritized display with overdue tasks highlighted
+   - Direct links to task details
 
-4. **Entry Point**:
-   - Primary application navigation starts at the dashboard
-   - Navigation bar updated to highlight dashboard as main entry point
+### Admin Dashboard
+
+The admin dashboard provides additional features for administrators:
+
+1. **Tasks by User**:
+   - Breakdown of tasks assigned to each user
+   - Statistics on open, pending, and completed tasks
+
+2. **Overdue Tasks**:
+   - Comprehensive list of all overdue tasks
+   - Days overdue calculation for prioritization
+
+3. **Site Activity Logs**:
+   - Recent system activity for auditing purposes
+   - User actions tracking for compliance
+   - Timestamp display of when activities occurred
+
+4. **Past Due Control Reviews**:
+   - Controls that have missed review dates
+   - Days overdue calculation for prioritization
+
+### Calendar View
+
+The calendar view has been simplified to use a table-based approach for greater reliability:
+
+1. **Control Reviews Table**:
+   - Lists upcoming control reviews in chronological order
+   - Status indicators for past due or upcoming reviews
+   - Direct links to control details
+
+2. **Tasks Table**:
+   - Shows tasks with due dates
+   - Includes status indicators
+   - Direct links to task editing
+
+This approach ensures that the application remains functional and responsive even in environments where JavaScript libraries might not load properly or conflict with other components.
 
 ## Import/Export System
 
@@ -269,6 +302,36 @@ The application supports bulk operations for compliance controls through CSV imp
    - File type validation (CSV only)
    - Admin-only access
    - Input sanitization for CSV contents
+
+### Import/Export Issues
+
+Common problems with the import/export functionality:
+
+1. **CSV Format**: Exported CSV files should be compatible with the import functionality
+2. **Headers**: Ensure CSV headers match the expected column names
+3. **Date Formats**: Dates should be in YYYY-MM-DD format for proper parsing
+4. **File Size**: Large imports might require adjusting the maximum file size in the Flask configuration
+
+### Audit Log Issues
+
+When working with the audit log system, be aware of these common issues:
+
+1. **Timestamp Format**: Audit log timestamps are stored as ISO format strings, not datetime objects
+   - Do not attempt to call `strftime()` on these values in templates
+   - Example error: `'str object' has no attribute 'strftime'`
+   - Use the timestamp string directly in templates: `{{ log.timestamp }}`
+
+2. **Database Connection**: Ensure proper connection when querying large numbers of audit logs
+   - Large result sets may cause timeout issues
+   - Use appropriate LIMIT clauses for pagination
+
+3. **Event Tracking**: When adding new features, remember to add corresponding audit log entries
+   - All important user actions should be logged
+   - Include object IDs where applicable for proper tracking
+
+4. **Admin Dashboard**: The Site Activity Logs section requires audit logs to be available
+   - If logs are missing, check the audit log service implementation
+   - Verify that audit log entries are being created correctly
 
 ## Task Notifications
 
@@ -318,6 +381,52 @@ The notification system is designed to be non-blocking, with email operations oc
 
 ## Security Considerations
 
+The CMMC Tracker implements several security best practices:
+
+### Recent Security Improvements
+
+As part of our continuous security enhancement efforts, the following improvements have been implemented:
+
+1. **Password Strength Enforcement** ✅
+   - Added required password complexity validation during registration and password changes
+   - Ensures passwords meet minimum security requirements (length, character types)
+   - Implemented in both user self-registration and admin user creation
+   - Prevents users from creating weak passwords that could be easily compromised
+
+2. **Security Headers Implementation** ✅
+   - Added critical HTTP security headers to all responses:
+     - X-Content-Type-Options: Prevents MIME type sniffing
+     - X-XSS-Protection: Enables browser's XSS filtering
+     - X-Frame-Options: Prevents clickjacking attacks
+     - Strict-Transport-Security: Enforces HTTPS connections
+     - Content-Security-Policy: Restricts resource loading sources
+   - Implemented using Flask's @app.after_request decorator to apply headers to all responses
+
+3. **Enhanced Password Reset Security** ✅
+   - Improved password reset token security with one-time use enforcement
+   - Added additional validation to verify tokens haven't been used already
+   - Enhanced error logging for security events
+   - Prevents token reuse attacks
+
+4. **IDOR Protection Improvements** ✅
+   - Added ownership validation for all resource access in task management
+   - Implemented proper authorization checks on all endpoints
+   - Added audit logging for unauthorized access attempts
+   - Prevents unauthorized users from viewing, editing, or deleting resources they shouldn't access
+
+5. **Rate Limiting for Authentication** ✅
+   - Implemented rate limiting on authentication endpoints using Flask-Limiter
+   - Added limit of 10 login attempts per minute to prevent brute force attacks
+   - Added limit of 5 registration and password reset requests per hour to prevent abuse
+   - Enhanced logging for failed login attempts to track potential attackers
+
+6. **Other Security Enhancements** (Pending)
+   - Improved input validation and sanitization
+   - Enhanced error handling to avoid information disclosure
+   - Added comprehensive security event logging
+
+### Existing Security Features
+
 The application implements several security measures:
 
 1. **Input Validation**: All user inputs are validated before processing
@@ -361,7 +470,7 @@ The application is containerized using Docker with the following components:
    - Base image: Python 3.13 slim
    - Dependencies installed from requirements.txt
    - Uses gunicorn as the WSGI server
-   - Contains the entrypoint script for automatic database initialization
+   - Uses start.sh script for database initialization and application startup
 
 2. **Database Container**:
    - PostgreSQL 15 database
@@ -377,11 +486,11 @@ Notable Docker configurations:
    ENV PYTHONPATH=/app:/app/cmmc_tracker
    ```
 
-2. The Docker entrypoint script (`docker-entrypoint.sh`) handles:
+2. The startup script (`start.sh`) handles:
    - Waiting for the database to be ready before starting the application
    - Checking if the database needs initialization
    - Running the seed script if needed
-   - Starting the web application
+   - Starting the web application with gunicorn
 
 3. Data persistence is managed through a named volume:
    ```yaml
@@ -389,33 +498,67 @@ Notable Docker configurations:
      postgres_data:
    ```
 
+4. Simplified Dockerfile structure:
+   ```Dockerfile
+   # Use an official Python runtime as a parent image
+   FROM python:3.13-slim
+   
+   # Set up working directory
+   WORKDIR /app
+   
+   # Copy requirements first for better caching
+   COPY requirements.txt /app/
+   RUN pip install --no-cache-dir -r requirements.txt
+   
+   # Copy the rest of the application
+   COPY . /app/
+   
+   # Make the start script executable
+   RUN chmod +x /app/start.sh
+   
+   # Make port 80 available outside the container
+   EXPOSE 80
+   
+   # Set Python path
+   ENV PYTHONPATH=/app:/app/cmmc_tracker
+   
+   # Run the start script
+   CMD ["/app/start.sh"]
+   ```
+
 ## Database Initialization
 
-The database initialization is automated through the `docker-entrypoint.sh` script and `seed_db.py`:
+The database initialization is automated through the `start.sh` script and `seed_db.py`:
 
-1. **Automatic Seeding**:
-   - When the application starts, `docker-entrypoint.sh` checks if the database is empty
-   - If empty or if tables don't exist, it runs the seed script
-   - If data exists, it skips initialization
+1. **Automatic Database Connection Check**:
+   - When the application starts, `start.sh` waits for the database to be ready
+   - Retries connection up to 30 times with 2-second intervals
+   - Provides clear logging of connection attempts
 
-2. **Seed Script (`seed_db.py`)**:
-   - Creates database tables if they don't exist
-   - Imports CMMC controls from cmmc_controls.json
-   - Creates default admin and regular user accounts
-   - Generates sample tasks for demonstration
+2. **Improved Seeding Process**:
+   - `seed_db.py` has been enhanced with robust checks to determine if initialization is needed
+   - Checks for existing tables and data before attempting to create or populate
+   - Connection pooling and retry logic for better reliability
+   - Comprehensive logging of the initialization process
 
-3. **Reset Process**:
+3. **Smart Initialization Logic**:
+   - Only creates tables if they don't exist
+   - Only adds users, controls, and sample tasks if they don't already exist
+   - Prevents duplicate data and errors when restarting the application
+
+4. **Reset Process**:
    To completely reset the database and start fresh:
    ```
    docker compose down -v  # The -v flag removes volumes
-   docker compose up -d    # Database will be automatically initialized
+   docker compose up --build -d  # Rebuild containers and restart with fresh database
    ```
 
-4. **Database Schema Evolution**:
-   Currently, the application doesn't include formal migrations. Schema changes should be managed by:
-   - Updating the table creation logic in `seed_db.py`
-   - Documenting the changes for manual application to existing databases
-   - Future enhancement: Implement proper database migrations
+5. **Validation and Testing**:
+   - Includes a `test_auth.py` script to verify authentication is working properly
+   - Tests can be run manually to validate database setup:
+   ```
+   docker compose exec web python /app/test_auth.py
+   ```
 
 ## Common Issues and Troubleshooting
 
@@ -458,6 +601,33 @@ If you encounter database connection problems:
 3. Ensure the database credentials in `docker-compose.yml` match the ones expected by the application
 4. Check that database initialization completed successfully in the logs: `docker compose logs web`
 
+### Docker Container Issues
+
+Common Docker container issues and their solutions:
+
+1. **Container won't start**:
+   - Check Docker logs: `docker compose logs web`
+   - Verify port availability: Make sure port 80 is not already in use
+   - Check environment variables: Ensure all required variables are set
+
+2. **Container starts but application is inaccessible**:
+   - Check if gunicorn is running: `docker compose exec web ps aux | grep gunicorn`
+   - Verify port mappings: Ensure port 80 is correctly mapped in docker-compose.yml
+   - Check application logs for errors: `docker compose logs web`
+
+3. **Database initialization issues**:
+   - Check if the script ran: Look for "Database initialization complete" in logs
+   - Verify database volume: Ensure it's created with `docker volume ls`
+   - Try manual initialization: `docker compose exec web python /app/seed_db.py`
+
+4. **Changes to code not reflected in container**:
+   - You need to rebuild the container: `docker compose up --build -d`
+   - Check bind mounts: For development, consider using bind mounts instead of copying files
+
+5. **Authentication testing**:
+   - Use the test_auth.py script: `docker compose exec web python /app/test_auth.py`
+   - Check user table directly: `docker compose exec db psql -U cmmc_user -d cmmc_db -c "SELECT username, isadmin FROM users;"`
+
 ### Template Rendering Errors
 
 Common template issues include:
@@ -465,7 +635,7 @@ Common template issues include:
 1. **Undefined variables**: Always provide all required variables to `render_template()`
 2. **URL building errors**: Verify all `url_for()` calls reference valid endpoints
 3. **CSRF token issues**: Ensure all forms include the CSRF token: `<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">`
-4. **Chart.js rendering**: If charts aren't displaying, check the console for JavaScript errors and ensure data is properly formatted
+4. **Progress bar calculations**: If dashboard progress bars aren't displaying correctly, ensure the metrics data is properly calculated and division by zero is handled
 
 ### Notification System Issues
 
@@ -476,33 +646,105 @@ If email notifications aren't working:
 3. **Manual Test**: Use the admin interface to manually trigger notifications
 4. **Flask-APScheduler**: Ensure the package is installed and properly configured
 
-### Import/Export Issues
-
-Common problems with the import/export functionality:
-
-1. **CSV Format**: Exported CSV files should be compatible with the import functionality
-2. **Headers**: Ensure CSV headers match the expected column names
-3. **Date Formats**: Dates should be in YYYY-MM-DD format for proper parsing
-4. **File Size**: Large imports might require adjusting the maximum file size in the Flask configuration
-
 ## Testing
 
 The application currently lacks formal tests, which is an area for improvement.
 
 Recommended testing strategy:
 1. Add unit tests for models and services
-2. Implement integration tests for routes and user flows
-3. Set up CI/CD pipeline with automated testing
-4. Add end-to-end tests for critical user journeys
+2. Add integration tests for database operations 
+3. Add end-to-end tests for critical user workflows
 
-### Priority Testing Areas
+## UI Implementation Notes
 
-For the new features, prioritize testing of:
-1. Dashboard data aggregation accuracy
-2. CSV import validation and error handling
-3. Email notification scheduling and delivery
-4. Automatic database initialization
+The user interface has been simplified to avoid dependencies on complex JavaScript libraries:
+
+1. **Dashboard UI**: The dashboard uses simple HTML progress bars instead of Chart.js to display metrics. This approach:
+   - Reduces JavaScript dependencies
+   - Improves compatibility across browsers
+   - Simplifies maintenance
+   - Is more reliable in containerized environments
+
+2. **Calendar UI**: The calendar view has been implemented as a simple table-based display instead of using FullCalendar. This approach:
+   - Eliminates JavaScript initialization issues
+   - Improves loading time and performance
+   - Provides better accessibility
+   - Works more consistently across different environments
+
+3. **General UI Principles**:
+   - Prefer server-side rendering for complex data display
+   - Minimize client-side JavaScript dependencies
+   - Use simple, reliable UI components
+   - Implement graceful fallbacks for all dynamic features
+
+4. **Admin Dashboard Enhancements**:
+   - Added Site Activity Logs to replace Upcoming Control Reviews
+   - Improved visibility into user actions and system changes
+   - Enhanced audit capabilities for administrators
+   - Better tracking of changes for compliance purposes
+   - Timestamp display optimized for readability
+   - Table-based interface for better sorting and scanning of activities
+
+These UI simplifications make the application more robust, especially in containerized environments where browser compatibility and JavaScript execution might be less predictable.
 
 ---
 
 This documentation is intended to be a living document. As the application evolves, please keep it updated to reflect the current state of the codebase. 
+
+## Security Improvements Summary
+
+In our recent security overhaul, we've implemented several critical improvements to enhance the application's security posture:
+
+1. **Password Strength Enforcement**
+   - Implemented in both user self-registration and admin user management
+   - Enforces minimum length and character requirements
+   - Prevents common password vulnerabilities
+
+2. **HTTP Security Headers**
+   - Added comprehensive security headers to all responses
+   - Prevents common web vulnerabilities like XSS, clickjacking, and MIME sniffing
+   - Enforces HTTPS through HSTS headers
+
+3. **Rate Limiting**
+   - Protected authentication endpoints from brute force attacks
+   - Implemented tiered limits for different sensitive operations
+   - Enhanced logging for failed attempts
+
+4. **One-time Password Reset Tokens**
+   - Improved token validation to prevent reuse
+   - Enhanced security of the password reset flow
+   - Added detailed logging of token usage
+
+5. **IDOR Protection**
+   - Improved authorization checks throughout the application
+   - Added comprehensive audit logging for unauthorized access attempts
+   - Enforced proper access control on all resource endpoints
+
+### Future Security Recommendations
+
+For future security enhancements, consider implementing:
+
+1. **Multi-Factor Authentication (MFA)**
+   - Add support for TOTP-based 2FA for admin accounts
+   - Implement email verification as a second factor
+
+2. **Advanced Input Validation**
+   - Replace the basic sanitize_string function with a more comprehensive solution
+   - Consider using a library like bleach for HTML sanitization
+
+3. **Enhanced Logging and Monitoring**
+   - Implement centralized logging with structured data
+   - Add alerting for suspicious activity
+   - Consider integrating with a SIEM solution
+
+4. **Regular Security Scanning**
+   - Implement automated security scanning in the CI/CD pipeline
+   - Regular dependency vulnerability checks
+   - Periodic penetration testing
+
+5. **Server Hardening**
+   - Implement more restrictive Content Security Policy
+   - Add subnet restrictions for admin access
+   - Consider implementing a Web Application Firewall (WAF)
+
+These improvements have significantly enhanced the security of the CMMC Tracker application, reducing the risk of common vulnerabilities and providing better protection against unauthorized access. 

@@ -68,6 +68,15 @@ def verify_reset_token(token, expiration=3600):
     salt = current_app.config['PASSWORD_SALT']
     try:
         email = serializer.loads(token, salt=salt, max_age=expiration)
+        
+        # Check if token exists and matches the stored token for the user
+        from app.models.user import User
+        user = User.get_by_email(email)
+        
+        if not user or user.reset_token != token:
+            logger.warning(f"Invalid or already used token for email: {email}")
+            return None
+            
         return email
     except SignatureExpired:
         logger.warning("Token expired")

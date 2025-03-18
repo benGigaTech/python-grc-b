@@ -520,3 +520,74 @@ def import_csv():
         logger.error(f"Error importing controls: {e}")
         flash('Error importing controls', 'error')
         return redirect(url_for('controls.index'))
+
+@controls_bp.route('/edit_control_family/<family_id>', methods=['GET', 'POST'])
+@login_required
+def edit_control_family(family_id):
+    """Edit a control family."""
+    control_family = Control.get_by_id(family_id)
+    
+    if control_family is None:
+        flash('Control family not found!', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    if request.method == 'POST':
+        control_family.family_name = request.form['family_name']
+        control_family.description = request.form['description']
+        
+        if control_family.update():
+            # Log the action
+            add_audit_log(current_user.username, 'Edit Control Family', 'Control Family', family_id)
+            flash('Control family updated successfully!', 'success')
+            return redirect(url_for('controls.control_family_detail', family_id=family_id))
+        else:
+            flash('An error occurred while updating the control family.', 'danger')
+    
+    return render_template('edit_control_family.html', control_family=control_family.to_dict())
+
+@controls_bp.route('/delete_control_family/<family_id>', methods=['POST'])
+@login_required
+def delete_control_family(family_id):
+    """Delete a control family."""
+    # Only admins can delete control families
+    if not current_user.is_admin:
+        flash('You do not have permission to delete control families.', 'danger')
+        return redirect(url_for('controls.control_family_detail', family_id=family_id))
+    
+    control_family = Control.get_by_id(family_id)
+    
+    if control_family is None:
+        flash('Control family not found!', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    # Delete the control family
+    if control_family.delete():
+        # Log the action
+        add_audit_log(current_user.username, 'Delete Control Family', 'Control Family', family_id)
+        flash('Control family deleted successfully!', 'success')
+        return redirect(url_for('controls.index'))
+    else:
+        flash('An error occurred while deleting the control family.', 'danger')
+        return redirect(url_for('controls.control_family_detail', family_id=family_id))
+
+@controls_bp.route('/update_control_family/<family_id>', methods=['POST'])
+@login_required
+def update_control_family(family_id):
+    """Update control family."""
+    control_family = Control.get_by_id(family_id)
+    
+    if control_family is None:
+        flash('Control family not found!', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    control_family.family_name = request.form['family_name']
+    control_family.description = request.form['description']
+    
+    if control_family.update():
+        # Log the action
+        add_audit_log(current_user.username, 'Update Control Family', 'Control Family', family_id)
+        flash('Control family updated successfully!', 'success')
+        return redirect(url_for('controls.control_family_detail', family_id=family_id))
+    else:
+        flash('An error occurred while updating the control family.', 'danger')
+        return redirect(url_for('controls.edit_control_family', family_id=family_id))

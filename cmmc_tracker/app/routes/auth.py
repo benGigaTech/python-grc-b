@@ -4,11 +4,11 @@ import logging
 from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import login_manager
+from app import login_manager, limiter
 from app.models.user import User
 from app.services.audit import add_audit_log
 from app.services.email import send_password_reset
-from app.utils.security import sanitize_string, verify_reset_token, generate_reset_token
+from app.utils.security import sanitize_string, verify_reset_token, generate_reset_token, is_password_strong
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +21,7 @@ def load_user(user_id):
     return User.get_by_id(user_id)
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
 def login():
     """Handle user login."""
     if request.method == 'POST':
@@ -36,6 +37,9 @@ def login():
             add_audit_log(username, 'Login', 'User', user.id)
             return redirect(url_for('controls.index'))
         else:
+            # Log failed login attempt
+            logger.warning(f"Failed login attempt for username: {username} from IP: {request.remote_addr}")
+            add_audit_log(username, 'Failed Login', 'User', '0', f"Failed login from IP: {request.remote_addr}")
             flash('Invalid username or password.', 'danger')
             
     return render_template('login.html')
@@ -53,6 +57,7 @@ def logout():
     return redirect(url_for('auth.login'))
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def register():
     """Handle user registration."""
     if request.method == 'POST':
@@ -64,6 +69,11 @@ def register():
         # Check if passwords match
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
+            return render_template('register.html')
+        
+        # Validate password strength
+        if not is_password_strong(password):
+            flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
             return render_template('register.html')
         
         # Check if username already exists
@@ -86,6 +96,7 @@ def register():
     return render_template('register.html')
 
 @auth_bp.route('/request_reset', methods=['GET', 'POST'])
+@limiter.limit("5 per hour")
 def request_reset():
     """Handle password reset request."""
     if request.method == 'POST':
@@ -137,6 +148,11 @@ def reset_password(token):
         
         if password != confirm_password:
             flash('Passwords do not match.', 'danger')
+            return render_template('reset_password.html', token=token)
+        
+        # Validate password strength
+        if not is_password_strong(password):
+            flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
             return render_template('reset_password.html', token=token)
         
         # Update password

@@ -25,12 +25,12 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 ## Technology Stack
 
-- **Backend**: Python, Flask
-- **Database**: PostgreSQL
-- **Authentication**: Flask-Login
-- **Frontend**: Bootstrap, Jinja2 templates, Chart.js
+- **Backend**: Python, Flask, SQLite
+- **Frontend**: Bootstrap, Jinja2 templates, Progress Bars and Responsive Tables
+- **Authentication**: Flask-Login with password hashing
+- **Database**: SQLite for development, PostgreSQL for production
+- **Docker**: Containerized for easy deployment
 - **Task Scheduling**: Flask-APScheduler
-- **Deployment**: Docker, Docker Compose
 
 ## Getting Started
 

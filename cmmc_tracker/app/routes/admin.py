@@ -10,6 +10,8 @@ from app.utils.date import parse_date, format_date
 from werkzeug.security import generate_password_hash
 from app.services.email import check_and_notify_task_deadlines
 from app.services.auth import admin_required
+from app.services.audit import add_audit_log, get_recent_audit_logs
+from app.utils.security import is_password_strong
 
 logger = logging.getLogger(__name__)
 
@@ -83,32 +85,9 @@ def reports():
         # Sort by total tasks (descending)
         tasks_by_user_detailed.sort(key=lambda x: x['total_tasks'], reverse=True)
         
-        # Upcoming Controls
-        upcoming_controls_query = """
-            SELECT * FROM controls
-            WHERE nextreviewdate IS NOT NULL AND nextreviewdate != ''
-            AND nextreviewdate > %s AND nextreviewdate <= %s
-            ORDER BY nextreviewdate
-        """
-        upcoming_controls_db = execute_query(
-            upcoming_controls_query,
-            (today.isoformat(), future_date.isoformat()),
-            fetch_all=True
-        )
-        
-        # Convert to dictionaries and add days until
-        upcoming_controls = []
-        for control in upcoming_controls_db:
-            control_dict = dict(control)
+        # Get site activity logs
+        site_activity = get_recent_audit_logs(limit=15)
             
-            review_date = parse_date(control_dict['nextreviewdate'])
-            if review_date:
-                control_dict['days_until'] = (review_date - today).days
-            else:
-                control_dict['days_until'] = 'N/A'
-                
-            upcoming_controls.append(control_dict)
-        
         # Past Due Controls
         past_due_controls_query = """
             SELECT * FROM controls
@@ -122,36 +101,35 @@ def reports():
             fetch_all=True
         )
         
-        # Convert to dictionaries and add days since
+        # Convert to dictionaries and add days overdue
         past_due_controls = []
         for control in past_due_controls_db:
-            control_dict = dict(control)
+            next_review = parse_date(control['nextreviewdate'])
+            days_overdue = (today - next_review).days if next_review else None
             
-            review_date = parse_date(control_dict['nextreviewdate'])
-            if review_date:
-                control_dict['days_since'] = (today - review_date).days
-            else:
-                control_dict['days_since'] = 'N/A'
-                
-            past_due_controls.append(control_dict)
+            past_due_controls.append({
+                'id': control['controlid'],
+                'name': control['controlname'],
+                'next_review': format_date(control['nextreviewdate']),
+                'days_overdue': days_overdue
+            })
         
         return render_template(
-            'reports.html',
+            'admin_dashboard.html',
             overdue_tasks=overdue_tasks_data,
             tasks_by_user_detailed=tasks_by_user_detailed,
-            upcoming_controls=upcoming_controls,
+            site_activity=site_activity,
             past_due_controls=past_due_controls,
             date_range=date_range
         )
-    
     except Exception as e:
-        logger.error(f"Error generating reports: {e}")
-        flash('An error occurred while generating reports.', 'danger')
-        return redirect(url_for('controls.index'))
+        logger.error(f"Error generating admin dashboard: {e}")
+        flash('An error occurred while generating the dashboard.', 'danger')
+        return redirect(url_for('controls.dashboard'))
 
 @admin_bp.route('/users')
 @login_required
-def admin_users():
+def users():
     """Display list of users for administration."""
     if not current_user.is_admin:
         flash('You do not have permission to access this page.', 'danger')
@@ -171,7 +149,7 @@ def admin_users():
 
 @admin_bp.route('/users/create', methods=['GET', 'POST'])
 @login_required
-def admin_create_user():
+def create_user():
     """Create a new user."""
     if not current_user.is_admin:
         flash('You do not have permission to access this page.', 'danger')
@@ -186,6 +164,11 @@ def admin_create_user():
         # Basic validation
         if not username or not password:
             flash('Username and password are required.', 'danger')
+            return render_template('admin_create_user.html')
+        
+        # Validate password strength
+        if not is_password_strong(password):
+            flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
             return render_template('admin_create_user.html')
         
         try:
@@ -224,7 +207,7 @@ def admin_create_user():
             )
             
             flash(f'User {username} created successfully.', 'success')
-            return redirect(url_for('admin.admin_users'))
+            return redirect(url_for('admin.users'))
             
         except Exception as e:
             logger.error(f"Error creating user: {e}")
@@ -233,25 +216,141 @@ def admin_create_user():
     
     return render_template('admin_create_user.html')
 
+@admin_bp.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def admin_edit_user(user_id):
+    """Edit an existing user."""
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    try:
+        # Get user details
+        user_query = 'SELECT userid, username, isadmin, email FROM users WHERE userid = %s'
+        user = execute_query(user_query, (user_id,), fetch_one=True)
+        
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        if request.method == 'POST':
+            # Get form data
+            email = request.form.get('email')
+            is_admin = 1 if request.form.get('is_admin') else 0
+            new_password = request.form.get('password')
+            
+            # Validate password strength if a new password is provided
+            if new_password and not is_password_strong(new_password):
+                flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
+                return render_template('admin_edit_user.html', user=user)
+            
+            # Update user
+            if new_password:
+                # Update with new password
+                password_hash = generate_password_hash(new_password)
+                update_query = '''
+                    UPDATE users
+                    SET email = %s, isadmin = %s, password = %s
+                    WHERE userid = %s
+                '''
+                execute_query(
+                    update_query,
+                    (email, is_admin, password_hash, user_id),
+                    commit=True
+                )
+                
+                log_message = f"User {user['username']} updated (including password)"
+            else:
+                # Update without changing password
+                update_query = '''
+                    UPDATE users
+                    SET email = %s, isadmin = %s
+                    WHERE userid = %s
+                '''
+                execute_query(
+                    update_query,
+                    (email, is_admin, user_id),
+                    commit=True
+                )
+                
+                log_message = f"User {user['username']} updated (no password change)"
+            
+            # Add audit log
+            now = date.today().isoformat()
+            add_audit_log(
+                current_user.username,
+                'Update User',
+                'User',
+                str(user_id),
+                log_message
+            )
+            
+            flash('User updated successfully.', 'success')
+            return redirect(url_for('admin.users'))
+        
+        return render_template('admin_edit_user.html', user=user)
+            
+    except Exception as e:
+        logger.error(f"Error editing user: {e}")
+        flash('An error occurred while editing the user.', 'danger')
+        return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+def admin_delete_user(user_id):
+    """Delete a user."""
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    try:
+        # Get user details for audit log
+        user_query = 'SELECT username FROM users WHERE userid = %s'
+        user = execute_query(user_query, (user_id,), fetch_one=True)
+        
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        # Prevent deletion of the currently logged-in user
+        if user_id == current_user.id:
+            flash('You cannot delete your own account.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        # Delete user
+        delete_query = 'DELETE FROM users WHERE userid = %s'
+        execute_query(delete_query, (user_id,), commit=True)
+        
+        # Add audit log
+        now = date.today().isoformat()
+        add_audit_log(
+            current_user.username,
+            'Delete User',
+            'User',
+            str(user_id),
+            f"User {user['username']} deleted"
+        )
+        
+        flash('User deleted successfully.', 'success')
+        return redirect(url_for('admin.users'))
+            
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
+        flash('An error occurred while deleting the user.', 'danger')
+        return redirect(url_for('admin.users'))
+
 @admin_bp.route('/notifications/send-test', methods=['POST'])
 @login_required
 @admin_required
 def send_test_notifications():
-    """
-    Manually trigger task deadline email notifications.
-    This is for testing purposes.
-    """
+    """Send test task deadline notifications."""
     try:
         # Call the notification function
-        notification_count = check_and_notify_task_deadlines()
+        sent_count = check_and_notify_task_deadlines(force=True)
         
-        if notification_count > 0:
-            flash(f'Successfully sent {notification_count} notifications', 'success')
-        else:
-            flash('No notifications were sent - there may be no tasks due soon or overdue', 'info')
-        
-        return redirect(url_for('admin.admin_users'))
+        flash(f'Test notifications sent successfully! ({sent_count} notifications)', 'success')
     except Exception as e:
         logger.error(f"Error sending test notifications: {e}")
-        flash('Error sending test notifications', 'error')
-        return redirect(url_for('admin.admin_users'))
+        flash('An error occurred while sending test notifications.', 'danger')
+    
+    return redirect(url_for('admin.users'))

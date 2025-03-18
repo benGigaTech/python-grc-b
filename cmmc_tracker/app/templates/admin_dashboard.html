@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1>Admin Dashboard</h1>
+
+<div class="dashboard-filters">
+    <form method="get" action="{{ url_for('admin.reports') }}">
+        <label for="date_range">Date Range:</label>
+        <select name="date_range" id="date_range" onchange="this.form.submit()">
+            <option value="7" {% if date_range == '7' %}selected{% endif %}>7 Days</option>
+            <option value="30" {% if date_range == '30' %}selected{% endif %}>30 Days</option>
+            <option value="90" {% if date_range == '90' %}selected{% endif %}>90 Days</option>
+            <option value="all" {% if date_range == 'all' %}selected{% endif %}>All Time</option>
+        </select>
+    </form>
+</div>
+
+<div class="dashboard-section">
+    <h2>Tasks by User</h2>
+    <div class="admin-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Open Tasks</th>
+                    <th>Pending Tasks</th>
+                    <th>Completed Tasks</th>
+                    <th>Total Tasks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in tasks_by_user_detailed %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.open_tasks }}</td>
+                    <td>{{ user.pending_tasks }}</td>
+                    <td>{{ user.completed_tasks }}</td>
+                    <td><strong>{{ user.total_tasks }}</strong></td>
+                </tr>
+                {% endfor %}
+                {% if not tasks_by_user_detailed %}
+                <tr>
+                    <td colspan="5">No task data available.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <h2>Overdue Tasks</h2>
+    <div class="admin-table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Task Description</th>
+                    <th>Control ID</th>
+                    <th>Assigned To</th>
+                    <th>Due Date</th>
+                    <th>Days Overdue</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in overdue_tasks %}
+                <tr class="past-due">
+                    <td>{{ task.taskdescription }}</td>
+                    <td>{{ task.controlid }}</td>
+                    <td>{{ task.assignedto }}</td>
+                    <td>{{ task.duedate }}</td>
+                    <td>{{ task.days_overdue }}</td>
+                </tr>
+                {% endfor %}
+                {% if not overdue_tasks %}
+                <tr>
+                    <td colspan="5">No overdue tasks. Great job!</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="dashboard-row">
+    <div class="dashboard-column">
+        <div class="dashboard-section">
+            <h2>Site Activity Logs</h2>
+            <div class="admin-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Object Type</th>
+                            <th>Object ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in site_activity %}
+                        <tr>
+                            <td>{{ log.timestamp }}</td>
+                            <td>{{ log.username }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.objecttype }}</td>
+                            <td>{{ log.objectid }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not site_activity %}
+                        <tr>
+                            <td colspan="5">No activity logs found.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-column">
+        <div class="dashboard-section">
+            <h2>Past Due Control Reviews</h2>
+            <div class="admin-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Control ID</th>
+                            <th>Control Name</th>
+                            <th>Review Date</th>
+                            <th>Days Overdue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for control in past_due_controls %}
+                        <tr class="past-due">
+                            <td>{{ control.id }}</td>
+                            <td>{{ control.name }}</td>
+                            <td>{{ control.next_review }}</td>
+                            <td>{{ control.days_overdue }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not past_due_controls %}
+                        <tr>
+                            <td colspan="4">No past due control reviews.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-filters {
+        margin-bottom: 20px;
+        background-color: #f8fafc;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .dashboard-filters select {
+        padding: 8px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        margin-left: 10px;
+        width: auto;
+        display: inline-block;
+        cursor: pointer;
+    }
+    
+    .dashboard-section {
+        margin-bottom: 30px;
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .dashboard-section h2 {
+        margin-top: 0;
+        color: #1e40af;
+        font-size: 18px;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 10px;
+    }
+    
+    .admin-table-container {
+        overflow-x: auto;
+    }
+    
+    .dashboard-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .dashboard-column {
+        flex: 1;
+        min-width: 300px;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-row {
+            flex-direction: column;
+        }
+        
+        .dashboard-column {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %} 

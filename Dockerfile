@@ -1,23 +1,24 @@
 # Use an official Python runtime as a parent image
 FROM python:3.13-slim
 
-# Set the working directory
+# Set up working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container
-COPY . /app
-
-# Install any needed packages specified in requirements.txt
+# Copy requirements first for better caching
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Make port 80 available to the world outside this container
+# Copy the rest of the application
+COPY . /app/
+
+# Make the start script executable
+RUN chmod +x /app/start.sh
+
+# Make port 80 available outside the container
 EXPOSE 80
 
-# Set environment variables - add parent directory to PYTHONPATH
+# Set Python path
 ENV PYTHONPATH=/app:/app/cmmc_tracker
 
-# Run with gunicorn from the correct directory
-WORKDIR /app/cmmc_tracker
-
-# Run the application
-CMD ["/bin/bash", "-c", "python -m gunicorn --bind 0.0.0.0:80 --workers 4 run:app"]
+# Run the start script
+CMD ["/app/start.sh"]

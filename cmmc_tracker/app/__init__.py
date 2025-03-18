@@ -5,6 +5,8 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from cmmc_tracker.config import config
 
 # Initialize extensions
@@ -12,6 +14,7 @@ login_manager = LoginManager()
 login_manager.login_view = 'auth.login'
 mail = Mail()
 csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
 
 def create_app(config_name=None):
     """Application factory function."""
@@ -25,12 +28,24 @@ def create_app(config_name=None):
     login_manager.init_app(app)
     mail.init_app(app)
     csrf.init_app(app)
+    limiter.init_app(app)
     
     # Set up logging
     configure_logging(app)
     
     # Register CSRF error handler
     register_error_handlers(app)
+    
+    # Add security headers
+    @app.after_request
+    def add_security_headers(response):
+        """Add security headers to every response."""
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+        return response
     
     # Register blueprints
     register_blueprints(app)

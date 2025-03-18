@@ -9,6 +9,7 @@ from app.services.audit import add_audit_log
 from app.services.email import send_task_notification
 from app.utils.date import is_date_valid, format_date
 from app.services.database import execute_query
+from app.services.database import get_db_connection
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,19 @@ def edit_task(task_id):
     
     if task is None:
         flash('Task not found!', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    # Enhanced IDOR protection: Check if current user is authorized to edit this task
+    if not current_user.is_admin and task.assigned_to != current_user.username and task.reviewer != current_user.username:
+        # Log unauthorized access attempt
+        add_audit_log(
+            current_user.username, 
+            'Unauthorized Access Attempt', 
+            'Task', 
+            task_id, 
+            f"Attempted to edit task assigned to {task.assigned_to}"
+        )
+        flash('You do not have permission to edit this task.', 'danger')
         return redirect(url_for('controls.index'))
     
     # Get all users for task assignment
@@ -178,6 +192,19 @@ def delete_task(task_id):
         flash('Task not found!', 'danger')
         return redirect(url_for('controls.index'))
     
+    # Enhanced IDOR protection: Only allow admins or the creator to delete tasks
+    if not current_user.is_admin:
+        # Log unauthorized access attempt and deny access
+        add_audit_log(
+            current_user.username, 
+            'Unauthorized Access Attempt', 
+            'Task', 
+            task_id, 
+            "Attempted to delete task without admin privileges"
+        )
+        flash('Only administrators can delete tasks.', 'danger')
+        return redirect(url_for('controls.control_detail', control_id=task.control_id))
+    
     # Store control_id before deleting
     control_id = task.control_id
     
@@ -189,6 +216,31 @@ def delete_task(task_id):
         flash('An error occurred while deleting the task.', 'danger')
     
     return redirect(url_for('controls.control_detail', control_id=control_id))
+
+@tasks_bp.route('/statistics')
+def statistics():
+    """Display task statistics."""
+    task_counts_query = """
+    SELECT status, COUNT(*) as count, SUM(CASE WHEN duedate < CURRENT_DATE THEN 1 ELSE 0 END) as overdue
+    FROM tasks
+    GROUP BY status
+    ORDER BY status
+    """
+    
+    task_stats = []
+    
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+        cursor.execute(task_counts_query)
+        task_stats = cursor.fetchall()
+        cursor.close()
+        connection.close()
+    except Exception as e:
+        app.logger.error(f"Error fetching task statistics: {e}")
+        flash("Unable to fetch task statistics.", "error")
+    
+    return render_template('task_statistics.html', task_stats=task_stats)
 
 @tasks_bp.route('/calendar')
 @login_required

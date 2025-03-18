@@ -4,29 +4,85 @@
 
 {% block content %}
 <h1>Admin - Edit User</h1>
+
 <div class="form-container">
     <form method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <div>
-            <label for="username">Username:</label><br>
-            <input type="text" id="username" name="username" value="{{ user.username }}" required>
+        
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" value="{{ user.username }}" readonly class="readonly-field">
+            <small>Username cannot be changed</small>
         </div>
-        <div>
-            <label for="email">Email:</label><br>
-            <input type="text" id="email" name="email" value = "{{user.email}}" required>
+        
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" value="{{ user.email }}">
         </div>
-        <div>
-            <label for="password">New Password (leave blank to keep unchanged):</label><br>
+        
+        <div class="form-group">
+            <label for="password">New Password:</label>
             <input type="password" id="password" name="password">
+            <small>Leave blank to keep current password</small>
         </div>
-        <div>
-            <label for="is_admin">Admin:</label>
-            <input type="checkbox" id="is_admin" name="is_admin" value="1" {% if user.is_admin %}checked{% endif %}>
+        
+        <div class="form-group checkbox-group">
+            <label for="is_admin">
+                <input type="checkbox" id="is_admin" name="is_admin" {% if user.isadmin %}checked{% endif %}>
+                Admin User
+            </label>
         </div>
-        <div>
-            <input type="submit" value="Update User">
+        
+        <div class="form-actions">
+            <button type="submit" class="button-link save">Save Changes</button>
+            <a href="{{ url_for('admin.users') }}" class="button-link cancel">Cancel</a>
         </div>
     </form>
 </div>
-<a href="{{ url_for('admin.admin_users') }}" class="button-link" style="margin-top: 1em;">Back to User List</a>
+
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: 20px 0;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    
+    .readonly-field {
+        background-color: #f0f0f0;
+    }
+    
+    small {
+        color: #666;
+        font-size: 0.8em;
+    }
+    
+    .checkbox-group label {
+        display: flex;
+        align-items: center;
+        font-weight: normal;
+    }
+    
+    .checkbox-group input[type="checkbox"] {
+        margin-right: 10px;
+    }
+    
+    .form-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    
+    .cancel {
+        background-color: #6c757d;
+    }
+</style>
 {% endblock %}

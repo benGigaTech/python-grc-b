@@ -73,9 +73,11 @@ def dashboard():
         """
         overdue_tasks = execute_query(overdue_tasks_query, (today.isoformat(),), fetch_one=True)[0]
         
-        # Get recent activities (last 10)
+        # Get recent activities related to tasks and controls only (last 10)
         recent_activities_query = """
             SELECT * FROM auditlogs 
+            WHERE objecttype IN ('control', 'task')
+            AND action IN ('created', 'updated', 'deleted', 'completed', 'confirmed')
             ORDER BY logid DESC 
             LIMIT 10
         """
@@ -83,8 +85,12 @@ def dashboard():
         
         # Get user's tasks (max 10)
         my_tasks_query = """
-            SELECT t.*, 
-                   CASE WHEN t.duedate < %s THEN 1 ELSE 0 END as is_overdue
+            SELECT t.taskid as task_id, 
+                   t.controlid as control_id, 
+                   t.taskdescription as task_description, 
+                   t.duedate as due_date, 
+                   t.status, 
+                   CASE WHEN t.duedate < %s AND t.status != 'Completed' THEN 1 ELSE 0 END as is_overdue
             FROM tasks t
             WHERE t.assignedto = %s AND t.status != 'Completed'
             ORDER BY t.duedate ASC NULLS LAST
@@ -234,6 +240,9 @@ def control_detail(control_id):
             offset=offset
         )
         
+        # Convert tasks to dictionaries for the template
+        tasks_dicts = [task.to_dict() for task in tasks]
+        
         # Get total count of tasks for pagination
         total_count = control.count_tasks()
         
@@ -249,7 +258,7 @@ def control_detail(control_id):
         return render_template(
             'control_detail.html',
             control=control.to_dict(),
-            tasks=tasks,
+            tasks=tasks_dicts,
             users=users,
             sort_by=sort_by,
             sort_order=sort_order,

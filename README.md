@@ -42,7 +42,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/python-grc-b.git
+   git clone https://github.com/benGigaTech/python-grc-b
    cd python-grc-b
    ```
 
@@ -101,10 +101,3 @@ The application can be configured using the following environment variables:
 - `NOTIFICATION_ENABLED`: Enable/disable email notifications (true/false)
 - `NOTIFICATION_HOUR`: Hour of the day to send daily notifications (0-23)
 
-## License
-
-[Your License Information]
-
-## Contact
-
-[Your Contact Information]

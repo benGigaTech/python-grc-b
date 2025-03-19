@@ -522,7 +522,7 @@
         .dropdown-menu {
             display: none;
             position: absolute;
-            background-color: white;
+            background-color: rgb(255, 255, 255);
             min-width: 180px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             border-radius: 4px;
@@ -537,7 +537,7 @@
         .dropdown-item {
             display: block;
             padding: 10px 15px;
-            color: #1e40af;
+            color: #fcf7f7;
             text-decoration: none;
             transition: background-color 0.2s;
             font-weight: 500;
@@ -545,7 +545,7 @@
         }
 
         .dropdown-item:hover {
-            background-color: #f1f5f9;
+            background-color: #9da8b3;
             color: #1e40af;
             text-decoration: none;
             border-left: 3px solid #3b82f6;
@@ -589,9 +589,9 @@
                     <div class="dropdown">
                         <a href="#" class="dropdown-toggle">Admin</a>
                         <div class="dropdown-menu">
-                            <a href="{{ url_for('admin.reports') }}" class="dropdown-item">Admin Dashboard</a>
-                            <a href="{{ url_for('admin.users') }}" class="dropdown-item">Manage Users</a>
-                            <a href="{{ url_for('admin.create_user') }}" class="dropdown-item">Create User</a>
+                            <a href="{{ url_for('admin.reports') }}" class="dropdown-item" style="color: rgb(30, 64, 175);">Admin Dashboard</a>
+                            <a href="{{ url_for('admin.users') }}" class="dropdown-item" style="color: rgb(30, 64, 175);">Manage Users</a>
+                            <a href="{{ url_for('admin.create_user') }}" class="dropdown-item" style="color: rgb(30, 64, 175);">Create User</a>
                         </div>
                     </div>
                     {% endif %}

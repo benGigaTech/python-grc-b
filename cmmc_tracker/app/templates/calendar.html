@@ -5,181 +5,700 @@
 {% block content %}
 <h1>CMMC Review Calendar</h1>
 
-<div class="calendar-view">
-    <div class="calendar-actions">
-        <h2 class="month-display">Upcoming Events</h2>
+{% set past_due_count = all_controls|selectattr('status', 'equalto', 'past-due')|list|length %}
+{% set upcoming_count = all_controls|selectattr('status', 'equalto', 'upcoming')|list|length %}
+{% set scheduled_count = all_controls|length - past_due_count - upcoming_count %}
+
+<div class="card-container">
+    <!-- Summary Cards -->
+    <div class="summary-card">
+        <div class="summary-icon"><i class="bi bi-calendar-check"></i></div>
+        <div class="summary-content">
+            <h3>Control Reviews</h3>
+            <div class="count">{{ all_controls|length }}</div>
+            <div class="description">Scheduled reviews</div>
+        </div>
     </div>
     
-    {% if controls %}
-    <h3>Control Reviews</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Control ID</th>
-                <th>Control Name</th>
-                <th>Review Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for control in controls %}
-            {% if control.nextreviewdate %}
-            <tr>
-                <td>{{ control.controlid }}</td>
-                <td>{{ control.controlname }}</td>
-                <td>{{ control.nextreviewdate }}</td>
-                <td>
-                    {% if control.status == 'past-due' %}
-                    <span class="badge bg-danger">Past Due</span>
-                    {% elif control.status == 'upcoming' %}
-                    <span class="badge bg-success">Upcoming</span>
-                    {% else %}
-                    <span class="badge bg-primary">Scheduled</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary">View</a>
-                </td>
-            </tr>
-            {% endif %}
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+    <div class="summary-card">
+        <div class="summary-icon"><i class="bi bi-exclamation-triangle"></i></div>
+        <div class="summary-content">
+            <h3>Past Due</h3>
+            <div class="count">{{ past_due_count }}</div>
+            <div class="description">Reviews past due</div>
+        </div>
+    </div>
     
-    {% if tasks %}
-    <h3>Tasks</h3>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Task Description</th>
-                <th>Control ID</th>
-                <th>Due Date</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td>{{ task.taskdescription }}</td>
-                <td>{{ task.controlid }}</td>
-                <td>{{ task.duedate }}</td>
-                <td>
-                    {% if task.status == 'Completed' %}
-                    <span class="badge bg-success">Completed</span>
-                    {% elif task.status == 'Pending Confirmation' %}
-                    <span class="badge bg-warning">Pending</span>
-                    {% else %}
-                    <span class="badge bg-primary">Open</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{{ url_for('tasks.edit_task', task_id=task.taskid) }}" class="btn btn-sm btn-primary">Edit</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
+    <div class="summary-card">
+        <div class="summary-icon"><i class="bi bi-list-task"></i></div>
+        <div class="summary-content">
+            <h3>Tasks</h3>
+            <div class="count">{{ pagination.tasks_count }}</div>
+            <div class="description">Total tasks</div>
+        </div>
+    </div>
 </div>
 
+<div class="row">
+    <!-- Calendar View -->
+    <div class="col-lg-7">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Calendar</h2>
+            </div>
+            <div class="card-body">
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button id="prevMonth" class="btn btn-sm btn-outline-primary"><i class="bi bi-chevron-left"></i></button>
+                        <h3 id="currentMonth">Month Year</h3>
+                        <button id="nextMonth" class="btn btn-sm btn-outline-primary"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                    <div class="calendar-weekdays">
+                        <div>Sun</div>
+                        <div>Mon</div>
+                        <div>Tue</div>
+                        <div>Wed</div>
+                        <div>Thu</div>
+                        <div>Fri</div>
+                        <div>Sat</div>
+                    </div>
+                    <div id="calendarDays" class="calendar-days">
+                        <!-- Calendar days will be inserted by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Events -->
+    <div class="col-lg-5">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Upcoming Events</h2>
+            </div>
+            <div class="card-body">
+                <div class="upcoming-events">
+                    {% for control in all_controls if control.status == 'upcoming' %}
+                    <div class="event">
+                        <div class="event-date">{{ control.nextreviewdate }}</div>
+                        <div class="event-content">
+                            <h4>{{ control.controlid }} Review</h4>
+                            <p>{{ control.controlname }}</p>
+                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary">View</a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="no-events">No upcoming control reviews in the next 30 days.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Control Reviews Table -->
+{% if controls %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>Control Reviews</h2>
+        <div>
+            <span class="text-muted">{{ pagination.controls_count }} controls total</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Control ID</th>
+                        <th>Control Name</th>
+                        <th>Review Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for control in controls %}
+                    <tr class="{{ control.status }}">
+                        <td>{{ control.controlid }}</td>
+                        <td>{{ control.controlname }}</td>
+                        <td>{{ control.nextreviewdate }}</td>
+                        <td>
+                            {% if control.status == 'past-due' %}
+                            <span class="badge bg-danger">Past Due</span>
+                            {% elif control.status == 'upcoming' %}
+                            <span class="badge bg-warning">Due Soon</span>
+                            {% else %}
+                            <span class="badge bg-success">Scheduled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination for Controls Table -->
+        {% if pagination.controls_total_pages > 1 %}
+        <nav aria-label="Control reviews pagination">
+            <ul class="pagination bootstrap-pagination justify-content-center">
+                <li class="page-item {{ 'disabled' if pagination.controls_page == 1 else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=pagination.controls_page-1, tasks_page=pagination.tasks_page) if pagination.controls_page > 1 else '#' }}">Previous</a>
+                </li>
+                
+                {% for page_num in range(max(1, pagination.controls_page - 2), min(pagination.controls_total_pages + 1, pagination.controls_page + 3)) %}
+                <li class="page-item {{ 'active' if page_num == pagination.controls_page else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=page_num, tasks_page=pagination.tasks_page) }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+                
+                <li class="page-item {{ 'disabled' if pagination.controls_page == pagination.controls_total_pages else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=pagination.controls_page+1, tasks_page=pagination.tasks_page) if pagination.controls_page < pagination.controls_total_pages else '#' }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Tasks Table -->
+{% if tasks %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2>Tasks</h2>
+        <div>
+            <span class="text-muted">{{ pagination.tasks_count }} tasks total</span>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Task Description</th>
+                        <th>Control ID</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.taskdescription }}</td>
+                        <td>{{ task.controlid }}</td>
+                        <td>{{ task.duedate }}</td>
+                        <td>
+                            {% if task.status == 'Completed' %}
+                            <span class="badge bg-success">Completed</span>
+                            {% elif task.status == 'Pending Confirmation' %}
+                            <span class="badge bg-warning">Pending</span>
+                            {% else %}
+                            <span class="badge bg-primary">Open</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.taskid) }}" class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination for Tasks Table -->
+        {% if pagination.tasks_total_pages > 1 %}
+        <nav aria-label="Tasks pagination">
+            <ul class="pagination bootstrap-pagination justify-content-center">
+                <li class="page-item {{ 'disabled' if pagination.tasks_page == 1 else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=pagination.controls_page, tasks_page=pagination.tasks_page-1) if pagination.tasks_page > 1 else '#' }}">Previous</a>
+                </li>
+                
+                {% for page_num in range(max(1, pagination.tasks_page - 2), min(pagination.tasks_total_pages + 1, pagination.tasks_page + 3)) %}
+                <li class="page-item {{ 'active' if page_num == pagination.tasks_page else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=pagination.controls_page, tasks_page=page_num) }}">{{ page_num }}</a>
+                </li>
+                {% endfor %}
+                
+                <li class="page-item {{ 'disabled' if pagination.tasks_page == pagination.tasks_total_pages else '' }}">
+                    <a class="page-link" href="{{ url_for('tasks.calendar', controls_page=pagination.controls_page, tasks_page=pagination.tasks_page+1) if pagination.tasks_page < pagination.tasks_total_pages else '#' }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 <style>
-  .calendar-view {
-    max-width: 1100px;
-    margin: 20px auto;
+/* Card Styles */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  }
-  
-  .month-display {
-    text-align: center;
     margin-bottom: 20px;
-    color: #1e3a8a;
-  }
-  
-  .calendar-actions {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 15px;
-    position: relative;
-  }
-  
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  
-  .table th {
+}
+
+.card-header {
     background-color: #f1f5f9;
-    padding: 10px;
-    text-align: left;
-    font-weight: 600;
-    color: #1e3a8a;
-  }
-  
-  .table td {
-    padding: 10px;
     border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .badge {
-    display: inline-block;
-    padding: 0.25em 0.6em;
-    font-size: 75%;
+    padding: 15px 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.card-header h2 {
+    margin: 0;
+    color: #1e40af;
+    font-size: 1.25rem;
     font-weight: 600;
-    line-height: 1;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Summary Cards */
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.summary-card {
+    flex: 1;
+    min-width: 200px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.summary-icon {
+    font-size: 2rem;
+    margin-right: 20px;
+    color: #3b82f6;
+}
+
+.summary-content h3 {
+    font-size: 1rem;
+    margin: 0 0 5px 0;
+    color: #64748b;
+}
+
+.count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e40af;
+}
+
+.description {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* Calendar Styles */
+.calendar-container {
+    background-color: white;
+    border-radius: 10px;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.calendar-header h3 {
+    margin: 0;
+    color: #1e40af;
+    font-size: 1.25rem;
+}
+
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
     text-align: center;
-    white-space: nowrap;
-    vertical-align: baseline;
-    border-radius: 0.25rem;
-    color: white;
-  }
-  
-  .bg-danger {
-    background-color: #ef4444;
-  }
-  
-  .bg-warning {
-    background-color: #f59e0b;
-  }
-  
-  .bg-success {
-    background-color: #10b981;
-  }
-  
-  .bg-primary {
-    background-color: #3b82f6;
-  }
-  
-  .btn {
+    font-weight: 600;
+    color: #64748b;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-gap: 5px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid #e2e8f0;
+    position: relative;
+}
+
+.calendar-day:hover {
+    background-color: #f8fafc;
+}
+
+.calendar-day.today {
+    background-color: #dbeafe;
+    font-weight: 600;
+}
+
+.calendar-day.has-event {
+    background-color: #ecfdf5;
+}
+
+.calendar-day.past-due {
+    background-color: #fef2f2;
+}
+
+.calendar-day-number {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.calendar-day-indicator {
+    height: 6px;
+    width: 6px;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 5px;
     display: inline-block;
-    font-weight: 400;
+    margin-right: 2px;
+}
+
+.indicator-past-due {
+    background-color: #ef4444;
+}
+
+.indicator-upcoming {
+    background-color: #f59e0b;
+}
+
+.indicator-regular {
+    background-color: #10b981;
+}
+
+/* Upcoming Events */
+.upcoming-events {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.event {
+    display: flex;
+    border-left: 4px solid #3b82f6;
+    padding: 10px 15px;
+    background-color: #f8fafc;
+    border-radius: 0 6px 6px 0;
+}
+
+.event-date {
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 15px;
+    min-width: 100px;
+}
+
+.event-content {
+    flex: 1;
+}
+
+.event-content h4 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.event-content p {
+    margin: 0 0 10px 0;
+    color: #64748b;
+}
+
+.no-events {
+    color: #64748b;
+    font-style: italic;
     text-align: center;
-    vertical-align: middle;
-    user-select: none;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-    line-height: 1.5;
+    padding: 20px 0;
+}
+
+/* Table Enhancements */
+.table-responsive {
+    overflow-x: auto;
+}
+
+tr.past-due {
+    background-color: #fee2e2 !important;
+}
+
+tr.upcoming {
+    background-color: #fef3c7 !important;
+}
+
+.badge {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-weight: 500;
+}
+
+/* Bootstrap Pagination Override Styles */
+.bootstrap-pagination {
+    display: flex !important;
+    flex-direction: row !important;
+    margin-top: 20px;
+    gap: 5px;
+}
+
+.bootstrap-pagination .page-item {
+    margin: 0 2px;
+}
+
+.bootstrap-pagination .page-link {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #dee2e6;
     border-radius: 0.25rem;
+    color: #0d6efd;
+    background-color: #fff;
     text-decoration: none;
-  }
-  
-  .btn-primary {
-    color: #fff;
-    background-color: #3b82f6;
-    border: 1px solid #3b82f6;
-  }
-  
-  .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.75rem;
-  }
+}
+
+.bootstrap-pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.bootstrap-pagination .page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Remove any existing calendar pagination styles to avoid conflicts */
+.calendar-pagination.pagination,
+.card-body nav .pagination,
+.card-body nav .pagination a,
+.card-body nav .pagination .active a {
+    /* Reset all properties to avoid conflicts */
+}
+
+/* Pagination Styles - Override for Bootstrap */
+.pagination {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    padding-left: 0 !important;
+    list-style: none !important;
+    border-radius: 0.25rem !important;
+    justify-content: center !important;
+    margin-top: 1rem !important;
+}
+
+.page-link {
+    position: relative !important;
+    display: block !important;
+    padding: 0.5rem 0.75rem !important;
+    margin-left: -1px !important;
+    line-height: 1.25 !important;
+    color: #3b82f6 !important;
+    background-color: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    text-decoration: none !important;
+}
+
+.page-item:first-child .page-link {
+    margin-left: 0 !important;
+    border-top-left-radius: 0.25rem !important;
+    border-bottom-left-radius: 0.25rem !important;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 0.25rem !important;
+    border-bottom-right-radius: 0.25rem !important;
+}
+
+.page-item.active .page-link {
+    z-index: 3 !important;
+    color: #fff !important;
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d !important;
+    pointer-events: none !important;
+    cursor: auto !important;
+    background-color: #fff !important;
+    border-color: #dee2e6 !important;
+}
 </style>
+
+<!-- Prepare the calendar data for JavaScript to avoid template issues -->
+<script id="calendar-data" type="application/json">
+[
+    {% for control in all_controls %}
+    {
+        "id": "{{ control.controlid }}",
+        "name": "{{ control.controlname }}",
+        "date": "{{ control.nextreviewdate }}",
+        "status": "{{ control.status }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+]
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get calendar data from the hidden JSON
+    const controlReviewsJson = document.getElementById('calendar-data').textContent;
+    const controlReviews = JSON.parse(controlReviewsJson);
+    
+    // Initialize calendar
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    
+    function renderCalendar() {
+        const monthNames = ["January", "February", "March", "April", "May", "June", 
+                          "July", "August", "September", "October", "November", "December"];
+                          
+        // Update header
+        document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        
+        // Clear previous days
+        const calendarDays = document.getElementById('calendarDays');
+        calendarDays.innerHTML = '';
+        
+        // Get first day of month and total days
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        
+        // Add empty cells for days before start of month
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDay = document.createElement('div');
+            emptyDay.classList.add('calendar-day', 'empty');
+            calendarDays.appendChild(emptyDay);
+        }
+        
+        // Current date for comparison
+        const today = new Date();
+        const todayDay = today.getDate();
+        const todayMonth = today.getMonth();
+        const todayYear = today.getFullYear();
+        
+        // Add days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayElement = document.createElement('div');
+            dayElement.classList.add('calendar-day');
+            
+            // Check if it's today
+            if (day === todayDay && currentMonth === todayMonth && currentYear === todayYear) {
+                dayElement.classList.add('today');
+            }
+            
+            // Add the day number
+            const dayNumber = document.createElement('div');
+            dayNumber.classList.add('calendar-day-number');
+            dayNumber.textContent = day;
+            dayElement.appendChild(dayNumber);
+            
+            // Check for events on this date
+            const dateString = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            let hasPastDue = false;
+            let hasUpcoming = false;
+            let hasRegular = false;
+            
+            controlReviews.forEach(control => {
+                if (control.date && control.date.includes(dateString)) {
+                    if (control.status === 'past-due') {
+                        hasPastDue = true;
+                        dayElement.classList.add('past-due');
+                    } else if (control.status === 'upcoming') {
+                        hasUpcoming = true;
+                        dayElement.classList.add('has-event');
+                    } else {
+                        hasRegular = true;
+                        dayElement.classList.add('has-event');
+                    }
+                }
+            });
+            
+            // Add indicators in a containing div
+            if (hasPastDue || hasUpcoming || hasRegular) {
+                const indicatorsContainer = document.createElement('div');
+                indicatorsContainer.style.display = 'flex';
+                indicatorsContainer.style.justifyContent = 'center';
+                indicatorsContainer.style.gap = '3px';
+                indicatorsContainer.style.marginTop = '2px';
+                
+                if (hasPastDue) {
+                    const indicator = document.createElement('div');
+                    indicator.classList.add('calendar-day-indicator', 'indicator-past-due');
+                    indicatorsContainer.appendChild(indicator);
+                }
+                
+                if (hasUpcoming) {
+                    const indicator = document.createElement('div');
+                    indicator.classList.add('calendar-day-indicator', 'indicator-upcoming');
+                    indicatorsContainer.appendChild(indicator);
+                }
+                
+                if (hasRegular) {
+                    const indicator = document.createElement('div');
+                    indicator.classList.add('calendar-day-indicator', 'indicator-regular');
+                    indicatorsContainer.appendChild(indicator);
+                }
+                
+                dayElement.appendChild(indicatorsContainer);
+            }
+            
+            calendarDays.appendChild(dayElement);
+        }
+    }
+    
+    // Render initial calendar
+    renderCalendar();
+    
+    // Add event listeners for month navigation
+    document.getElementById('prevMonth').addEventListener('click', function() {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderCalendar();
+    });
+    
+    document.getElementById('nextMonth').addEventListener('click', function() {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderCalendar();
+    });
+});
+</script>
 
 <a href="{{ url_for('controls.index') }}" class="button-link mt-3">Back to Control List</a>
 {% endblock %}

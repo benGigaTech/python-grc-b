@@ -18,10 +18,12 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - **Control Management**: Create, update, and track cybersecurity controls
 - **Bulk Import/Export**: Easily import or export controls in CSV format
 - **Task Assignment**: Assign tasks to team members with due dates and status tracking
+- **Interactive Calendar**: Visual calendar with paginated tables for control reviews and tasks
 - **User Management**: Role-based access control with admin capabilities
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
 - **Email Notifications**: Automated alerts for task assignments and upcoming deadlines
+- **Responsive Design**: Optimized for both desktop and mobile devices
 
 ## Technology Stack
 

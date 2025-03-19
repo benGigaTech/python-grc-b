@@ -11,6 +11,9 @@ from app.utils.date import is_date_valid, format_date
 from app.services.database import execute_query
 from app.services.database import get_db_connection
 
+# Remove the builtins import and use the Python standard library
+import math  # For ceil function
+
 logger = logging.getLogger(__name__)
 
 # Create blueprint
@@ -247,13 +250,36 @@ def statistics():
 def calendar():
     """Display a calendar view of controls and tasks."""
     try:
-        # Get controls with review dates
-        controls_query = 'SELECT * FROM controls WHERE nextreviewdate IS NOT NULL AND nextreviewdate != \'\''
-        controls_data = execute_query(controls_query, fetch_all=True)
+        # Get pagination parameters
+        page = request.args.get('page', 1, type=int)
+        controls_page = request.args.get('controls_page', 1, type=int)
+        tasks_page = request.args.get('tasks_page', 1, type=int)
+        items_per_page = 10
         
-        # Get all tasks
-        tasks_query = 'SELECT * FROM tasks'
-        tasks_data = execute_query(tasks_query, fetch_all=True)
+        # Get controls with review dates
+        controls_count_query = "SELECT COUNT(*) FROM controls WHERE nextreviewdate IS NOT NULL AND nextreviewdate != ''"
+        controls_count = execute_query(controls_count_query, fetch_one=True)[0]
+        
+        controls_query = '''
+            SELECT * FROM controls 
+            WHERE nextreviewdate IS NOT NULL AND nextreviewdate != '' 
+            ORDER BY nextreviewdate 
+            LIMIT %s OFFSET %s
+        '''
+        controls_offset = (controls_page - 1) * items_per_page
+        controls_data = execute_query(controls_query, (items_per_page, controls_offset), fetch_all=True)
+        
+        # Get all tasks with pagination
+        tasks_count_query = "SELECT COUNT(*) FROM tasks"
+        tasks_count = execute_query(tasks_count_query, fetch_one=True)[0]
+        
+        tasks_query = '''
+            SELECT * FROM tasks 
+            ORDER BY duedate 
+            LIMIT %s OFFSET %s
+        '''
+        tasks_offset = (tasks_page - 1) * items_per_page
+        tasks_data = execute_query(tasks_query, (items_per_page, tasks_offset), fetch_all=True)
         
         # Process controls to add status (past-due, upcoming)
         from datetime import date, timedelta
@@ -280,7 +306,60 @@ def calendar():
                         'status': status
                     })
         
-        return render_template('calendar.html', controls=controls_with_status, tasks=tasks_data)
+        # Get all controls for the calendar view (no pagination for the calendar itself)
+        all_controls_query = "SELECT * FROM controls WHERE nextreviewdate IS NOT NULL AND nextreviewdate != ''"
+        all_controls_data = execute_query(all_controls_query, fetch_all=True)
+        
+        all_controls_with_status = []
+        for control in all_controls_data:
+            if control['nextreviewdate']:
+                review_date = format_date(control['nextreviewdate'])
+                if review_date:
+                    from app.utils.date import parse_date
+                    review_date_obj = parse_date(review_date)
+                    status = ""
+                    if review_date_obj < today:
+                        status = "past-due"
+                    elif review_date_obj <= next_month:
+                        status = "upcoming"
+                    
+                    all_controls_with_status.append({
+                        'controlid': control['controlid'],
+                        'controlname': control['controlname'],
+                        'nextreviewdate': review_date,
+                        'status': status
+                    })
+        
+        # Calculate pagination metadata
+        controls_total_pages = (controls_count + items_per_page - 1) // items_per_page
+        tasks_total_pages = (tasks_count + items_per_page - 1) // items_per_page
+        
+        pagination = {
+            'controls_page': controls_page,
+            'controls_total_pages': controls_total_pages,
+            'controls_count': controls_count,
+            'tasks_page': tasks_page,
+            'tasks_total_pages': tasks_total_pages,
+            'tasks_count': tasks_count,
+            'items_per_page': items_per_page
+        }
+        
+        # Define utility functions for the template
+        def template_max(a, b):
+            return max(a, b)
+            
+        def template_min(a, b):
+            return min(a, b)
+        
+        return render_template(
+            'calendar.html', 
+            controls=controls_with_status, 
+            all_controls=all_controls_with_status,
+            tasks=tasks_data, 
+            pagination=pagination,
+            max=template_max,  # Pass max function to template
+            min=template_min   # Pass min function to template
+        )
     
     except Exception as e:
         logger.error(f"Error loading calendar view: {e}")

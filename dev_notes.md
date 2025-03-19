@@ -248,19 +248,41 @@ The admin dashboard provides additional features for administrators:
 
 ### Calendar View
 
-The calendar view has been simplified to use a table-based approach for greater reliability:
+The calendar view combines a visual calendar with tables for a comprehensive event tracking experience:
 
-1. **Control Reviews Table**:
-   - Lists upcoming control reviews in chronological order
+1. **Interactive Calendar Component**:
+   - Visual month-based calendar showing control review dates
+   - Color-coded indicators for different event types (past due, upcoming, scheduled)
+   - Navigation controls for moving between months
+   - Highlights the current day for easier reference
+   - Completely JavaScript-based for dynamic interaction
+
+2. **Summary Cards**:
+   - Overview metrics showing total control reviews, past due items, and tasks
+   - Quick visual indicators of system status
+   - Numeric counters for at-a-glance information
+
+3. **Upcoming Events Panel**:
+   - Focused view of events due in the next 30 days
+   - Card-based layout with clear date indicators
+   - Direct links to relevant controls
+
+4. **Control Reviews Table with Pagination**:
+   - Lists control reviews in chronological order with page navigation
    - Status indicators for past due or upcoming reviews
+   - Color-coded rows based on status for easier scanning
    - Direct links to control details
+   - Pagination controls for navigating large datasets
+   - Shows total count of controls in the header
 
-2. **Tasks Table**:
-   - Shows tasks with due dates
-   - Includes status indicators
+5. **Tasks Table with Pagination**:
+   - Shows tasks with due dates and pagination for large datasets
+   - Includes status indicators with consistent color coding
    - Direct links to task editing
+   - Pagination controls allow browsing through all tasks
+   - Displays total task count in the header
 
-This approach ensures that the application remains functional and responsive even in environments where JavaScript libraries might not load properly or conflict with other components.
+This approach combines the benefits of visualization (calendar) with detailed, paginated data (tables) to provide a complete view of upcoming compliance activities. The design is responsive and works well on both desktop and mobile devices.
 
 ## Import/Export System
 

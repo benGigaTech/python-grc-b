@@ -72,7 +72,11 @@
                     {% if evidence.is_expired %}
                     <span class="badge badge-danger">Expired</span>
                     {% else %}
-                    <span class="badge badge-success">{{ evidence.status }}</span>
+                        {% if evidence.status == "Pending Review" %}
+                        <span class="badge badge-warning">{{ evidence.status }}</span>
+                        {% else %}
+                        <span class="badge badge-success">{{ evidence.status }}</span>
+                        {% endif %}
                     {% endif %}
                 </td>
                 <td>
@@ -146,6 +150,11 @@
     
     .badge-success {
         background-color: #10b981;
+        color: white;
+    }
+    
+    .badge-warning {
+        background-color: #f59e0b;
         color: white;
     }
     

@@ -57,6 +57,26 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 The database will be automatically initialized with sample data on first startup. No manual initialization is required.
 
+### Database Migrations
+
+When schema changes are required, SQL migration files are provided in the `db` directory. To apply migrations:
+
+1. **Using the migration script**:
+   ```
+   # Apply all migrations
+   python apply_migration.py
+   
+   # Apply a specific migration
+   python apply_migration.py db/evidence_migration.sql
+   ```
+
+2. **Within Docker**:
+   ```
+   docker compose exec web python apply_migration.py
+   ```
+
+Migration files are named descriptively (e.g., `evidence_migration.sql`) to indicate their purpose.
+
 ### Default Credentials
 
 - **Admin User**:

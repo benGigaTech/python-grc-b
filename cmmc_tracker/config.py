@@ -52,6 +52,16 @@ class Config:
     # Flask-APScheduler settings
     SCHEDULER_API_ENABLED = False
     SCHEDULER_TIMEZONE = "UTC"
+    
+    # File upload settings
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
+    MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB default
+    ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'}
+    EVIDENCE_STATUS = {
+        'CURRENT': 'Current',
+        'EXPIRED': 'Expired',
+        'PENDING_REVIEW': 'Pending Review'
+    }
 
 class DevelopmentConfig(Config):
     """Development configuration."""

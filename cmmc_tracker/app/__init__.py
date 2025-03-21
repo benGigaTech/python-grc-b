@@ -97,6 +97,7 @@ def register_blueprints(app):
     from app.routes.tasks import tasks_bp
     from app.routes.admin import admin_bp
     from app.routes.reports import reports_bp
+    from app.routes.evidence import evidence_bp
     
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -104,6 +105,7 @@ def register_blueprints(app):
     app.register_blueprint(tasks_bp)
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(reports_bp)
+    app.register_blueprint(evidence_bp)
 
 # Create a logger instance
 logger = logging.getLogger(__name__)

@@ -10,6 +10,9 @@ done
 echo "Checking if database needs to be initialized..."
 python /app/seed_db.py
 
+echo "Applying any pending database migrations..."
+python /app/apply_migration.py
+
 echo "Starting the application..."
 cd /app/cmmc_tracker
 exec gunicorn --bind 0.0.0.0:80 --workers 4 run:app 

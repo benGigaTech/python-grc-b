@@ -12,6 +12,8 @@
 <p><strong>Next Review Date:</strong> {{ control.nextreviewdate }}</p>
 
 <a href="{{ url_for('controls.edit_control', control_id=control.controlid) }}" class="button-link">Edit Control</a>
+<a href="{{ url_for('tasks.add_task', control_id=control.controlid) }}" class="button-link">Add Task</a>
+<a href="{{ url_for('evidence.list_evidence', control_id=control.controlid) }}" class="button-link">Manage Evidence</a>
 {% if current_user.is_admin %}
     <form action="{{ url_for('controls.delete_control', control_id=control.controlid) }}" method="post" style="display: inline;">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

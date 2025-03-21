@@ -22,6 +22,7 @@ This document provides comprehensive technical documentation of the CMMC Complia
 12. [Database Initialization](#database-initialization)
 13. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
 14. [Testing](#testing)
+15. [Database Migrations](#database-migrations)
 
 ## Architecture Overview
 
@@ -708,6 +709,86 @@ The user interface has been simplified to avoid dependencies on complex JavaScri
    - Table-based interface for better sorting and scanning of activities
 
 These UI simplifications make the application more robust, especially in containerized environments where browser compatibility and JavaScript execution might be less predictable.
+
+## Database Migrations
+
+### Overview
+
+The CMMC Compliance Tracker application now supports database migrations for schema evolution. This allows for adding new tables, columns, and other database objects in a controlled manner.
+
+### Migration System
+
+The migration system consists of:
+
+1. **SQL Migration Files** - Located in the `/db` directory with descriptive names (e.g., `evidence_migration.sql`)
+2. **Migration Tracking Table** - A table in the database that tracks which migrations have been applied
+3. **Migration Application Script** - The `apply_migration.py` script that handles applying migrations
+
+### How to Apply Migrations
+
+For local development:
+```
+python apply_migration.py
+```
+
+In Docker environment:
+```
+docker compose exec web python apply_migration.py
+```
+
+### How to Create New Migrations
+
+1. Create a new SQL file in the `/db` directory with a descriptive name
+2. Use the numbered file format to ensure correct execution order (e.g., `04_add_custom_field.sql`)
+3. Use the template pattern for idempotent operations:
+
+```sql
+-- Check if the feature exists before creating it
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'table_name') THEN
+        -- Create the table/column/etc.
+        CREATE TABLE table_name (...);
+        
+        RAISE NOTICE 'Created table_name';
+    ELSE
+        RAISE NOTICE 'table_name already exists';
+    END IF;
+END $$;
+```
+
+4. Add proper error handling and logging in the SQL script
+5. Test the migration thoroughly before committing
+
+### Docker Initialization
+
+When running in Docker, the PostgreSQL container executes SQL files in the `docker-entrypoint-initdb.d` directory in alphabetical order. This is why we use a numbered prefix format (`01_`, `02_`, etc.) for migration files to ensure they run in the correct sequence.
+
+The sequence is important because:
+1. Base tables must be created first
+2. The migration tracking table should be created next
+3. Feature-specific migrations can then be applied
+
+If migrations fail during Docker initialization, check the database logs with `docker compose logs db`.
+
+### Verification
+
+After applying migrations, you can verify that they were applied correctly:
+
+```
+python check_evidence_table.py
+```
+
+This will check if the evidence table exists and output its structure and indexes.
+
+### Best Practices
+
+1. Migrations should be forward-only (no rollbacks)
+2. Make migrations idempotent so they can be safely re-run
+3. Add proper documentation in the SQL file header about what the migration does
+4. Keep migrations focused on a single concern (e.g., adding one table or feature)
+5. Use transactions where appropriate
+6. Avoid direct data manipulation in migrations when possible
 
 ---
 

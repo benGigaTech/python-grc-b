@@ -4,3 +4,4 @@ from app.models.user import User
 from app.models.control import Control
 from app.models.task import Task
 from app.models.audit import AuditLog
+from app.models.evidence import Evidence

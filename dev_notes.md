@@ -23,6 +23,7 @@ This document provides comprehensive technical documentation of the CMMC Complia
 13. [Common Issues and Troubleshooting](#common-issues-and-troubleshooting)
 14. [Testing](#testing)
 15. [Database Migrations](#database-migrations)
+16. [Redis-Backed Rate Limiting](#redis-backed-rate-limiting)
 
 ## Architecture Overview
 
@@ -31,8 +32,9 @@ The CMMC Tracker is a Flask-based web application following a layered architectu
 - **Presentation Layer**: Flask routes and Jinja2 templates with responsive progress bars and table-based visualizations
 - **Business Logic Layer**: Models and Services
 - **Data Access Layer**: Database service abstraction over PostgreSQL
-- **Infrastructure**: Docker containers for the web app and PostgreSQL database
+- **Infrastructure**: Docker containers for the web app, PostgreSQL database, and Redis
 - **Background Processing**: Flask-APScheduler for automated email notifications
+- **Rate Limiting**: Redis-backed rate limiting via Flask-Limiter
 
 The application uses the Blueprint pattern to organize routes and follows a factory pattern for application creation, allowing different configurations based on the environment. It implements a responsive dashboard with real-time metrics and automated task notification system.
 
@@ -442,6 +444,7 @@ As part of our continuous security enhancement efforts, the following improvemen
    - Added limit of 10 login attempts per minute to prevent brute force attacks
    - Added limit of 5 registration and password reset requests per hour to prevent abuse
    - Enhanced logging for failed login attempts to track potential attackers
+   - Configured Redis as persistent storage backend for rate limiting keys
 
 6. **Other Security Enhancements** (Pending)
    - Improved input validation and sanitization
@@ -457,9 +460,9 @@ The application implements several security measures:
 3. **Password Security**: Passwords are hashed using secure algorithms
 4. **Audit Logging**: All significant actions are logged
 5. **Parameterized Queries**: SQL injection protection
+6. **Redis-backed Rate Limiting**: Distributed and persistent rate limiting for authentication endpoints
 
 Areas for enhancement:
-- Consider implementing rate limiting for login attempts
 - Add Multi-Factor Authentication support
 - Implement more granular role-based access control
 
@@ -500,6 +503,12 @@ The application is containerized using Docker with the following components:
    - Persistent volume for data storage
    - Port 5432 exposed for external connections
 
+3. **Redis Container**:
+   - Redis 7-alpine image for rate limiting storage
+   - Persistent volume for data storage
+   - Configured to save data every 60 seconds
+   - Port 6379 exposed for external connections
+
 The `docker-compose.yml` file coordinates these containers and provides the networking setup.
 
 Notable Docker configurations:
@@ -515,10 +524,11 @@ Notable Docker configurations:
    - Running the seed script if needed
    - Starting the web application with gunicorn
 
-3. Data persistence is managed through a named volume:
+3. Data persistence is managed through named volumes:
    ```yaml
    volumes:
      postgres_data:
+     redis_data:
    ```
 
 4. Simplified Dockerfile structure:
@@ -650,6 +660,12 @@ Common Docker container issues and their solutions:
 5. **Authentication testing**:
    - Use the test_auth.py script: `docker compose exec web python /app/test_auth.py`
    - Check user table directly: `docker compose exec db psql -U cmmc_user -d cmmc_db -c "SELECT username, isadmin FROM users;"`
+
+6. **Rate Limiting Issues**:
+   - Check Redis connection: `docker compose exec redis redis-cli ping`
+   - View rate limiting keys: `docker compose exec redis redis-cli keys "*LIMITS*"`
+   - Check rate limit value: `docker compose exec redis redis-cli get "LIMITS:LIMITER/[IP_ADDRESS]/auth.login/10/1/minute"`
+   - Reset rate limits: `docker compose exec redis redis-cli flushall`
 
 ### Template Rendering Errors
 
@@ -789,6 +805,263 @@ This will check if the evidence table exists and output its structure and indexe
 4. Keep migrations focused on a single concern (e.g., adding one table or feature)
 5. Use transactions where appropriate
 6. Avoid direct data manipulation in migrations when possible
+
+## Evidence Management System
+
+The CMMC Tracker now includes a comprehensive evidence management system that allows users to upload, track, and manage compliance evidence files associated with specific controls.
+
+### System Components
+
+1. **Database Schema**:
+   - The evidence table stores metadata about uploaded files
+   - Created by the `03_evidence_migration.sql` migration
+   - Includes fields for file metadata, upload dates, and status tracking
+   - Indexed for efficient querying by control ID, upload date, expiration date, and status
+
+2. **Model Layer**:
+   - `Evidence` class in `app/models/evidence.py` provides the data model and business logic
+   - Handles CRUD operations for evidence records
+   - Includes validation and relationship management with controls
+   - Provides status logic (Current, Pending Review, Expired)
+
+3. **Routes and Controllers**:
+   - Implemented in `app/routes/evidence.py`
+   - Provides endpoints for listing, adding, updating, downloading, and deleting evidence
+   - Includes access control and validation logic
+   - Manages file uploads and secure file serving
+
+4. **Storage Service**:
+   - `app/services/storage.py` handles file storage operations
+   - Manages directory creation and file saving
+   - Handles secure filename generation
+   - Enforces file type restrictions
+
+5. **Templates**:
+   - `evidence_list.html`: List view of evidence for a control with sorting and pagination
+   - `add_evidence.html`: Form for uploading new evidence
+   - `update_evidence.html`: Form for updating evidence metadata
+
+### Status Indicators
+
+Evidence status is visualized using color-coded badges:
+- **Current** (Green): Valid and up-to-date evidence
+- **Pending Review** (Yellow): Evidence that needs review or validation
+- **Expired** (Red): Evidence past its expiration date
+
+The status is determined automatically based on the expiration date or can be manually set during updates.
+
+### File Handling
+
+1. **File Upload Process**:
+   - Files are validated for allowed types (`ALLOWED_EXTENSIONS` in config)
+   - Secure filenames are generated to prevent path traversal
+   - Files are stored in a structured directory hierarchy by control ID
+   - File metadata (size, type, path) is stored in the database
+
+2. **File Download Process**:
+   - Files are served securely with proper MIME types
+   - Downloads are logged in the audit system
+   - Access control ensures only authorized users can download files
+
+3. **File Storage Structure**:
+   - Base directory: `/app/uploads/evidence/`
+   - Files organized by control ID: `/app/uploads/evidence/{control_id}/`
+   - Filenames include timestamps to prevent collisions
+
+### Sample Data
+
+For testing purposes, the system includes a script to generate sample evidence records:
+- `add_sample_evidence.py` creates test evidence records for controls
+- Sample data includes various file types and statuses
+- To add sample evidence: `docker compose exec web python /app/add_sample_evidence.py`
+
+### Implementation Notes
+
+1. **Evidence Model Design**:
+   - Implements a lazy-loaded relationship to the Control model
+   - Provides helper properties like `is_expired` and `filename`
+   - Uses the database service layer for operations
+
+2. **Access Control**:
+   - All evidence operations require authentication
+   - Only admin users can delete evidence
+   - All users can view and download evidence
+
+3. **Future Enhancements**:
+   - Consider implementing file versioning
+   - Add support for evidence approval workflows
+   - Implement file content indexing for search
+   - Add direct file previews for common formats
+
+### Troubleshooting Evidence Issues
+
+Common issues with the evidence management system:
+
+1. **Upload Directory Permissions**:
+   - If file uploads fail, check that the web container has write permissions to the uploads directory
+   - Verify the directory exists and is created if missing
+
+2. **File Size Limitations**:
+   - Default maximum file size is 16MB
+   - To change, modify `MAX_CONTENT_LENGTH` in the Flask configuration
+
+3. **Missing Evidence Table**:
+   - If the evidence feature is not working, verify the evidence migration was applied
+   - Run `python check_evidence_table.py` to verify the table exists
+   - If missing, apply the migration: `python apply_migration.py db/03_evidence_migration.sql`
+
+4. **File Download Issues**:
+   - Ensure the file exists at the stored path
+   - Verify the MIME type is correctly set in the database
+   - Check that send_file is configured correctly for the deployment environment
+
+### Redis Implementation Issues
+
+If you encounter issues with the Redis-backed rate limiting:
+
+1. **Connection issues**:
+   - Verify the Redis container is running: `docker compose ps`
+   - Check Redis logs: `docker compose logs redis`
+   - Ensure the Redis URL in the configuration matches what's expected by Flask-Limiter
+
+2. **Rate limiting not working**:
+   - Check that Redis keys are being created using: `docker compose exec redis redis-cli keys "*LIMITS*"`
+   - Verify rate limits are correctly specified in the route decorators
+   - Ensure the Flask-Limiter extension is properly initialized in `app/__init__.py`
+
+3. **Redis data persistence**:
+   - Redis is configured to save snapshots every 60 seconds
+   - If Redis data is unexpectedly lost, check if the redis_data volume exists: `docker volume ls`
+   - Verify the Redis save configuration with: `docker compose exec redis redis-cli config get save`
+
+## Redis-Backed Rate Limiting
+
+The application now uses Redis as a persistent storage backend for rate limiting through Flask-Limiter. This implementation provides several advantages over the default in-memory storage:
+
+1. **Persistence**: Rate limiting data persists across application restarts, ensuring consistent protection against abuse
+2. **Scalability**: Redis allows for distributed rate limiting when running multiple application instances
+3. **Configurability**: Time-to-Live (TTL) for rate limit windows is automatically managed
+4. **Monitoring**: Rate limiting statistics can be easily monitored through Redis commands
+
+### Implementation Details
+
+1. **Configuration**:
+   - Redis settings are defined in `config.py`:
+     ```python
+     # Redis settings for Flask-Limiter
+     REDIS_HOST = os.environ.get('REDIS_HOST', 'redis')
+     REDIS_PORT = int(os.environ.get('REDIS_PORT', 6379))
+     REDIS_DB = int(os.environ.get('REDIS_DB', 0))
+     REDIS_PASSWORD = os.environ.get('REDIS_PASSWORD', None)
+     REDIS_URL = os.environ.get('REDIS_URL', f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}")
+     ```
+   - Redis container in `docker-compose.yml` is configured with persistence:
+     ```yaml
+     redis:
+       image: redis:7-alpine
+       ports:
+         - "6379:6379"
+       volumes:
+         - redis_data:/data
+       command: redis-server --save 60 1 --loglevel warning
+     ```
+
+2. **Flask-Limiter Integration**:
+   - Initialization in `app/__init__.py`:
+     ```python
+     # Initialize limiter with None storage - will be configured in create_app
+     limiter = Limiter(
+         key_func=get_remote_address,
+         default_limits=["200 per day", "50 per hour"],
+         storage_uri=None  # Will be set in create_app
+     )
+
+     def create_app(config_name=None):
+         # ...
+         redis_uri = app.config.get('REDIS_URL')
+         # ...
+         # Configure Limiter with appropriate storage
+         if redis_uri:
+             app.config['RATELIMIT_STORAGE_URI'] = redis_uri
+         limiter.init_app(app)
+     ```
+
+3. **Rate Limits Applied**:
+   - Authentication routes (`auth.py`):
+     - Login: `@limiter.limit("10 per minute")`
+     - Registration: `@limiter.limit("5 per hour")`
+     - Password reset request: `@limiter.limit("5 per hour")`
+   - Admin routes (`admin.py`):
+     - Create user: `@limiter.limit("5 per hour")`
+     - Edit user: `@limiter.limit("10 per hour")`
+     - Delete user: `@limiter.limit("5 per hour")`
+     - Send test notifications: `@limiter.limit("3 per hour")`
+   - Evidence routes (`evidence.py`):
+     - Add evidence: `@limiter.limit("20 per hour")`
+     - Download evidence: `@limiter.limit("30 per hour")`
+     - Delete evidence: `@limiter.limit("10 per hour")`
+     - Update evidence: `@limiter.limit("20 per hour")`
+
+### Verifying Redis Rate Limiting
+
+You can verify that the Redis-backed rate limiting is working correctly using the following commands:
+
+1. **Check active rate limits**:
+   ```
+   docker compose exec redis redis-cli keys "*LIMITS*"
+   ```
+
+2. **Check specific endpoint rate limit**:
+   ```
+   docker compose exec redis redis-cli keys "*auth.login*"
+   ```
+
+3. **Check current count for a specific limit**:
+   ```
+   docker compose exec redis redis-cli get "LIMITS:LIMITER/[IP_ADDRESS]/auth.login/10/1/minute"
+   ```
+
+4. **Check TTL for a rate limit key**:
+   ```
+   docker compose exec redis redis-cli ttl "LIMITS:LIMITER/[IP_ADDRESS]/auth.login/10/1/minute"
+   ```
+
+Rate limit keys in Redis follow the format:
+```
+LIMITS:LIMITER/[IP_ADDRESS]/[ROUTE]/[LIMIT_COUNT]/[LIMIT_PERIOD]/[LIMIT_UNIT]
+```
+
+Example: `LIMITS:LIMITER/172.20.0.1/auth.login/10/1/minute` indicates a limit of 10 requests per minute for the auth.login endpoint from IP 172.20.0.1.
+
+### Troubleshooting
+
+1. **Rate limits not being enforced**:
+   - Ensure Redis is running: `docker compose ps`
+   - Verify the Redis connection in the application logs
+   - Check that the Redis URI is correctly configured and used
+   - Confirm that the rate limit decorator is correctly applied to routes
+
+2. **TTL issues**:
+   - Redis keys should have appropriate TTLs matching the rate limit window
+   - If keys are expiring too quickly or not at all, check Redis configuration
+   - Verify Redis persistence configuration with `docker compose exec redis redis-cli config get save`
+
+3. **Resetting rate limits**:
+   - For testing purposes, you can flush all rate limits with:
+     ```
+     docker compose exec redis redis-cli flushall
+     ```
+   - Or delete specific keys with:
+     ```
+     docker compose exec redis redis-cli del "LIMITS:LIMITER/[IP_ADDRESS]/[ROUTE]/[LIMIT_COUNT]/[LIMIT_PERIOD]/[LIMIT_UNIT]"
+     ```
+
+4. **Redis persistence issues**:
+   - Check that the Redis volume is properly mounted
+   - Verify that Redis is configured to save data: `docker compose exec redis redis-cli config get save`
+   - The current configuration saves after 60 seconds if at least 1 key has changed
+
+This Redis implementation ensures that rate limiting remains effective and persistent in production environments, protecting sensitive endpoints from abuse while maintaining application performance.
 
 ---
 

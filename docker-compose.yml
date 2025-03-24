@@ -18,9 +18,14 @@ services:
       - MAIL_USERNAME=${MAIL_USERNAME:-bc366ad3b451bc}
       - MAIL_PASSWORD=${MAIL_PASSWORD:-8d801eecf49e5a}
       - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER:-cmmc-tracker@example.com}
+      # Redis configuration
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app/cmmc_tracker
     depends_on:
       - db
+      - redis
     volumes:
       - ./:/app
 
@@ -36,5 +41,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db:/docker-entrypoint-initdb.d
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --save 60 1 --loglevel warning
+
 volumes:
   postgres_data:
+  redis_data:

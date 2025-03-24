@@ -12,6 +12,7 @@ from app.services.email import check_and_notify_task_deadlines
 from app.services.auth import admin_required
 from app.services.audit import add_audit_log, get_recent_audit_logs
 from app.utils.security import is_password_strong
+from app import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -149,6 +150,8 @@ def users():
 
 @admin_bp.route('/users/create', methods=['GET', 'POST'])
 @login_required
+@admin_required
+@limiter.limit("5 per hour")
 def create_user():
     """Create a new user."""
     if not current_user.is_admin:
@@ -218,6 +221,8 @@ def create_user():
 
 @admin_bp.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
+@admin_required
+@limiter.limit("10 per hour")
 def admin_edit_user(user_id):
     """Edit an existing user."""
     if not current_user.is_admin:
@@ -297,6 +302,8 @@ def admin_edit_user(user_id):
 
 @admin_bp.route('/users/delete/<int:user_id>', methods=['POST'])
 @login_required
+@admin_required
+@limiter.limit("5 per hour")
 def admin_delete_user(user_id):
     """Delete a user."""
     if not current_user.is_admin:
@@ -342,6 +349,7 @@ def admin_delete_user(user_id):
 @admin_bp.route('/notifications/send-test', methods=['POST'])
 @login_required
 @admin_required
+@limiter.limit("3 per hour")
 def send_test_notifications():
     """Send test task deadline notifications."""
     try:

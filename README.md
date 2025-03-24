@@ -9,6 +9,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - Managing CMMC and NIST SP 800-171 controls
 - Assigning and tracking compliance tasks
 - Conducting control reviews
+- Managing evidence for compliance controls
 - Generating compliance reports
 - Maintaining detailed audit logs
 
@@ -19,6 +20,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - **Bulk Import/Export**: Easily import or export controls in CSV format
 - **Task Assignment**: Assign tasks to team members with due dates and status tracking
 - **Interactive Calendar**: Visual calendar with paginated tables for control reviews and tasks
+- **Evidence Management**: Upload, track, and manage compliance evidence files with metadata
 - **User Management**: Role-based access control with admin capabilities
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
@@ -86,6 +88,29 @@ Migration files are named descriptively (e.g., `evidence_migration.sql`) to indi
 - **Regular User**:
   - Username: user
   - Password: userpassword
+
+## Evidence Management
+
+The application includes a comprehensive evidence management system for tracking compliance documentation:
+
+### Features
+
+- Upload and store compliance evidence files for specific controls
+- Track metadata including upload date, expiration date, and status
+- View evidence status with color-coded indicators (Current, Pending Review, Expired)
+- Download evidence files securely
+- Add, update, and delete evidence with proper access controls
+- Organize evidence by control for easy compliance verification
+
+### File Support
+
+- Supported file types include PDF, Word documents, Excel spreadsheets, images, and text files
+- Each evidence item tracks file size, type, and original filename
+- Optional expiration dates to manage evidence lifecycle
+
+### Access
+
+Evidence management is accessible from each control's detail page via the "Manage Evidence" button.
 
 ## Troubleshooting
 

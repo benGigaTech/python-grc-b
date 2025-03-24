@@ -10,6 +10,7 @@ from app.models.control import Control
 from app.services.audit import add_audit_log
 from app.services.storage import save_evidence_file, get_evidence_file_path, delete_evidence_file
 from app.utils.date import is_date_valid, format_date
+from app import limiter
 import math
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,7 @@ def list_evidence(control_id):
 
 @evidence_bp.route('/control/<control_id>/evidence/add', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per hour")
 def add_evidence(control_id):
     """Add new evidence for a control."""
     try:
@@ -164,6 +166,7 @@ def add_evidence(control_id):
 
 @evidence_bp.route('/evidence/<evidence_id>/download')
 @login_required
+@limiter.limit("30 per hour")
 def download_evidence(evidence_id):
     """Download evidence file."""
     try:
@@ -205,6 +208,7 @@ def download_evidence(evidence_id):
 
 @evidence_bp.route('/evidence/<evidence_id>/delete', methods=['POST'])
 @login_required
+@limiter.limit("10 per hour")
 def delete_evidence(evidence_id):
     """Delete evidence."""
     try:
@@ -244,6 +248,7 @@ def delete_evidence(evidence_id):
 
 @evidence_bp.route('/evidence/<evidence_id>/update', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per hour")
 def update_evidence(evidence_id):
     """Update evidence metadata."""
     try:

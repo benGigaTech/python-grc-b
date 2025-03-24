@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set Up Two-Factor Authentication</title>
+
+    <!-- JQuery (required for Bootstrap) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    
+    <!-- Bootstrap CSS and JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
+    
+    <!-- Custom styles -->
+    <style>
+        /* --- Base Styles --- */
+        body {
+            background-color: #f5f7fa; /* Light gray-blue background */
+            color: #334155; /* Dark gray-blue for text */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        a {
+            color: #3b82f6; /* Bright blue for links */
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        a:hover {
+            color: #1d4ed8; /* Darker blue on hover */
+            text-decoration: underline;
+        }
+
+        h1, h2, h3 {
+            color: #1e40af; /* Navy blue headings */
+            margin-bottom: 0.8em;
+            font-weight: 600;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid #dbeafe; /* Very light blue border */
+            padding-bottom: 0.3em;
+        }
+
+        /* --- Flash Messages --- */
+        .flash-messages {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0 20px;
+            margin-bottom: 20px;
+        }
+
+        .flash-message {
+            padding: 14px 20px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+            font-weight: 500;
+            border-left: 4px solid transparent;
+        }
+
+        .flash-success {
+            background-color: #ecfdf5; /* Light green */
+            border-color: #10b981; /* Medium green */
+            color: #065f46; /* Dark green for text */
+        }
+
+        .flash-danger {
+            background-color: #fef2f2; /* Light red */
+            border-color: #ef4444; /* Medium red */
+            color: #991b1b; /* Dark red for text */
+        }
+
+        .flash-warning {
+            background-color: #fffbeb; /* Light yellow */
+            border-color: #f59e0b; /* Medium yellow */
+            color: #92400e; /* Dark yellow/brown for text */
+        }
+
+        /* --- Table Styles --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: white;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e2e8f0;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #dbeafe; /* Very light blue header */
+            color: #1e40af; /* Navy blue text */
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc; /* Very light gray-blue */
+        }
+
+        tr:hover {
+            background-color: #f1f5f9; /* Slightly darker on hover */
+        }
+
+        .past-due {
+            background-color: #fef2f2; /* Light red */
+            color: #991b1b; /* Dark red */
+            font-weight: 500;
+        }
+
+        .upcoming {
+            background-color: #ecfdf5; /* Light green */
+            color: #065f46; /* Dark green */
+            font-weight: 500;
+        }
+
+        .invalid-date {
+            background-color: #fffbeb; /* Light yellow */
+            color: #92400e; /* Dark yellow/brown */
+            font-weight: 500;
+        }
+
+        .completed {
+            background-color: #f0f9ff; /* Very light blue */
+            color: #0c4a6e; /* Dark blue */
+            font-weight: 500;
+        }
+
+        /* --- Form Element Styles --- */
+        input[type="text"],
+        input[type="password"],
+        input[type="email"],
+        input[type="date"],
+        textarea,
+        select {
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            background-color: white;
+            color: #334155;
+            width: 100%;
+            box-sizing: border-box;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            font-size: 16px;
+            display: block;
+            margin-bottom: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus,
+        input[type="email"]:focus,
+        input[type="date"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #1e40af;
+        }
+
+        /*--- Task List Styles ---*/
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task-item {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            background-color: white;
+            border-left: 4px solid #94a3b8;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .task-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .task-description {
+            font-weight: 600;
+            flex-grow: 1;
+            margin-right: 15px;
+            color: #334155;
+        }
+
+        .task-details {
+            font-size: 0.9em;
+            margin-right: 15px;
+            flex-grow: 1;
+            color: #64748b;
+        }
+
+        .task-actions {
+            white-space: nowrap;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .open {
+            border-left-color: #94a3b8; /* Slate gray */
+        }
+
+        .pending {
+            border-left-color: #f59e0b; /* Amber */
+            background-color: #fffbeb;
+        }
+
+        .completed {
+            border-left-color: #10b981; /* Emerald */
+            background-color: #ecfdf5;
+        }
+
+        /* --- Button Styles --- */
+        .button-link,
+        .form-button {
+            background-color: #3b82f6; /* Bright blue */
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            font-size: 15px;
+            transition: background-color 0.2s, transform 0.1s;
+            line-height: 1.4;
+        }
+
+        .button-link:hover,
+        .form-button:hover {
+            background-color: #2563eb; /* Slightly darker blue */
+            text-decoration: none;
+            transform: translateY(-1px);
+        }
+
+        .button-link:active,
+        .form-button:active {
+            transform: translateY(0);
+        }
+
+        .button-link.secondary,
+        .form-button.secondary {
+            background-color: #e2e8f0; /* Light gray */
+            color: #334155; /* Dark gray text */
+        }
+
+        .button-link.secondary:hover,
+        .form-button.secondary:hover {
+            background-color: #cbd5e1; /* Slightly darker gray */
+        }
+
+        .button-link.danger,
+        .form-button.danger {
+            background-color: #ef4444; /* Red */
+        }
+
+        .button-link.danger:hover,
+        .form-button.danger:hover {
+            background-color: #dc2626; /* Darker red */
+        }
+
+        form.inline-form {
+            display: inline;
+        }
+
+        /* --- Header --- */
+        .site-header {
+            background-color: #1e40af; /* Navy blue header */
+            color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            width: 100%;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo a {
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo a:hover {
+            text-decoration: none;
+            color: white;
+        }
+
+        .logo a:before {
+            content: "🔒"; /* Lock emoji for security theme */
+            margin-right: 8px;
+            font-size: 24px;
+        }
+
+        /* --- Navigation Bar --- */
+        .navbar {
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+        }
+
+        .navbar-left {
+            display: flex;
+            gap: 1.2rem;
+        }
+
+        .navbar a {
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .navbar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+        }
+
+        .navbar span {
+            color: rgba(255, 255, 255, 0.8);
+            margin-right: 10px;
+        }
+
+        .navbar .button-link {
+            background-color: #3b82f6; /* Bright blue */
+            font-weight: 500;
+            padding: 8px 12px;
+        }
+
+        .navbar .button-link:hover {
+            background-color: #2563eb; /* Slightly darker blue */
+        }
+
+        /* --- Main Content Area --- */
+        main {
+            padding: 25px;
+            flex-grow: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* --- Footer --- */
+        footer {
+            text-align: center;
+            padding: 20px;
+            background-color: #1e40af; /* Navy blue footer */
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: underline;
+        }
+
+        footer a:hover {
+            text-decoration: none;
+        }
+
+        /* --- Form Container Styles --- */
+        .form-container {
+            max-width: 600px;
+            margin: 20px 0;
+            padding: 25px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* --- Top Controls Layout --- */
+        .top-controls {
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        /* --- Sort Link Styles --- */
+        .sort-links a {
+            color: #3b82f6;
+            margin: 0 5px;
+            font-weight: normal;
+            text-decoration: none;
+        }
+
+        .sort-links a.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+
+        .sort-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* --- Pagination --- */
+        .pagination {
+            margin-top: 25px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .pagination a {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .pagination a:hover {
+            background-color: #2563eb;
+            text-decoration: none;
+        }
+
+        .pagination span {
+            color: #334155;
+            font-weight: 500;
+        }
+
+        /* Adjustments for smaller screens */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .navbar {
+                margin-top: 15px;
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .navbar-left {
+                margin-bottom: 10px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .top-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .form-container {
+                padding: 15px;
+                margin: 10px 0;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        /* Dropdown styling */
+        .dropdown {
+            position: relative;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .dropdown-toggle::after {
+            content: "▼";
+            font-size: 9px;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            background-color: rgb(255, 255, 255);
+            min-width: 180px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            border-radius: 4px;
+            z-index: 1000;
+            top: 100%;
+            left: 0;
+            border: 1px solid #dbeafe;
+            padding: 5px 0;
+            margin-top: 2px;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 10px 15px;
+            color: #fcf7f7;
+            text-decoration: none;
+            transition: background-color 0.2s;
+            font-weight: 500;
+            border-left: 3px solid transparent;
+        }
+
+        .dropdown-item:hover {
+            background-color: #9da8b3;
+            color: #1e40af;
+            text-decoration: none;
+            border-left: 3px solid #3b82f6;
+        }
+
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+
+        /* make sure dropdown toggle looks like other navbar links */
+        .navbar .dropdown-toggle {
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+            font-size: 15px;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .navbar .dropdown-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <div class="header-content">
+            <div class="logo">
+                <a href="/dashboard">CMMC Compliance Tracker</a>
+            </div>
+            <nav class="navbar">
+                <div class="navbar-left">
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/">Controls</a>
+                    <a href="/calendar">Calendar</a>
+                    <a href="/reports">Reports</a>
+                    
+                    
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle">Admin</a>
+                        <div class="dropdown-menu">
+                            <a href="/admin/dashboard" class="dropdown-item" style="color: rgb(30, 64, 175);">Admin Dashboard</a>
+                            <a href="/admin/users" class="dropdown-item" style="color: rgb(30, 64, 175);">Manage Users</a>
+                            <a href="/admin/users/create" class="dropdown-item" style="color: rgb(30, 64, 175);">Create User</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div>
+                    
+                    <div class="dropdown">
+                        <a href="#" class="dropdown-toggle">admin</a>
+                        <div class="dropdown-menu">
+                            <a href="/profile" class="dropdown-item" style="color: rgb(30, 64, 175);">Profile</a>
+                            
+                            <a href="/admin/dashboard" class="dropdown-item" style="color: rgb(30, 64, 175);">Admin Dashboard</a>
+                            
+                            <a href="/logout" class="dropdown-item" style="color: rgb(30, 64, 175);">Logout</a>
+                        </div>
+                    </div>
+                    
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        
+          
+        
+
+        
+<h1>Set Up Two-Factor Authentication</h1>
+
+<div class="form-container">
+    <div class="setup-steps">
+        <div class="step">
+            <h3>Step 1: Scan QR Code</h3>
+            <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):</p>
+            <div class="qr-container">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAcIAAAHCAQAAAABUY/ToAAADj0lEQVR4nO2cQW7cOBBFf4UEvJSAHMBHoW6QIxk5km8gHaUPEEBcDkDhz6JIiWo7s0jcsLvn10JQN/VACSiQVb9IGvFntnz7QxAQKVKkSJEiRYr8eqRVi36HZQTMxq3+N+UIILenpk9+W5FfiwRJEokkuQaSLLVh9ksg5+FobQ/P9/WdIm9P5ja+LCNAroC9kASwmU3ZDABgZvHj+hT5oGS6RGAZA/mzzVucB9Km2/Up8vFIe2EBMJBIKwDk+PahL/O2Ij+ZbM4xEEAGsPwokcjfPSoiMoDEetcLkvf1nSJvR9aYulog0vrbS3tKMbXIk/FsdQYjyRmBwJGXnU0+JPJEuhY05egZfbPNkFhgLxezKhIBsOlD+hT5KKT7BZGfiOW5wIBYCGwRGH5FAlvkMgJE3qw+/GlvK/LrkjYB8JEmrVUG4uzq9BOBobhwBBxZ/j1+p8hbkC0eWqsM5HL0PBQgsV5cu04uYAfp1CKvrEXSxdVppDW4I3k2VhsCa6A0qNYh8tqO3J7zULxA5qOP/xzqOFRLZWsbueRDIptVjxjoebyPQz6X7SXYKg21wUjjkMiTNb2n1HhobhGPz1v1kVbL9+lOPiTyDWk2BtrkxfvNvECWLrGWW20EAIRT4fUev1PkLciqDy2Tue5jAECgABj+MSLHgvQaQWAzAiVKHxL5HplYgMUiXAEyM6v60G6LPRHLGKQPibyylpeFvVRW2upFhE44anKRcnuR75KeiHXLhIbS36WLeYzEn+OH9SnyUciubn9VrW8i0aFiF1TJUeOQyN4O7bAJiCfP6cscQBWw5UMi35LLcx1kbAJgEzZfSl0X4XfLPmrx/k6/U+QNyBYB5Sca8ggs4y//x5fBug2EpdcRXJ4J+9s+RT4Wea6X9UFRla0HXp/qoHhI5Nn63B7AUZ73ugYQWiUER3gkHxLZWUvJyqksxl0QWkN/t7fKh0Tu1vkLALRd03WbdFWKdrkotQ3T8iGRu/Fsvb90GxX3Wj40Dol8lzzO/eCc4ynOzmY1RvIEX/UykdfWSdTdyR4rAA+n137lmXRqke/YSacO3cqz1toWWrsNbdKTD4n8L/JYnQ/kCJv2hvlmfYp8GJK8RNiEQK/R111lNfOvO14/uE+R901en/thaS6+p5WpzWlE/k4sU2B1qb/sU+RjkW/P/fBaB3Cq5feHOUinFnky0xnnIkWKFClSpMj/OfkvUqUwg2z2V0MAAAAASUVORK5CYII=" alt="QR Code for Two-Factor Authentication">
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Manual Setup (if needed)</h3>
+            <p>If you can't scan the QR code, enter this code manually in your authenticator app:</p>
+            <div class="secret-key">
+                <code>24V4V6FJDQSFTX6XEI4N6QEOZFMPR4BF</code>
+                <button type="button" onclick="copySecret()" class="copy-button">Copy</button>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Verify Setup</h3>
+            <p>Enter the 6-digit code from your authenticator app to verify the setup:</p>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="ImRiMDRhMTYyMDllMjZmM2QzYjA2NzIyNWRhMjMzYmY4OWM2OTZkMjki.Z-FzSg.2kVqFRt8_chdYFbyFL0YN8ORnFg">
+                <input type="hidden" name="mfa_secret" value="24V4V6FJDQSFTX6XEI4N6QEOZFMPR4BF">
+                <div>
+                    <label for="code">Authentication Code:</label><br>
+                    <input type="text" id="code" name="code" required inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+                </div>
+                <div class="button-group">
+                    <input type="submit" value="Verify and Enable" class="form-button">
+                    <a href="/profile" class="button-link secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    </main>
+
+    <footer>
+        &copy; <script>document.write(new Date().getFullYear())</script> CMMC Compliance Tracker | 
+        Version 1.0 | <a href="#" onclick="alert('Contact your system administrator for support.')">Support</a>
+    </footer>
+</body>
+</html>

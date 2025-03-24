@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<h1>Manage Two-Factor Authentication</h1>
+
+<div class="form-container">
+    <div class="status-banner status-success">
+        <strong>Two-factor authentication is enabled for your account.</strong>
+    </div>
+    
+    <div class="mfa-sections">
+        <div class="mfa-section">
+            <h2>Backup Codes</h2>
+            <p>If you lose access to your authenticator app, you can use one of these backup codes to access your account. Each code can only be used once.</p>
+            
+            <div class="backup-codes">
+                {% if backup_codes %}
+                <ul>
+                    {% for code in backup_codes %}
+                    <li>{{ code }}</li>
+                    {% endfor %}
+                </ul>
+                <div class="code-actions">
+                    <button type="button" onclick="printCodes()" class="form-button secondary">Print Codes</button>
+                    <button type="button" onclick="copyCodes()" class="form-button secondary">Copy Codes</button>
+                </div>
+                {% else %}
+                <p>No backup codes available.</p>
+                {% endif %}
+            </div>
+            
+            <h3>Regenerate Backup Codes</h3>
+            <p>Generate new backup codes. This will invalidate all existing backup codes.</p>
+            <form method="post" action="{{ url_for('profile.regenerate_backup_codes') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label for="password_regen">Enter your password to continue:</label><br>
+                    <input type="password" id="password_regen" name="password" required>
+                </div>
+                <div>
+                    <input type="submit" value="Regenerate Backup Codes" class="form-button">
+                </div>
+            </form>
+        </div>
+        
+        <div class="mfa-section">
+            <h2>Disable Two-Factor Authentication</h2>
+            <p>Warning: Disabling two-factor authentication will make your account less secure.</p>
+            <form method="post" action="{{ url_for('profile.disable_mfa') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div>
+                    <label for="password_disable">Enter your password to continue:</label><br>
+                    <input type="password" id="password_disable" name="password" required>
+                </div>
+                <div>
+                    <input type="submit" value="Disable Two-Factor Authentication" class="form-button danger">
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="button-group">
+        <a href="{{ url_for('profile.view_profile') }}" class="button-link">Back to Profile</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyCodes() {
+    const codeElements = document.querySelectorAll('.backup-codes li');
+    const codes = Array.from(codeElements).map(el => el.textContent.trim()).join('\n');
+    
+    navigator.clipboard.writeText(codes).then(() => {
+        alert('Backup codes copied to clipboard');
+    });
+}
+
+function printCodes() {
+    const codeElements = document.querySelectorAll('.backup-codes li');
+    const codes = Array.from(codeElements).map(el => el.textContent.trim());
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>Two-Factor Authentication Backup Codes</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h1 { font-size: 18px; }
+                ul { padding-left: 20px; }
+                li { margin-bottom: 5px; font-family: monospace; font-size: 16px; }
+                .warning { color: #991b1b; margin-top: 20px; }
+            </style>
+        </head>
+        <body>
+            <h1>Two-Factor Authentication Backup Codes</h1>
+            <p>Each code can only be used once.</p>
+            <ul>
+                ${codes.map(code => `<li>${code}</li>`).join('')}
+            </ul>
+            <p class="warning">Keep these codes in a safe place!</p>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .mfa-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .mfa-section {
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .mfa-section:last-child {
+        border-bottom: none;
+    }
+    
+    .status-banner {
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+    }
+    
+    .status-success {
+        background-color: #ecfdf5;
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+    
+    .backup-codes {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 15px 0;
+    }
+    
+    .backup-codes ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        padding-left: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .backup-codes li {
+        font-family: monospace;
+        font-size: 16px;
+        background-color: white;
+        padding: 8px;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .code-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .button-group {
+        margin-top: 20px;
+    }
+</style>
+{% endblock %} 

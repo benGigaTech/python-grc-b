@@ -38,6 +38,22 @@
             <a href="{{ url_for('admin.users') }}" class="button-link cancel">Cancel</a>
         </div>
     </form>
+    
+    <!-- MFA Status Section -->
+    <div class="mfa-section">
+        <h3>Two-Factor Authentication Status</h3>
+        <p>
+            <strong>Status:</strong> {{ "Enabled" if user.mfa_enabled else "Disabled" }}
+        </p>
+        
+        {% if user.mfa_enabled %}
+        <form action="{{ url_for('admin.admin_reset_mfa', user_id=user.userid) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="button-link warning">Reset MFA</button>
+            <p><small>This will disable MFA for the user. They will need to set it up again.</small></p>
+        </form>
+        {% endif %}
+    </div>
 </div>
 
 <style>
@@ -83,6 +99,35 @@
     
     .cancel {
         background-color: #6c757d;
+    }
+    
+    .mfa-section {
+        margin-top: 30px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        border-left: 4px solid #6c757d;
+    }
+    
+    .mfa-status {
+        font-size: 1.1em;
+        padding: 5px 0;
+    }
+    
+    .mfa-status.enabled {
+        color: #28a745;
+    }
+    
+    .mfa-status.disabled {
+        color: #6c757d;
+    }
+    
+    .warning {
+        background-color: #dc3545;
+    }
+    
+    .mfa-note {
+        margin-top: 10px;
     }
 </style>
 {% endblock %}

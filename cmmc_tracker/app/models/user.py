@@ -1,14 +1,10 @@
 """User model for the CMMC Tracker application."""
 
 import logging
+import json
+import random
+import string
 from datetime import datetime, timezone, timedelta
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import UserMixin
-from app.services.database import get_by_id, insert, update, execute_query
-from app.utils.security import generate_reset_token
-
-import logging
-from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app.services.database import get_by_id, insert, update, execute_query
@@ -19,7 +15,8 @@ logger = logging.getLogger(__name__)
 class User(UserMixin):
     """User model class."""
     
-    def __init__(self, id, username, password_hash, is_admin=0, email=None, reset_token=None, token_expiration=None):
+    def __init__(self, id, username, password_hash, is_admin=0, email=None, reset_token=None, 
+                 token_expiration=None, mfa_enabled=False, mfa_secret=None, mfa_backup_codes=None):
         self.id = id
         self.username = username
         self.password = password_hash
@@ -27,6 +24,9 @@ class User(UserMixin):
         self.email = email
         self.reset_token = reset_token
         self.token_expiration = token_expiration
+        self.mfa_enabled = mfa_enabled
+        self.mfa_secret = mfa_secret
+        self.mfa_backup_codes = mfa_backup_codes
         
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
@@ -63,7 +63,136 @@ class User(UserMixin):
         
         self.reset_token = None
         self.token_expiration = None
-
+        
+    def enable_mfa(self, secret_key):
+        """
+        Enable MFA for the user and store the secret key.
+        
+        Args:
+            secret_key: The TOTP secret key
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Generate backup codes
+            backup_codes = self._generate_backup_codes()
+            backup_codes_json = json.dumps(backup_codes)
+            
+            # Update database
+            update('users', 'userid', self.id, {
+                'mfa_enabled': True,
+                'mfa_secret': secret_key,
+                'mfa_backup_codes': backup_codes_json
+            })
+            
+            # Update object properties
+            self.mfa_enabled = True
+            self.mfa_secret = secret_key
+            self.mfa_backup_codes = backup_codes_json
+            
+            logger.info(f"MFA enabled for user {self.username}")
+            return True
+        except Exception as e:
+            logger.error(f"Error enabling MFA for user {self.username}: {e}")
+            return False
+    
+    def disable_mfa(self):
+        """
+        Disable MFA for the user.
+        
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        try:
+            # Update database
+            update('users', 'userid', self.id, {
+                'mfa_enabled': False,
+                'mfa_secret': None,
+                'mfa_backup_codes': None
+            })
+            
+            # Update object properties
+            self.mfa_enabled = False
+            self.mfa_secret = None
+            self.mfa_backup_codes = None
+            
+            logger.info(f"MFA disabled for user {self.username}")
+            return True
+        except Exception as e:
+            logger.error(f"Error disabling MFA for user {self.username}: {e}")
+            return False
+    
+    def verify_backup_code(self, code):
+        """
+        Verify and consume a backup code.
+        
+        Args:
+            code: The backup code to verify
+            
+        Returns:
+            bool: True if code is valid, False otherwise
+        """
+        if not self.mfa_backup_codes:
+            return False
+        
+        try:
+            backup_codes = json.loads(self.mfa_backup_codes)
+            
+            if code in backup_codes:
+                # Remove the used code
+                backup_codes.remove(code)
+                
+                # Update database
+                backup_codes_json = json.dumps(backup_codes)
+                update('users', 'userid', self.id, {
+                    'mfa_backup_codes': backup_codes_json
+                })
+                
+                # Update object property
+                self.mfa_backup_codes = backup_codes_json
+                
+                logger.info(f"Backup code used for user {self.username}")
+                return True
+            
+            return False
+        except Exception as e:
+            logger.error(f"Error verifying backup code for user {self.username}: {e}")
+            return False
+    
+    def _generate_backup_codes(self, count=10, length=8):
+        """
+        Generate backup codes for MFA.
+        
+        Args:
+            count: Number of codes to generate
+            length: Length of each code
+            
+        Returns:
+            list: List of backup codes
+        """
+        codes = []
+        for _ in range(count):
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+            codes.append(code)
+        return codes
+    
+    def get_backup_codes(self):
+        """
+        Get the user's backup codes.
+        
+        Returns:
+            list: List of backup codes or empty list if none
+        """
+        if not self.mfa_backup_codes:
+            return []
+        
+        try:
+            return json.loads(self.mfa_backup_codes)
+        except Exception as e:
+            logger.error(f"Error parsing backup codes for user {self.username}: {e}")
+            return []
+    
     @classmethod
     def get_by_id(cls, user_id):
         """
@@ -84,7 +213,10 @@ class User(UserMixin):
                 user_data['isadmin'],
                 user_data['email'],
                 user_data['resettoken'],
-                user_data['tokenexpiration']
+                user_data['tokenexpiration'],
+                user_data.get('mfa_enabled', False),
+                user_data.get('mfa_secret'),
+                user_data.get('mfa_backup_codes')
             )
         return None
 
@@ -109,7 +241,10 @@ class User(UserMixin):
                 user_data['isadmin'],
                 user_data['email'],
                 user_data['resettoken'],
-                user_data['tokenexpiration']
+                user_data['tokenexpiration'],
+                user_data.get('mfa_enabled', False),
+                user_data.get('mfa_secret'),
+                user_data.get('mfa_backup_codes')
             )
         return None
 
@@ -134,7 +269,10 @@ class User(UserMixin):
                 user_data['isadmin'],
                 user_data['email'],
                 user_data['resettoken'],
-                user_data['tokenexpiration']
+                user_data['tokenexpiration'],
+                user_data.get('mfa_enabled', False),
+                user_data.get('mfa_secret'),
+                user_data.get('mfa_backup_codes')
             )
         return None
 
@@ -171,7 +309,10 @@ class User(UserMixin):
                 user_data['isadmin'],
                 user_data['email'],
                 user_data['resettoken'],
-                user_data['tokenexpiration']
+                user_data['tokenexpiration'],
+                user_data.get('mfa_enabled', False),
+                user_data.get('mfa_secret'),
+                user_data.get('mfa_backup_codes')
             )
         except Exception as e:
             logger.error(f"Error creating user: {e}")

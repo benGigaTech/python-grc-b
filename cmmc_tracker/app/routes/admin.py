@@ -137,8 +137,8 @@ def users():
         return redirect(url_for('controls.index'))
     
     try:
-        # Get all users
-        users_query = 'SELECT userid, username, isadmin, email FROM users ORDER BY username'
+        # Get all users with MFA status
+        users_query = 'SELECT userid, username, isadmin, email, mfa_enabled FROM users ORDER BY username'
         users = execute_query(users_query, fetch_all=True)
         
         return render_template('admin_users.html', users=users)
@@ -230,8 +230,8 @@ def admin_edit_user(user_id):
         return redirect(url_for('controls.index'))
     
     try:
-        # Get user details
-        user_query = 'SELECT userid, username, isadmin, email FROM users WHERE userid = %s'
+        # Get user details including MFA status
+        user_query = 'SELECT userid, username, isadmin, email, mfa_enabled FROM users WHERE userid = %s'
         user = execute_query(user_query, (user_id,), fetch_one=True)
         
         if not user:
@@ -299,6 +299,57 @@ def admin_edit_user(user_id):
         logger.error(f"Error editing user: {e}")
         flash('An error occurred while editing the user.', 'danger')
         return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/reset-mfa/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+@limiter.limit("5 per hour")
+def admin_reset_mfa(user_id):
+    """Reset MFA for a user."""
+    # Log for debugging
+    logger.info(f"Reset MFA requested for user ID: {user_id} by {current_user.username}")
+    
+    if not current_user.is_admin:
+        logger.error(f"Non-admin user {current_user.username} attempted to reset MFA for user ID: {user_id}")
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    try:
+        # Get user details for audit log
+        user_query = 'SELECT username FROM users WHERE userid = %s'
+        user = execute_query(user_query, (user_id,), fetch_one=True)
+        logger.info(f"Found user: {user}")
+        
+        if not user:
+            logger.error(f"User ID {user_id} not found during MFA reset attempt")
+            flash('User not found.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        # Reset MFA
+        update_query = '''
+            UPDATE users
+            SET mfa_enabled = FALSE, mfa_secret = NULL, mfa_backup_codes = NULL
+            WHERE userid = %s
+        '''
+        execute_query(update_query, (user_id,), commit=True)
+        logger.info(f"MFA reset successful for user ID: {user_id}")
+        
+        # Add audit log
+        add_audit_log(
+            current_user.username,
+            'Reset MFA',
+            'User',
+            str(user_id),
+            f"MFA reset for user {user['username']}"
+        )
+        
+        flash(f"MFA has been reset for user {user['username']}.", 'success')
+        return redirect(url_for('admin.admin_edit_user', user_id=user_id))
+        
+    except Exception as e:
+        logger.error(f"Error resetting MFA for user ID {user_id}: {e}")
+        flash('An error occurred while resetting MFA.', 'danger')
+        return redirect(url_for('admin.admin_edit_user', user_id=user_id))
 
 @admin_bp.route('/users/delete/<int:user_id>', methods=['POST'])
 @login_required

@@ -25,6 +25,7 @@
             <th>Username</th>
             <th>Email</th>
             <th>Admin?</th>
+            <th>MFA</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -36,8 +37,14 @@
             <td>{{ user.email }}</td>
             <td>{{ "Yes" if user.isadmin else "No" }}</td>
             <td>
+                <span class="mfa-status-indicator {% if user.mfa_enabled %}enabled{% else %}disabled{% endif %}">
+                    {{ "Enabled" if user.mfa_enabled else "Disabled" }}
+                </span>
+            </td>
+            <td>
                 <a href="{{ url_for('admin.admin_edit_user', user_id=user.userid) }}" class="button-link">Edit</a>
                 <form action="{{ url_for('admin.admin_delete_user', user_id=user.userid) }}" method="post" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="form-button" onclick="return confirm('Are you sure you want to delete this user?');">Delete</button>
                 </form>
             </td>
@@ -66,6 +73,23 @@
     .admin-section p {
         margin-top: 10px;
         color: #666;
+    }
+    
+    .mfa-status-indicator {
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: bold;
+    }
+    
+    .mfa-status-indicator.enabled {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .mfa-status-indicator.disabled {
+        background-color: #f8f9fa;
+        color: #6c757d;
     }
 </style>
 {% endblock %}

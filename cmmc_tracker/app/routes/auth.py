@@ -1,13 +1,14 @@
 """Authentication routes for the CMMC Tracker application."""
 
 import logging
-from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app
+from flask import Blueprint, render_template, redirect, url_for, request, flash, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import login_manager, limiter
 from app.models.user import User
 from app.services.audit import add_audit_log
 from app.services.email import send_password_reset
+from app.services.mfa import verify_totp, generate_totp_secret, get_totp_uri, generate_qr_code
 from app.utils.security import sanitize_string, verify_reset_token, generate_reset_token, is_password_strong
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,14 @@ def login():
         user = User.get_by_username(username)
         
         if user and user.check_password(password):
+            # Check if MFA is enabled
+            if user.mfa_enabled:
+                # Store user ID in session for MFA verification
+                session['mfa_user_id'] = user.id
+                add_audit_log(username, 'Login MFA Required', 'User', user.id)
+                return redirect(url_for('auth.verify_mfa'))
+            
+            # No MFA required, log the user in
             login_user(user)
             flash('Logged in successfully!', 'success')
             # Log the login
@@ -44,6 +53,51 @@ def login():
             
     return render_template('login.html')
 
+@auth_bp.route('/verify-mfa', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
+def verify_mfa():
+    """Handle MFA verification."""
+    # Check if user ID is in session
+    if 'mfa_user_id' not in session:
+        flash('Please log in first.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    user = User.get_by_id(session['mfa_user_id'])
+    if not user:
+        session.pop('mfa_user_id', None)
+        flash('User not found. Please log in again.', 'danger')
+        return redirect(url_for('auth.login'))
+    
+    if request.method == 'POST':
+        # Check if the user is using a backup code
+        if 'backup_code' in request.form and request.form['backup_code']:
+            backup_code = request.form['backup_code'].strip().upper()
+            if user.verify_backup_code(backup_code):
+                # Log the user in
+                login_user(user)
+                session.pop('mfa_user_id', None)
+                flash('Logged in successfully with backup code!', 'success')
+                add_audit_log(user.username, 'Login with Backup Code', 'User', user.id)
+                return redirect(url_for('controls.index'))
+            else:
+                flash('Invalid backup code.', 'danger')
+                return render_template('verify_mfa.html')
+        
+        # Otherwise, verify TOTP
+        totp_code = request.form.get('totp_code', '').strip()
+        if verify_totp(user.mfa_secret, totp_code):
+            # Log the user in
+            login_user(user)
+            session.pop('mfa_user_id', None)
+            flash('Logged in successfully!', 'success')
+            add_audit_log(user.username, 'Login with MFA', 'User', user.id)
+            return redirect(url_for('controls.index'))
+        else:
+            flash('Invalid authentication code. Please try again.', 'danger')
+            add_audit_log(user.username, 'Failed MFA Verification', 'User', user.id)
+            
+    return render_template('verify_mfa.html')
+
 @auth_bp.route('/logout')
 @login_required
 def logout():
@@ -51,8 +105,7 @@ def logout():
     username = current_user.username
     user_id = current_user.id
     logout_user()
-    flash('Logged out successfully!', 'success')
-    # Log the logout
+    flash('You have been logged out.', 'success')
     add_audit_log(username, 'Logout', 'User', user_id)
     return redirect(url_for('auth.login'))
 

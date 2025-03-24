@@ -22,6 +22,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - **Interactive Calendar**: Visual calendar with paginated tables for control reviews and tasks
 - **Evidence Management**: Upload, track, and manage compliance evidence files with metadata
 - **User Management**: Role-based access control with admin capabilities
+- **Multi-Factor Authentication**: Time-based One-Time Password (TOTP) support with backup codes
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
 - **Email Notifications**: Automated alerts for task assignments and upcoming deadlines
@@ -136,6 +137,15 @@ Evidence management is accessible from each control's detail page via the "Manag
 5. **Email notification issues**:
    - Symptoms: No emails being sent for task notifications
    - Solution: Check mail server configuration in config.py and ensure the scheduler is running
+
+6. **Multi-Factor Authentication (MFA) issues**:
+   - Symptoms: QR code not displaying, unable to verify codes, or locked out of account
+   - Solutions:
+     - Ensure the pyotp library is installed and available
+     - Check that the Content Security Policy allows displaying the QR code image
+     - For locked accounts, administrators can reset MFA from the user edit page
+     - Verify that your authenticator app's time is synchronized correctly
+     - Use backup codes if you can't access your authenticator app
 
 ## Environment Variables
 

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Set Up Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<h1>Set Up Two-Factor Authentication</h1>
+
+<div class="form-container">
+    <div class="setup-steps">
+        <div class="step">
+            <h3>Step 1: Scan QR Code</h3>
+            <p>Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.):</p>
+            <div class="qr-container">
+                <img src="{{ qr_code }}" alt="QR Code for Two-Factor Authentication">
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 2: Manual Setup (if needed)</h3>
+            <p>If you can't scan the QR code, enter this code manually in your authenticator app:</p>
+            <div class="secret-key">
+                <code>{{ secret }}</code>
+                <button type="button" onclick="copySecret()" class="copy-button">Copy</button>
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>Step 3: Verify Setup</h3>
+            <p>Enter the 6-digit code from your authenticator app to verify the setup:</p>
+            <form method="post">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="mfa_secret" value="{{ secret }}">
+                <div>
+                    <label for="code">Authentication Code:</label><br>
+                    <input type="text" id="code" name="code" required inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+                </div>
+                <div class="button-group">
+                    <input type="submit" value="Verify and Enable" class="form-button">
+                    <a href="{{ url_for('profile.view_profile') }}" class="button-link secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copySecret() {
+    const secretText = document.querySelector('.secret-key code').textContent;
+    navigator.clipboard.writeText(secretText).then(() => {
+        const button = document.querySelector('.copy-button');
+        button.textContent = 'Copied!';
+        setTimeout(() => {
+            button.textContent = 'Copy';
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .setup-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
+    }
+    
+    .step {
+        padding-bottom: 20px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .step:last-child {
+        border-bottom: none;
+    }
+    
+    .qr-container {
+        text-align: center;
+        background-color: white;
+        padding: 15px;
+        display: inline-block;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        margin: 10px 0;
+    }
+    
+    .qr-container img {
+        max-width: 200px;
+        height: auto;
+    }
+    
+    .secret-key {
+        background-color: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-family: monospace;
+        margin: 10px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .copy-button {
+        background-color: #e2e8f0;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.8em;
+    }
+    
+    .copy-button:hover {
+        background-color: #cbd5e1;
+    }
+    
+    .button-group {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+</style>
+{% endblock %} 

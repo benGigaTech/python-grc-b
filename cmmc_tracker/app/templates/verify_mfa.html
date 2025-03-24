@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Two-Factor Authentication{% endblock %}
+
+{% block content %}
+<h1>Two-Factor Authentication</h1>
+<div class="form-container">
+    <p>Please enter the verification code from your authenticator app.</p>
+    <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+            <label for="totp_code">Authentication Code:</label><br>
+            <input type="text" id="totp_code" name="totp_code" required autofocus inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+        </div>
+        <div>
+            <input type="submit" value="Verify" class="form-button">
+        </div>
+    </form>
+    
+    <hr>
+    <div>
+        <h2>Use Backup Code</h2>
+        <p>If you don't have access to your authenticator app, you can use a backup code instead.</p>
+        <form method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+                <label for="backup_code">Backup Code:</label><br>
+                <input type="text" id="backup_code" name="backup_code" placeholder="Enter backup code">
+            </div>
+            <div>
+                <input type="submit" value="Use Backup Code" class="form-button secondary">
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

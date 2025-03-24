@@ -58,7 +58,7 @@ def create_app(config_name=None):
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+        response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
         return response
     
     # Register blueprints
@@ -112,6 +112,7 @@ def register_blueprints(app):
     from app.routes.admin import admin_bp
     from app.routes.reports import reports_bp
     from app.routes.evidence import evidence_bp
+    from app.routes.profile import profile_bp
     
     # Register blueprints
     app.register_blueprint(auth_bp)
@@ -120,6 +121,7 @@ def register_blueprints(app):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(reports_bp)
     app.register_blueprint(evidence_bp)
+    app.register_blueprint(profile_bp)
 
 # Create a logger instance
 logger = logging.getLogger(__name__)

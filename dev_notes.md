@@ -24,6 +24,7 @@ This document provides comprehensive technical documentation of the CMMC Complia
 14. [Testing](#testing)
 15. [Database Migrations](#database-migrations)
 16. [Redis-Backed Rate Limiting](#redis-backed-rate-limiting)
+17. [Multi-Factor Authentication (MFA)](#multi-factor-authentication-mfa)
 
 ## Architecture Overview
 
@@ -1063,6 +1064,164 @@ Example: `LIMITS:LIMITER/172.20.0.1/auth.login/10/1/minute` indicates a limit of
 
 This Redis implementation ensures that rate limiting remains effective and persistent in production environments, protecting sensitive endpoints from abuse while maintaining application performance.
 
+## Multi-Factor Authentication (MFA)
+
+The application now supports Time-based One-Time Password (TOTP) multi-factor authentication to enhance security, particularly for administrator accounts.
+
+### MFA Implementation Details
+
+1. **Database Schema**:
+   - MFA-related columns have been added to the `users` table via the `04_mfa_migration.sql` migration:
+     - `mfa_enabled` (BOOLEAN): Indicates whether MFA is enabled for the user
+     - `mfa_secret` (TEXT): Stores the TOTP secret key
+     - `mfa_backup_codes` (TEXT): Stores backup codes as a JSON array for use when the authenticator app is unavailable
+
+2. **User Model**:
+   - The `User` class in `app/models/user.py` has been extended with MFA-related methods:
+     - `enable_mfa()`: Enables MFA and generates backup codes
+     - `disable_mfa()`: Disables MFA for the user
+     - `verify_backup_code()`: Verifies and consumes a backup code
+     - `get_backup_codes()`: Retrieves the user's backup codes
+
+3. **MFA Service**:
+   - MFA functionality is encapsulated in `app/services/mfa.py`:
+     - `generate_totp_secret()`: Generates a new TOTP secret key
+     - `get_totp_uri()`: Creates a URI for QR code generation
+     - `generate_qr_code()`: Generates a QR code as a base64-encoded image
+     - `verify_totp()`: Verifies a TOTP token
+
+4. **Authentication Flow**:
+   - Enhanced login process in `app/routes/auth.py`:
+     - If MFA is enabled, the user is redirected to the MFA verification page after password authentication
+     - The user must provide a valid TOTP code or backup code to complete login
+
+5. **User Profile Management**:
+   - New profile management routes in `app/routes/profile.py`:
+     - View profile information
+     - Change password with strength validation
+     - Set up MFA with QR code for authenticator apps
+     - Manage MFA settings (view backup codes, regenerate backup codes, disable MFA)
+
+6. **Admin MFA Management**:
+   - Added functionality for administrators to manage user MFA in `app/routes/admin.py`:
+     - View MFA status for all users in the user list
+     - Reset MFA for any user from the edit user page
+     - Audit logging of all MFA reset actions
+   - The MFA reset process:
+     - Disables MFA for the target user
+     - Clears the user's MFA secret and backup codes
+     - Records the action in the audit log
+     - Administrator is required to confirm the action
+
+### How to Use MFA
+
+1. **Enabling MFA**:
+   - Navigate to your profile page
+   - Click "Enable Two-Factor Authentication"
+   - Scan the QR code with an authenticator app (Google Authenticator, Authy, etc.)
+   - Enter the verification code from your app
+   - Save your backup codes in a secure location
+
+2. **Logging in with MFA**:
+   - Enter your username and password
+   - When prompted, enter the TOTP code from your authenticator app
+   - Alternatively, use a backup code if you don't have access to your authenticator app
+
+3. **Managing MFA**:
+   - View and print backup codes
+   - Regenerate backup codes (invalidates previous codes)
+   - Disable MFA if necessary (requires password confirmation)
+
+4. **Admin MFA Reset**:
+   - Administrators can reset MFA for any user:
+     - Navigate to Admin → Users
+     - Click "Edit" for the target user
+     - In the MFA Status Section, click "Reset MFA" if MFA is enabled
+     - The reset is immediate and does not require confirmation from the user
+     - The user will need to set up MFA again if required
+
+### Security Considerations
+
+1. **Backup Codes**:
+   - Each backup code can only be used once
+   - New backup codes can be generated, which invalidates all existing codes
+   - Backup codes are stored as a JSON array in the database
+
+2. **TOTP Implementation**:
+   - Uses the industry-standard TOTP algorithm (RFC 6238)
+   - 30-second time step for code generation
+   - 6-digit codes for compatibility with most authenticator apps
+
+3. **Protection Measures**:
+   - Rate limiting on MFA verification (10 attempts per minute)
+   - Rate limiting on MFA management operations (3 operations per hour)
+   - Rate limiting on admin MFA reset (5 resets per hour)
+   - Password confirmation required for sensitive operations like disabling MFA
+
+4. **Recovery Options**:
+   - Backup codes provide a fallback when the authenticator app is unavailable
+   - Administrators can disable MFA for users when needed via the admin interface
+   - The admin MFA reset feature provides a simple user support workflow
+
+### Troubleshooting MFA Issues
+
+1. **Synchronization Problems**:
+   - If TOTP codes are consistently rejected, check that your device's time is correctly synchronized
+   - Time drift on the authenticator device can cause validation failures
+
+2. **Lost Access**:
+   - If a user loses access to both their authenticator app and backup codes, an administrator can:
+     - Navigate to Admin → Users
+     - Click "Edit" for the user in question
+     - Use the "Reset MFA" button to disable MFA for the user
+     - Alternatively, connect to the database directly and update the user's record:
+       ```sql
+       UPDATE users SET mfa_enabled = false, mfa_secret = NULL, mfa_backup_codes = NULL WHERE username = 'username';
+       ```
+
+3. **QR Code Issues**:
+   - If the QR code doesn't scan properly, users can manually enter the secret key into their authenticator app
+   - The secret key is displayed on the setup page along with a copy button for convenience
+
+4. **Admin Reset Issues**:
+   - If the admin MFA reset fails:
+     - Check server logs for detailed error messages
+     - Verify that the administrator has proper permissions
+     - Make sure the rate limit for MFA resets hasn't been exceeded
+     - For persistent issues, use direct database access as a fallback
+
+### Implementation Details for Admin MFA Reset
+
+The admin MFA reset functionality is implemented in `app/routes/admin.py` with the following key components:
+
+1. **Route Definition**:
+   ```python
+   @admin_bp.route('/users/reset-mfa/<int:user_id>', methods=['POST'])
+   @login_required
+   @admin_required
+   @limiter.limit("5 per hour")
+   def admin_reset_mfa(user_id):
+       # Implementation details...
+   ```
+
+2. **Template Integration**:
+   - The MFA status and reset button are displayed in `admin_edit_user.html`
+   - The reset button appears only when MFA is enabled for the user
+
+3. **Database Update**:
+   - The reset process sets `mfa_enabled` to `false` and clears MFA-related fields
+   - SQL query:
+     ```sql
+     UPDATE users
+     SET mfa_enabled = FALSE, mfa_secret = NULL, mfa_backup_codes = NULL
+     WHERE userid = %s
+     ```
+
+4. **Security Measures**:
+   - Rate limiting restricts the reset function to 5 uses per hour
+   - Admin permission check ensures only authorized users can perform resets
+   - Comprehensive audit logging records all reset actions
+
 ---
 
 This documentation is intended to be a living document. As the application evolves, please keep it updated to reflect the current state of the codebase. 
@@ -1100,9 +1259,10 @@ In our recent security overhaul, we've implemented several critical improvements
 
 For future security enhancements, consider implementing:
 
-1. **Multi-Factor Authentication (MFA)**
-   - Add support for TOTP-based 2FA for admin accounts
-   - Implement email verification as a second factor
+1. **Account Lockout Policy**
+   - Implement automatic account lockout after multiple failed login attempts
+   - Add admin interface for managing locked accounts
+   - Add self-service unlock via email verification
 
 2. **Advanced Input Validation**
    - Replace the basic sanitize_string function with a more comprehensive solution

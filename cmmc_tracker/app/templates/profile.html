@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Your Profile{% endblock %}
+
+{% block content %}
+<h1>Your Profile</h1>
+
+<div class="form-container">
+    <h2>Account Information</h2>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email or 'Not set' }}</p>
+    <p><strong>Account Type:</strong> {{ 'Administrator' if user.is_admin else 'Standard User' }}</p>
+    <p><strong>Two-Factor Authentication:</strong> {{ 'Enabled' if user.mfa_enabled else 'Disabled' }}</p>
+    
+    <div class="button-group">
+        <a href="{{ url_for('profile.change_password') }}" class="button-link">Change Password</a>
+        
+        {% if user.mfa_enabled %}
+        <a href="{{ url_for('profile.manage_mfa') }}" class="button-link">Manage Two-Factor Authentication</a>
+        {% else %}
+        <a href="{{ url_for('profile.setup_mfa') }}" class="button-link">Enable Two-Factor Authentication</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .button-group {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+</style>
+{% endblock %} 

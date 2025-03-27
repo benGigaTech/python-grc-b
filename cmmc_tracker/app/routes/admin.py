@@ -1,10 +1,11 @@
 """Admin routes for the CMMC Tracker application."""
 
 import logging
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from flask import Blueprint, render_template, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from app.models.task import Task
+from app.models.user import User
 from app.services.database import execute_query
 from app.utils.date import parse_date, format_date
 from werkzeug.security import generate_password_hash
@@ -137,9 +138,43 @@ def users():
         return redirect(url_for('controls.index'))
     
     try:
-        # Get all users with MFA status
-        users_query = 'SELECT userid, username, isadmin, email, mfa_enabled FROM users ORDER BY username'
-        users = execute_query(users_query, fetch_all=True)
+        # Get all users with MFA status and account lockout info
+        users_query = '''
+            SELECT userid, username, isadmin, email, mfa_enabled, 
+                   failed_login_attempts, account_locked_until 
+            FROM users 
+            ORDER BY username
+        '''
+        users_data = execute_query(users_query, fetch_all=True)
+        
+        # Process the data to add a "locked" status
+        users = []
+        now = datetime.now().astimezone()  # Current time with timezone
+        
+        for user in users_data:
+            # Check if account is locked
+            is_locked = False
+            locked_until = user.get('account_locked_until')
+            
+            if locked_until and isinstance(locked_until, str):
+                try:
+                    locked_until_dt = datetime.fromisoformat(locked_until)
+                    is_locked = locked_until_dt > now
+                except (ValueError, TypeError):
+                    is_locked = False
+            elif locked_until:
+                is_locked = locked_until > now
+                
+            users.append({
+                'userid': user['userid'],
+                'username': user['username'],
+                'isadmin': user['isadmin'],
+                'email': user['email'],
+                'mfa_enabled': user['mfa_enabled'],
+                'failed_login_attempts': user['failed_login_attempts'] or 0,
+                'is_locked': is_locked,
+                'account_locked_until': locked_until
+            })
         
         return render_template('admin_users.html', users=users)
     
@@ -186,8 +221,8 @@ def create_user():
             # Create new user
             password_hash = generate_password_hash(password)
             insert_query = '''
-                INSERT INTO users (username, password, isadmin, email)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO users (username, password, isadmin, email, failed_login_attempts, account_locked_until)
+                VALUES (%s, %s, %s, %s, 0, NULL)
                 RETURNING userid
             '''
             user_id = execute_query(
@@ -198,18 +233,15 @@ def create_user():
             )[0]
             
             # Add audit log
-            now = date.today().isoformat()
-            audit_query = '''
-                INSERT INTO auditlogs (timestamp, username, action, objecttype, objectid, details)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            '''
-            execute_query(
-                audit_query,
-                (now, current_user.username, 'Create User', 'User', str(user_id), f'User {username} created'),
-                commit=True
+            add_audit_log(
+                current_user.username,
+                'Create User',
+                'User',
+                user_id,
+                f'Created user {username}'
             )
             
-            flash(f'User {username} created successfully.', 'success')
+            flash('User created successfully!', 'success')
             return redirect(url_for('admin.users'))
             
         except Exception as e:
@@ -224,77 +256,63 @@ def create_user():
 @admin_required
 @limiter.limit("10 per hour")
 def admin_edit_user(user_id):
-    """Edit an existing user."""
-    if not current_user.is_admin:
-        flash('You do not have permission to access this page.', 'danger')
-        return redirect(url_for('controls.index'))
-    
+    """Edit a user."""
     try:
-        # Get user details including MFA status
-        user_query = 'SELECT userid, username, isadmin, email, mfa_enabled FROM users WHERE userid = %s'
-        user = execute_query(user_query, (user_id,), fetch_one=True)
-        
+        # Get user data
+        user = User.get_by_id(user_id)
         if not user:
             flash('User not found.', 'danger')
             return redirect(url_for('admin.users'))
         
+        # Check if account is locked
+        is_account_locked, lockout_message = user.is_account_locked()
+        
         if request.method == 'POST':
-            # Get form data
             email = request.form.get('email')
+            password = request.form.get('password')
             is_admin = 1 if request.form.get('is_admin') else 0
-            new_password = request.form.get('password')
             
-            # Validate password strength if a new password is provided
-            if new_password and not is_password_strong(new_password):
-                flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
-                return render_template('admin_edit_user.html', user=user)
+            # Prepare update data
+            update_data = {
+                'email': email,
+                'isadmin': is_admin
+            }
+            
+            # Update password if provided
+            if password:
+                # Validate password strength
+                if not is_password_strong(password):
+                    flash('Password is not strong enough. It must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.', 'danger')
+                    return render_template('admin_edit_user.html', user=user.to_dict(), 
+                                          is_account_locked=is_account_locked, 
+                                          lockout_message=lockout_message)
+                
+                update_data['password'] = generate_password_hash(password)
             
             # Update user
-            if new_password:
-                # Update with new password
-                password_hash = generate_password_hash(new_password)
-                update_query = '''
-                    UPDATE users
-                    SET email = %s, isadmin = %s, password = %s
-                    WHERE userid = %s
-                '''
-                execute_query(
-                    update_query,
-                    (email, is_admin, password_hash, user_id),
-                    commit=True
-                )
-                
-                log_message = f"User {user['username']} updated (including password)"
-            else:
-                # Update without changing password
-                update_query = '''
-                    UPDATE users
-                    SET email = %s, isadmin = %s
-                    WHERE userid = %s
-                '''
-                execute_query(
-                    update_query,
-                    (email, is_admin, user_id),
-                    commit=True
-                )
-                
-                log_message = f"User {user['username']} updated (no password change)"
-            
-            # Add audit log
-            now = date.today().isoformat()
-            add_audit_log(
-                current_user.username,
-                'Update User',
-                'User',
-                str(user_id),
-                log_message
+            execute_query(
+                'UPDATE users SET email = %s, isadmin = %s' + (', password = %s' if password else '') + ' WHERE userid = %s',
+                tuple(list(update_data.values()) + [user_id]),
+                commit=True
             )
             
-            flash('User updated successfully.', 'success')
+            # Add audit log
+            add_audit_log(
+                current_user.username,
+                'Edit User',
+                'User',
+                user_id,
+                f'Edited user {user.username}'
+            )
+            
+            flash('User updated successfully!', 'success')
             return redirect(url_for('admin.users'))
         
-        return render_template('admin_edit_user.html', user=user)
-            
+        return render_template('admin_edit_user.html', 
+                              user=user.to_dict(), 
+                              is_account_locked=is_account_locked, 
+                              lockout_message=lockout_message)
+        
     except Exception as e:
         logger.error(f"Error editing user: {e}")
         flash('An error occurred while editing the user.', 'danger')
@@ -411,5 +429,38 @@ def send_test_notifications():
     except Exception as e:
         logger.error(f"Error sending test notifications: {e}")
         flash('An error occurred while sending test notifications.', 'danger')
+    
+    return redirect(url_for('admin.users'))
+
+@admin_bp.route('/users/unlock/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+@limiter.limit("10 per hour")
+def admin_unlock_account(user_id):
+    """Unlock a user account."""
+    try:
+        # Get the user
+        user = User.get_by_id(user_id)
+        if not user:
+            flash('User not found.', 'danger')
+            return redirect(url_for('admin.users'))
+        
+        # Unlock the account
+        user.unlock_account()
+        
+        # Log the action
+        add_audit_log(
+            current_user.username,
+            'Unlock Account',
+            'User',
+            user_id,
+            f'Unlocked account for user {user.username}'
+        )
+        
+        flash(f'Account for {user.username} has been unlocked.', 'success')
+        
+    except Exception as e:
+        logger.error(f"Error unlocking account: {e}")
+        flash('An error occurred while unlocking the account.', 'danger')
     
     return redirect(url_for('admin.users'))

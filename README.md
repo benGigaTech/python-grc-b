@@ -23,6 +23,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - **Evidence Management**: Upload, track, and manage compliance evidence files with metadata
 - **User Management**: Role-based access control with admin capabilities
 - **Multi-Factor Authentication**: Time-based One-Time Password (TOTP) support with backup codes
+- **Account Security**: Account lockout after multiple failed login attempts with admin unlock capability
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
 - **Email Notifications**: Automated alerts for task assignments and upcoming deadlines
@@ -113,6 +114,30 @@ The application includes a comprehensive evidence management system for tracking
 
 Evidence management is accessible from each control's detail page via the "Manage Evidence" button.
 
+## Security Features
+
+### Account Lockout Protection
+
+The application includes account lockout protection to mitigate brute force attacks:
+
+- Accounts are automatically locked after 5 consecutive failed login attempts
+- Lockout duration is configurable (default: 15 minutes)
+- Failed attempts are tracked for both password and MFA verification
+- Administrators can view locked accounts in the admin interface
+- Admins can manually unlock accounts when needed
+- Account lockout status appears clearly in the user management pages
+- Failed login attempts are reset after successful authentication
+- All lockout events are thoroughly logged in the audit trail
+
+### Multi-Factor Authentication
+
+The application supports industry-standard TOTP-based multi-factor authentication:
+
+- Time-based One-Time Password (TOTP) compatible with Google Authenticator, Authy, etc.
+- QR code generation for easy setup
+- Backup codes for emergency access
+- Administrator capability to reset MFA for users
+
 ## Troubleshooting
 
 ### Common Issues
@@ -146,6 +171,14 @@ Evidence management is accessible from each control's detail page via the "Manag
      - For locked accounts, administrators can reset MFA from the user edit page
      - Verify that your authenticator app's time is synchronized correctly
      - Use backup codes if you can't access your authenticator app
+
+7. **Account Lockout Issues**:
+   - Symptoms: User account locked or login unsuccessful after multiple attempts
+   - Solutions:
+     - Wait for the automatic lockout period to expire (default 15 minutes)
+     - Ask an administrator to manually unlock the account
+     - Check if account is locked in the admin user management interface
+     - Review audit logs for unauthorized login attempts
 
 ## Environment Variables
 

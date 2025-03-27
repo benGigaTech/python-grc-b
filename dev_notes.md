@@ -1255,30 +1255,138 @@ In our recent security overhaul, we've implemented several critical improvements
    - Added comprehensive audit logging for unauthorized access attempts
    - Enforced proper access control on all resource endpoints
 
+6. **Account Lockout System**
+   - Implemented automatic account lockout after multiple failed login attempts
+   - Configurable failed attempt threshold (default: 5 attempts)
+   - Configurable lockout duration (default: 15 minutes)
+   - Tracks failed attempts for both password and MFA verification
+   - Administrative interface for viewing and managing locked accounts
+   - Automatic unlocking after lockout period expires
+   - Comprehensive audit logging of all lockout events
+   - Reset of failed attempt counters upon successful authentication
+   - Database schema support with migration script for failure tracking
+
+## Account Lockout Implementation
+
+The account lockout system provides protection against brute force attacks by temporarily locking user accounts after multiple failed authentication attempts.
+
+### Key Components
+
+1. **Database Schema**:
+   - `failed_login_attempts`: Integer column in the users table tracking the number of failed attempts
+   - `account_locked_until`: Timestamp column indicating when the lockout period expires
+
+2. **Model Implementation** (`app/models/user.py`):
+   - `increment_failed_attempts()`: Increments the counter and locks account if threshold reached
+   - `is_account_locked()`: Checks if an account is currently locked
+   - `reset_failed_attempts()`: Resets counter after successful login
+   - `unlock_account()`: Manually unlocks an account (admin function)
+
+3. **Authentication Flow Integration** (`app/routes/auth.py`):
+   - Check for account lockout before password validation
+   - Increment failed attempts on invalid password
+   - Increment failed attempts on invalid MFA code
+   - Reset failed attempts on successful authentication
+   - Clear lockout status during password reset
+
+4. **Admin Interface** (`app/routes/admin.py` and templates):
+   - Display locked accounts in user list with visual indicators
+   - Show failed attempts count for all users
+   - Provide unlock button for manually unlocking accounts
+   - Enhanced user edit page with account status information
+   - Audit logging of all unlock actions
+
+### Configuration Constants
+
+The account lockout behavior is controlled by two constants in `app/models/user.py`:
+```python
+MAX_FAILED_ATTEMPTS = 5  # Number of failed attempts before lockout
+LOCKOUT_DURATION = 15    # Lockout duration in minutes
+```
+
+These can be adjusted based on security requirements and user experience considerations.
+
+### Database Migration
+
+The account lockout functionality requires two new columns in the users table, added via `05_account_lockout_migration.sql`:
+```sql
+-- Add column for tracking failed login attempts
+ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0;
+
+-- Add column for tracking when account will be unlocked
+ALTER TABLE users ADD COLUMN account_locked_until TIMESTAMPTZ DEFAULT NULL;
+```
+
+This migration is designed to be idempotent and can be safely reapplied.
+
+### User Experience
+
+From the user perspective:
+1. After 5 consecutive failed login attempts, their account becomes locked
+2. A clear message indicates the account is locked with approximate time remaining
+3. After the lockout period (15 minutes), the account is automatically unlocked
+4. Users can contact administrators for immediate unlocking if needed
+
+From the administrator perspective:
+1. The user list shows locked accounts with visual indicators
+2. Failed login attempts are displayed for all users
+3. The edit user page provides detailed account status
+4. Admins can manually unlock accounts with a single click
+5. All lockout and unlock events are recorded in the audit log
+
+### Security Considerations
+
+1. **Preventing Enumeration**: Login failure messages do not reveal whether the username exists
+2. **Audit Logging**: All lockout and unlock events are thoroughly logged
+3. **Admin Override**: Administrators can unlock accounts in case of legitimate lockouts
+4. **MFA Integration**: Failed MFA attempts also count toward the lockout threshold
+5. **Password Reset**: The password reset process will automatically unlock accounts
+
+### Future Enhancements
+
+Potential improvements to the account lockout system:
+1. Progressive timeouts for repeat offenders
+2. Email notifications when accounts are locked
+3. Self-service unlock via email verification
+4. IP-based tracking to detect distributed attacks
+5. More granular configuration options for different user types
+
+### Testing
+
+The account lockout system can be tested by:
+1. Attempting multiple incorrect logins for a user
+2. Verifying the account becomes locked after the threshold
+3. Testing that MFA failures contribute to the lockout threshold
+4. Verifying an admin can unlock the account
+5. Checking that the account automatically unlocks after the timeout period
+
+### Troubleshooting
+
+Common issues with the account lockout system:
+1. **Permanent Lockouts**: If a user remains locked after the timeout period, check the timestamp format in `account_locked_until`
+2. **Failed Unlock**: If admin unlock fails, check permissions and ensure the admin user has the admin flag set
+3. **Missing Lockout Information**: Ensure the migration has been applied to add the required columns
+4. **False Positives**: Consider adjusting the threshold if legitimate users are frequently locked
+
 ### Future Security Recommendations
 
 For future security enhancements, consider implementing:
 
-1. **Account Lockout Policy**
-   - Implement automatic account lockout after multiple failed login attempts
-   - Add admin interface for managing locked accounts
-   - Add self-service unlock via email verification
-
-2. **Advanced Input Validation**
+1. **Enhanced Input Validation**
    - Replace the basic sanitize_string function with a more comprehensive solution
    - Consider using a library like bleach for HTML sanitization
 
-3. **Enhanced Logging and Monitoring**
+2. **Enhanced Logging and Monitoring**
    - Implement centralized logging with structured data
    - Add alerting for suspicious activity
    - Consider integrating with a SIEM solution
 
-4. **Regular Security Scanning**
+3. **Regular Security Scanning**
    - Implement automated security scanning in the CI/CD pipeline
    - Regular dependency vulnerability checks
    - Periodic penetration testing
 
-5. **Server Hardening**
+4. **Server Hardening**
    - Implement more restrictive Content Security Policy
    - Add subnet restrictions for admin access
    - Consider implementing a Web Application Firewall (WAF)

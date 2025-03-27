@@ -28,7 +28,7 @@
         
         <div class="form-group checkbox-group">
             <label for="is_admin">
-                <input type="checkbox" id="is_admin" name="is_admin" {% if user.isadmin %}checked{% endif %}>
+                <input type="checkbox" id="is_admin" name="is_admin" {% if user.is_admin %}checked{% endif %}>
                 Admin User
             </label>
         </div>
@@ -39,6 +39,32 @@
         </div>
     </form>
     
+    <!-- Account Status Section -->
+    <div class="account-section {% if is_account_locked %}locked{% else %}unlocked{% endif %}">
+        <h3>Account Status</h3>
+        <p>
+            <strong>Status:</strong> 
+            {% if is_account_locked %}
+            <span class="status-locked">Locked</span>
+            {% else %}
+            <span class="status-active">Active</span>
+            {% endif %}
+        </p>
+        
+        {% if user.failed_login_attempts > 0 %}
+        <p><strong>Failed Login Attempts:</strong> {{ user.failed_login_attempts }}</p>
+        {% endif %}
+        
+        {% if is_account_locked %}
+        <p><strong>Reason:</strong> {{ lockout_message }}</p>
+        
+        <form action="{{ url_for('admin.admin_unlock_account', user_id=user.id) }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="button-link success">Unlock Account</button>
+        </form>
+        {% endif %}
+    </div>
+    
     <!-- MFA Status Section -->
     <div class="mfa-section">
         <h3>Two-Factor Authentication Status</h3>
@@ -47,7 +73,7 @@
         </p>
         
         {% if user.mfa_enabled %}
-        <form action="{{ url_for('admin.admin_reset_mfa', user_id=user.userid) }}" method="post">
+        <form action="{{ url_for('admin.admin_reset_mfa', user_id=user.id) }}" method="post">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="button-link warning">Reset MFA</button>
             <p><small>This will disable MFA for the user. They will need to set it up again.</small></p>
@@ -101,12 +127,36 @@
         background-color: #6c757d;
     }
     
-    .mfa-section {
+    .mfa-section,
+    .account-section {
         margin-top: 30px;
         padding: 15px;
         background-color: #f8f9fa;
         border-radius: 4px;
+    }
+    
+    .mfa-section {
         border-left: 4px solid #6c757d;
+    }
+    
+    .account-section.locked {
+        border-left: 4px solid #dc3545;
+        background-color: #f8d7da;
+    }
+    
+    .account-section.unlocked {
+        border-left: 4px solid #28a745;
+        background-color: #d4edda;
+    }
+    
+    .status-locked {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .status-active {
+        color: #28a745;
+        font-weight: bold;
     }
     
     .mfa-status {
@@ -124,6 +174,10 @@
     
     .warning {
         background-color: #dc3545;
+    }
+    
+    .success {
+        background-color: #28a745;
     }
     
     .mfa-note {

@@ -31,7 +31,27 @@ def login():
         
         user = User.get_by_username(username)
         
-        if user and user.check_password(password):
+        # Check if user exists
+        if not user:
+            # Don't reveal if username doesn't exist for security reasons
+            logger.warning(f"Login attempt with non-existent username: {username} from IP: {request.remote_addr}")
+            add_audit_log(username, 'Failed Login', 'User', '0', f"Failed login with non-existent username from IP: {request.remote_addr}")
+            flash('Invalid username or password.', 'danger')
+            return render_template('login.html')
+        
+        # Check if account is locked
+        is_locked, lockout_message = user.is_account_locked()
+        if is_locked:
+            logger.warning(f"Login attempt on locked account: {username} from IP: {request.remote_addr}")
+            add_audit_log(username, 'Failed Login - Locked Account', 'User', user.id, f"Login attempt on locked account from IP: {request.remote_addr}")
+            flash(f'This account is temporarily locked due to too many failed login attempts. {lockout_message}', 'danger')
+            return render_template('login.html')
+        
+        # Validate password
+        if user.check_password(password):
+            # Reset failed login attempts on successful login
+            user.reset_failed_attempts()
+            
             # Check if MFA is enabled
             if user.mfa_enabled:
                 # Store user ID in session for MFA verification
@@ -46,10 +66,19 @@ def login():
             add_audit_log(username, 'Login', 'User', user.id)
             return redirect(url_for('controls.index'))
         else:
+            # Increment failed login attempts
+            was_locked = user.increment_failed_attempts()
+            
             # Log failed login attempt
             logger.warning(f"Failed login attempt for username: {username} from IP: {request.remote_addr}")
-            add_audit_log(username, 'Failed Login', 'User', '0', f"Failed login from IP: {request.remote_addr}")
-            flash('Invalid username or password.', 'danger')
+            
+            if was_locked:
+                add_audit_log(username, 'Account Locked', 'User', user.id, f"Account locked after multiple failed login attempts from IP: {request.remote_addr}")
+                flash('This account has been temporarily locked due to too many failed login attempts.', 'danger')
+            else:
+                add_audit_log(username, 'Failed Login', 'User', user.id, f"Failed login from IP: {request.remote_addr}")
+                # Don't reveal that the password was wrong specifically
+                flash('Invalid username or password.', 'danger')
             
     return render_template('login.html')
 
@@ -68,11 +97,23 @@ def verify_mfa():
         flash('User not found. Please log in again.', 'danger')
         return redirect(url_for('auth.login'))
     
+    # Check if account is locked (could have been locked by admin during MFA verification)
+    is_locked, lockout_message = user.is_account_locked()
+    if is_locked:
+        session.pop('mfa_user_id', None)
+        logger.warning(f"MFA verification attempt on locked account: {user.username}")
+        add_audit_log(user.username, 'Failed MFA - Locked Account', 'User', user.id)
+        flash(f'This account is temporarily locked. {lockout_message}', 'danger')
+        return redirect(url_for('auth.login'))
+    
     if request.method == 'POST':
         # Check if the user is using a backup code
         if 'backup_code' in request.form and request.form['backup_code']:
             backup_code = request.form['backup_code'].strip().upper()
             if user.verify_backup_code(backup_code):
+                # Reset failed login attempts
+                user.reset_failed_attempts()
+                
                 # Log the user in
                 login_user(user)
                 session.pop('mfa_user_id', None)
@@ -80,12 +121,18 @@ def verify_mfa():
                 add_audit_log(user.username, 'Login with Backup Code', 'User', user.id)
                 return redirect(url_for('controls.index'))
             else:
+                # Don't increment failed attempts for backup code failures
+                # But do log the attempt
                 flash('Invalid backup code.', 'danger')
+                add_audit_log(user.username, 'Failed Backup Code', 'User', user.id)
                 return render_template('verify_mfa.html')
         
         # Otherwise, verify TOTP
         totp_code = request.form.get('totp_code', '').strip()
         if verify_totp(user.mfa_secret, totp_code):
+            # Reset failed login attempts
+            user.reset_failed_attempts()
+            
             # Log the user in
             login_user(user)
             session.pop('mfa_user_id', None)
@@ -93,8 +140,17 @@ def verify_mfa():
             add_audit_log(user.username, 'Login with MFA', 'User', user.id)
             return redirect(url_for('controls.index'))
         else:
-            flash('Invalid authentication code. Please try again.', 'danger')
-            add_audit_log(user.username, 'Failed MFA Verification', 'User', user.id)
+            # Increment failed login attempts
+            was_locked = user.increment_failed_attempts()
+            
+            if was_locked:
+                session.pop('mfa_user_id', None)
+                add_audit_log(user.username, 'Account Locked', 'User', user.id, "Account locked after multiple failed MFA attempts")
+                flash('This account has been temporarily locked due to too many failed authentication attempts.', 'danger')
+                return redirect(url_for('auth.login'))
+            else:
+                flash('Invalid authentication code. Please try again.', 'danger')
+                add_audit_log(user.username, 'Failed MFA Verification', 'User', user.id)
             
     return render_template('verify_mfa.html')
 
@@ -212,6 +268,9 @@ def reset_password(token):
         if user.set_password(password):
             # Clear the reset token
             user.clear_reset_token()
+            
+            # Reset failed login attempts and unlock account
+            user.unlock_account()
             
             # Log the password reset
             add_audit_log('SYSTEM', 'Reset Password', 'User', user.id)

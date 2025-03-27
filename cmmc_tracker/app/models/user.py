@@ -12,11 +12,16 @@ from app.utils.security import generate_reset_token
 
 logger = logging.getLogger(__name__)
 
+# Constants for account lockout
+MAX_FAILED_ATTEMPTS = 5  # Number of failed attempts before lockout
+LOCKOUT_DURATION = 15    # Lockout duration in minutes
+
 class User(UserMixin):
     """User model class."""
     
     def __init__(self, id, username, password_hash, is_admin=0, email=None, reset_token=None, 
-                 token_expiration=None, mfa_enabled=False, mfa_secret=None, mfa_backup_codes=None):
+                 token_expiration=None, mfa_enabled=False, mfa_secret=None, mfa_backup_codes=None,
+                 failed_login_attempts=0, account_locked_until=None):
         self.id = id
         self.username = username
         self.password = password_hash
@@ -27,6 +32,8 @@ class User(UserMixin):
         self.mfa_enabled = mfa_enabled
         self.mfa_secret = mfa_secret
         self.mfa_backup_codes = mfa_backup_codes
+        self.failed_login_attempts = failed_login_attempts
+        self.account_locked_until = account_locked_until
         
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
@@ -38,6 +45,86 @@ class User(UserMixin):
         update('users', 'userid', self.id, {'password': password_hash})
         self.password = password_hash
         return True
+    
+    def to_dict(self):
+        """Convert User object to a dictionary."""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'is_admin': self.is_admin,
+            'email': self.email,
+            'mfa_enabled': self.mfa_enabled,
+            'failed_login_attempts': self.failed_login_attempts,
+            'account_locked_until': self.account_locked_until
+        }
+    
+    def is_account_locked(self):
+        """
+        Check if the user account is currently locked.
+        
+        Returns:
+            bool: True if account is locked, False otherwise
+            str: Reason for lockout or None if not locked
+        """
+        if not self.account_locked_until:
+            return False, None
+            
+        now = datetime.now(timezone.utc)
+        
+        # If the lockout time has passed, unlock the account automatically
+        if self.account_locked_until < now:
+            self.unlock_account()
+            return False, None
+            
+        # Calculate remaining lockout time in minutes
+        remaining = (self.account_locked_until - now).total_seconds() / 60
+        return True, f"Account locked for {int(remaining)} more minutes"
+    
+    def increment_failed_attempts(self):
+        """
+        Increment the number of failed login attempts and lock account if needed.
+        
+        Returns:
+            bool: True if account was locked, False otherwise
+        """
+        self.failed_login_attempts += 1
+        
+        # Check if we need to lock the account
+        if self.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_DURATION)
+            update('users', 'userid', self.id, {
+                'failed_login_attempts': self.failed_login_attempts,
+                'account_locked_until': lockout_time.isoformat()
+            })
+            self.account_locked_until = lockout_time
+            logger.warning(f"Account {self.username} locked until {lockout_time} due to too many failed attempts")
+            return True
+        else:
+            # Just update the failed attempts count
+            update('users', 'userid', self.id, {
+                'failed_login_attempts': self.failed_login_attempts
+            })
+            return False
+    
+    def reset_failed_attempts(self):
+        """Reset failed login attempts counter on successful login."""
+        if self.failed_login_attempts > 0:
+            update('users', 'userid', self.id, {
+                'failed_login_attempts': 0,
+                'account_locked_until': None
+            })
+            self.failed_login_attempts = 0
+            self.account_locked_until = None
+    
+    def unlock_account(self):
+        """Manually unlock an account."""
+        update('users', 'userid', self.id, {
+            'failed_login_attempts': 0,
+            'account_locked_until': None
+        })
+        self.failed_login_attempts = 0
+        self.account_locked_until = None
+        logger.info(f"Account {self.username} unlocked")
         
     def generate_password_reset_token(self):
         """Generate a password reset token for the user."""
@@ -216,7 +303,9 @@ class User(UserMixin):
                 user_data['tokenexpiration'],
                 user_data.get('mfa_enabled', False),
                 user_data.get('mfa_secret'),
-                user_data.get('mfa_backup_codes')
+                user_data.get('mfa_backup_codes'),
+                user_data.get('failed_login_attempts', 0),
+                user_data.get('account_locked_until')
             )
         return None
 
@@ -244,7 +333,9 @@ class User(UserMixin):
                 user_data['tokenexpiration'],
                 user_data.get('mfa_enabled', False),
                 user_data.get('mfa_secret'),
-                user_data.get('mfa_backup_codes')
+                user_data.get('mfa_backup_codes'),
+                user_data.get('failed_login_attempts', 0),
+                user_data.get('account_locked_until')
             )
         return None
 
@@ -272,7 +363,9 @@ class User(UserMixin):
                 user_data['tokenexpiration'],
                 user_data.get('mfa_enabled', False),
                 user_data.get('mfa_secret'),
-                user_data.get('mfa_backup_codes')
+                user_data.get('mfa_backup_codes'),
+                user_data.get('failed_login_attempts', 0),
+                user_data.get('account_locked_until')
             )
         return None
 
@@ -299,7 +392,9 @@ class User(UserMixin):
                 'username': username,
                 'password': password_hash,
                 'isadmin': 1 if is_admin else 0,
-                'email': email
+                'email': email,
+                'failed_login_attempts': 0,
+                'account_locked_until': None
             })
             
             return User(
@@ -312,7 +407,9 @@ class User(UserMixin):
                 user_data['tokenexpiration'],
                 user_data.get('mfa_enabled', False),
                 user_data.get('mfa_secret'),
-                user_data.get('mfa_backup_codes')
+                user_data.get('mfa_backup_codes'),
+                user_data.get('failed_login_attempts', 0),
+                user_data.get('account_locked_until')
             )
         except Exception as e:
             logger.error(f"Error creating user: {e}")

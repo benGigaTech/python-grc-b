@@ -35,6 +35,34 @@ def reports():
         future_date = today + timedelta(days=365)
     
     try:
+        # Get locked accounts count
+        now = datetime.now().astimezone()  # Current time with timezone
+        locked_accounts_query = '''
+            SELECT COUNT(*) 
+            FROM users 
+            WHERE account_locked_until IS NOT NULL 
+            AND account_locked_until > %s
+        '''
+        locked_accounts_count = execute_query(
+            locked_accounts_query,
+            (now.isoformat(),),
+            fetch_one=True
+        )[0]
+        
+        # Get high failed attempts (but not yet locked) accounts
+        high_failed_attempts_query = '''
+            SELECT COUNT(*) 
+            FROM users 
+            WHERE failed_login_attempts > 0 
+            AND failed_login_attempts < 5
+            AND (account_locked_until IS NULL OR account_locked_until <= %s)
+        '''
+        high_failed_attempts_count = execute_query(
+            high_failed_attempts_query,
+            (now.isoformat(),),
+            fetch_one=True
+        )[0]
+        
         # Overdue Tasks
         overdue_tasks = Task.get_overdue()
         
@@ -122,7 +150,9 @@ def reports():
             tasks_by_user_detailed=tasks_by_user_detailed,
             site_activity=site_activity,
             past_due_controls=past_due_controls,
-            date_range=date_range
+            date_range=date_range,
+            locked_accounts_count=locked_accounts_count,
+            high_failed_attempts_count=high_failed_attempts_count
         )
     except Exception as e:
         logger.error(f"Error generating admin dashboard: {e}")

@@ -1222,49 +1222,209 @@ The admin MFA reset functionality is implemented in `app/routes/admin.py` with t
    - Admin permission check ensures only authorized users can perform resets
    - Comprehensive audit logging records all reset actions
 
----
+## Security Metrics Dashboard
 
-This documentation is intended to be a living document. As the application evolves, please keep it updated to reflect the current state of the codebase. 
+The Security Metrics Dashboard provides real-time monitoring of account security status with visual indicators to help administrators quickly identify and respond to potential security threats.
 
-## Security Improvements Summary
+### Implementation Details
 
-In our recent security overhaul, we've implemented several critical improvements to enhance the application's security posture:
+1. **Backend Implementation** (`app/routes/admin.py`):
+   ```python
+   # Get locked accounts count
+   now = datetime.now().astimezone()  # Current time with timezone
+   locked_accounts_query = '''
+       SELECT COUNT(*) 
+       FROM users 
+       WHERE account_locked_until IS NOT NULL 
+       AND account_locked_until > %s
+   '''
+   locked_accounts_count = execute_query(
+       locked_accounts_query,
+       (now.isoformat(),),
+       fetch_one=True
+   )[0]
+   
+   # Get high failed attempts (but not yet locked) accounts
+   high_failed_attempts_query = '''
+       SELECT COUNT(*) 
+       FROM users 
+       WHERE failed_login_attempts > 0 
+       AND failed_login_attempts < 5
+       AND (account_locked_until IS NULL OR account_locked_until <= %s)
+   '''
+   high_failed_attempts_count = execute_query(
+       high_failed_attempts_query,
+       (now.isoformat(),),
+       fetch_one=True
+   )[0]
+   ```
 
-1. **Password Strength Enforcement**
-   - Implemented in both user self-registration and admin user management
-   - Enforces minimum length and character requirements
-   - Prevents common password vulnerabilities
+2. **Frontend Implementation** (`app/templates/admin_dashboard.html`):
+   ```html
+   <!-- Account Security Metrics Section -->
+   <div class="dashboard-section">
+       <h2>Account Security Status</h2>
+       <div class="metrics-cards">
+           <div class="metric-card {% if locked_accounts_count > 0 %}metric-warning{% endif %}">
+               <div class="metric-value">{{ locked_accounts_count }}</div>
+               <div class="metric-label">Locked Accounts</div>
+               {% if locked_accounts_count > 0 %}
+               <div class="metric-action">
+                   <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-primary">View Users</a>
+               </div>
+               {% endif %}
+           </div>
+           <div class="metric-card {% if high_failed_attempts_count > 0 %}metric-caution{% endif %}">
+               <div class="metric-value">{{ high_failed_attempts_count }}</div>
+               <div class="metric-label">Accounts with Failed Attempts</div>
+               {% if high_failed_attempts_count > 0 %}
+               <div class="metric-action">
+                   <a href="{{ url_for('admin.users') }}" class="btn btn-sm btn-primary">View Users</a>
+               </div>
+               {% endif %}
+           </div>
+       </div>
+   </div>
+   ```
 
-2. **HTTP Security Headers**
-   - Added comprehensive security headers to all responses
-   - Prevents common web vulnerabilities like XSS, clickjacking, and MIME sniffing
-   - Enforces HTTPS through HSTS headers
+3. **Styling Implementation**:
+   ```css
+   /* Account Security Metrics Styles */
+   .metrics-cards {
+       display: flex;
+       flex-wrap: wrap;
+       gap: 20px;
+       margin-bottom: 15px;
+   }
+   
+   .metric-card {
+       flex: 1;
+       min-width: 200px;
+       background-color: #f8fafc;
+       border-radius: 8px;
+       padding: 20px;
+       text-align: center;
+       border: 1px solid #e2e8f0;
+       transition: all 0.3s ease;
+   }
+   
+   .metric-card:hover {
+       transform: translateY(-2px);
+       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+   }
+   
+   .metric-warning {
+       background-color: #fee2e2;
+       border-color: #fca5a5;
+   }
+   
+   .metric-caution {
+       background-color: #fef3c7;
+       border-color: #fcd34d;
+   }
+   
+   .metric-value {
+       font-size: 32px;
+       font-weight: bold;
+       margin-bottom: 5px;
+       color: #1e40af;
+   }
+   
+   .metric-warning .metric-value {
+       color: #b91c1c;
+   }
+   
+   .metric-caution .metric-value {
+       color: #92400e;
+   }
+   ```
 
-3. **Rate Limiting**
-   - Protected authentication endpoints from brute force attacks
-   - Implemented tiered limits for different sensitive operations
-   - Enhanced logging for failed attempts
+### Key Features
 
-4. **One-time Password Reset Tokens**
-   - Improved token validation to prevent reuse
-   - Enhanced security of the password reset flow
-   - Added detailed logging of token usage
+1. **Real-time Account Status Monitoring**:
+   - Counts currently locked accounts
+   - Tracks accounts with failed attempts but not yet locked
+   - Updates on each admin dashboard view
+   - SQL queries use current timestamp for accurate counts
 
-5. **IDOR Protection**
-   - Improved authorization checks throughout the application
-   - Added comprehensive audit logging for unauthorized access attempts
-   - Enforced proper access control on all resource endpoints
+2. **Visual Indicators**:
+   - Red warning color for locked accounts
+   - Amber caution color for accounts with failed attempts
+   - Normal blue color when no issues exist
+   - Hover effects to indicate interactivity
 
-6. **Account Lockout System**
-   - Implemented automatic account lockout after multiple failed login attempts
-   - Configurable failed attempt threshold (default: 5 attempts)
-   - Configurable lockout duration (default: 15 minutes)
-   - Tracks failed attempts for both password and MFA verification
-   - Administrative interface for viewing and managing locked accounts
-   - Automatic unlocking after lockout period expires
-   - Comprehensive audit logging of all lockout events
-   - Reset of failed attempt counters upon successful authentication
-   - Database schema support with migration script for failure tracking
+3. **Quick Response Actions**:
+   - Direct links to user management page
+   - "View Users" button appears only when issues are detected
+   - One-click access to address potential security concerns
+
+4. **Integration Points**:
+   - Tied directly to user account lockout system
+   - Leverages the same database tables/columns
+   - Uses shared timestamp formatting for consistency
+   - Consistent styling with the rest of the dashboard
+
+### User Experience Benefits
+
+1. **Improved Security Awareness**: Administrators can instantly see if there are security issues
+2. **Early Threat Detection**: Failed attempt tracking helps identify attacks before lockout
+3. **Reduced Response Time**: Quick access to user management speeds up incident response
+4. **Visual Priority**: Color coding indicates severity and draws attention to issues
+5. **Dashboard Integration**: Fits seamlessly into existing admin dashboard
+
+### Technical Considerations
+
+1. **Performance**: 
+   - Simple COUNT queries are efficient even with large user tables
+   - No session state is used; all data is retrieved fresh on dashboard load
+   - Minimal DOM elements when no issues exist
+
+2. **Edge Cases**:
+   - Handles null values for account_locked_until
+   - Checks if timestamps are stored as strings or native timestamps
+   - Handles timezone differences using astimezone()
+   - Gracefully degrades if the columns don't exist (via try/except in the route)
+
+3. **Future Improvements**:
+   - Add monitoring of failed attempts over time (line charts)
+   - Implement real-time updates via websockets
+   - Add user-specific details on hover
+   - Create dedicated security dashboard with more metrics
+
+### Testing
+
+To test the security metrics dashboard:
+1. Create multiple failed login attempts for a test user
+2. Verify the "Accounts with Failed Attempts" counter increases
+3. Exceed the threshold to lock an account
+4. Verify the "Locked Accounts" counter increases
+5. Unlock an account and verify the counter decreases
+6. Wait for the automatic unlock period and verify all counters reset
+
+### Future Security Recommendations
+
+For future security enhancements, consider implementing:
+
+1. **Enhanced Input Validation**
+   - Replace the basic sanitize_string function with a more comprehensive solution
+   - Consider using a library like bleach for HTML sanitization
+
+2. **Enhanced Logging and Monitoring**
+   - Implement centralized logging with structured data
+   - Add alerting for suspicious activity
+   - Consider integrating with a SIEM solution
+
+3. **Regular Security Scanning**
+   - Implement automated security scanning in the CI/CD pipeline
+   - Regular dependency vulnerability checks
+   - Periodic penetration testing
+
+4. **Server Hardening**
+   - Implement more restrictive Content Security Policy
+   - Add subnet restrictions for admin access
+   - Consider implementing a Web Application Firewall (WAF)
+
+These improvements have significantly enhanced the security of the CMMC Tracker application, reducing the risk of common vulnerabilities and providing better protection against unauthorized access.
 
 ## Account Lockout Implementation
 

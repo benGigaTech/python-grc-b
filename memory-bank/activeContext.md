@@ -36,6 +36,10 @@ The CMMC Compliance Tracker project is currently in active development. Based on
 
 5. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
 
+6. **Account Lockout Implementation**: Added account lockout functionality that triggers after multiple failed login attempts, created database schema changes to track failed attempts and lockout status, implemented User model methods to handle lockout logic, added admin interface for viewing and managing locked accounts, integrated lockout checks in the authentication flow, and added support for unlocking accounts both automatically and manually.
+
+7. **Dashboard Enhancement**: Added security metrics dashboard section for administrators, implemented real-time monitoring of locked accounts with visual indicators, added tracking of accounts with failed login attempts but not yet locked, created color-coded metric cards (red warning for locked accounts, amber caution for accounts with failed attempts), added direct links to manage user accounts when issues are detected, and enhanced admin dashboard UI with responsive design and interactive elements.
+
 ## Active Decisions
 
 1. **Database Technology**: Using SQLite for development with migration path to PostgreSQL for production.

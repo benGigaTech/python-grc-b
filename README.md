@@ -24,6 +24,7 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 - **User Management**: Role-based access control with admin capabilities
 - **Multi-Factor Authentication**: Time-based One-Time Password (TOTP) support with backup codes
 - **Account Security**: Account lockout after multiple failed login attempts with admin unlock capability
+- **Security Metrics Dashboard**: Real-time monitoring of account security status with visual indicators
 - **Audit Logging**: Comprehensive audit trail for compliance activities
 - **Reporting**: Generate compliance status reports and dashboards
 - **Email Notifications**: Automated alerts for task assignments and upcoming deadlines
@@ -128,6 +129,18 @@ The application includes account lockout protection to mitigate brute force atta
 - Account lockout status appears clearly in the user management pages
 - Failed login attempts are reset after successful authentication
 - All lockout events are thoroughly logged in the audit trail
+
+### Security Metrics Dashboard
+
+The application includes a real-time security metrics dashboard for administrators:
+
+- At-a-glance view of currently locked accounts
+- Monitoring of accounts with failed login attempts (not yet locked)
+- Color-coded visual indicators (red for locked accounts, amber for accounts with failed attempts)
+- Direct links to user management for quick response to security issues
+- Responsive design with interactive elements
+- Prominently positioned at the top of the admin dashboard for visibility
+- Helps identify potential brute force attacks in progress
 
 ### Multi-Factor Authentication
 

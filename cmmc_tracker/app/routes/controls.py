@@ -98,6 +98,9 @@ def dashboard():
         """
         my_tasks = execute_query(my_tasks_query, (today.isoformat(), current_user.username), fetch_all=True)
         
+        # New: Get domain metrics
+        domain_metrics = generate_domain_metrics()
+        
         # Compile metrics
         control_metrics = {
             'total': control_total,
@@ -121,12 +124,121 @@ def dashboard():
             control_metrics=control_metrics,
             task_metrics=task_metrics,
             recent_activities=recent_activities,
-            my_tasks=my_tasks
+            my_tasks=my_tasks,
+            domain_metrics=domain_metrics
         )
     except Exception as e:
         logger.error(f"Error generating dashboard: {e}")
         flash('An error occurred while generating the dashboard.', 'danger')
         return redirect(url_for('controls.index'))
+
+def generate_domain_metrics():
+    """Generate domain-specific metrics for compliance status."""
+    try:
+        # Query to get domains (families) from controls
+        domains_query = """
+            SELECT DISTINCT 
+                CASE 
+                    WHEN controlid LIKE 'AC-%' THEN 'Access Control'
+                    WHEN controlid LIKE 'AU-%' THEN 'Audit & Accountability'
+                    WHEN controlid LIKE 'AT-%' THEN 'Awareness & Training'
+                    WHEN controlid LIKE 'CM-%' THEN 'Configuration Management'
+                    WHEN controlid LIKE 'IA-%' THEN 'Identification & Authentication'
+                    WHEN controlid LIKE 'IR-%' THEN 'Incident Response'
+                    WHEN controlid LIKE 'MA-%' THEN 'Maintenance'
+                    WHEN controlid LIKE 'MP-%' THEN 'Media Protection'
+                    WHEN controlid LIKE 'PS-%' THEN 'Personnel Security'
+                    WHEN controlid LIKE 'PE-%' THEN 'Physical Protection'
+                    WHEN controlid LIKE 'RA-%' THEN 'Risk Assessment'
+                    WHEN controlid LIKE 'CA-%' THEN 'Security Assessment'
+                    WHEN controlid LIKE 'SC-%' THEN 'System & Communications'
+                    WHEN controlid LIKE 'SI-%' THEN 'System & Information Integrity'
+                    ELSE 'Other'
+                END as domain
+            FROM controls
+            ORDER BY domain
+        """
+        domains = [row['domain'] for row in execute_query(domains_query, fetch_all=True)]
+        
+        metrics = []
+        
+        for domain in domains:
+            # Get control prefix for this domain
+            prefix = get_domain_prefix(domain)
+            
+            # Get total controls in this domain
+            total_query = f"SELECT COUNT(*) FROM controls WHERE controlid LIKE '{prefix}%'"
+            total = execute_query(total_query, fetch_one=True)[0]
+            
+            # Get compliant controls in this domain
+            compliant_query = f"""
+                SELECT COUNT(*) FROM controls 
+                WHERE controlid LIKE '{prefix}%' 
+                AND controlid IN (
+                    SELECT DISTINCT controlid FROM tasks WHERE status = 'Completed' AND confirmed = 1
+                )
+            """
+            compliant = execute_query(compliant_query, fetch_one=True)[0]
+            
+            # Get in-progress controls in this domain
+            in_progress_query = f"""
+                SELECT COUNT(*) FROM controls 
+                WHERE controlid LIKE '{prefix}%' 
+                AND controlid IN (
+                    SELECT DISTINCT controlid FROM tasks WHERE status IN ('Open', 'Pending Confirmation')
+                )
+            """
+            in_progress = execute_query(in_progress_query, fetch_one=True)[0]
+            
+            # Get not-assessed controls in this domain
+            not_assessed_query = f"""
+                SELECT COUNT(*) FROM controls 
+                WHERE controlid LIKE '{prefix}%' 
+                AND controlid NOT IN (SELECT DISTINCT controlid FROM tasks)
+            """
+            not_assessed = execute_query(not_assessed_query, fetch_one=True)[0]
+            
+            # Calculate non-compliant as remainder
+            non_compliant = total - compliant - in_progress - not_assessed
+            if non_compliant < 0:
+                non_compliant = 0
+                
+            # Add to metrics if domain has any controls
+            if total > 0:
+                metrics.append({
+                    'name': domain,
+                    'total': total,
+                    'compliant': compliant,
+                    'in_progress': in_progress,
+                    'non_compliant': non_compliant
+                })
+        
+        return metrics
+        
+    except Exception as e:
+        logger.error(f"Error generating domain metrics: {e}")
+        return []
+
+def get_domain_prefix(domain):
+    """Get the control ID prefix for a given domain."""
+    domain_prefixes = {
+        'Access Control': 'AC',
+        'Audit & Accountability': 'AU',
+        'Awareness & Training': 'AT',
+        'Configuration Management': 'CM',
+        'Identification & Authentication': 'IA',
+        'Incident Response': 'IR',
+        'Maintenance': 'MA',
+        'Media Protection': 'MP',
+        'Personnel Security': 'PS',
+        'Physical Protection': 'PE',
+        'Risk Assessment': 'RA',
+        'Security Assessment': 'CA',
+        'System & Communications': 'SC',
+        'System & Information Integrity': 'SI'
+    }
+    
+    return domain_prefixes.get(domain, '')
 
 @controls_bp.route('/')
 @login_required
@@ -401,7 +513,7 @@ def update_review_dates(control_id):
     
     return redirect(url_for('controls.control_detail', control_id=control_id))
 
-@controls_bp.route('/export-csv')
+@controls_bp.route('/export_csv')
 @login_required
 def export_csv():
     """Export controls to CSV."""
@@ -591,3 +703,31 @@ def update_control_family(family_id):
     else:
         flash('An error occurred while updating the control family.', 'danger')
         return redirect(url_for('controls.edit_control_family', family_id=family_id))
+
+@controls_bp.route('/export_json')
+@login_required
+def export_json():
+    """Export controls to JSON."""
+    try:
+        # Get all controls
+        controls = Control.get_all()
+        
+        if not controls:
+            flash('No controls to export', 'error')
+            return redirect(url_for('controls.index'))
+        
+        # Convert controls to dict
+        controls_data = [control.to_dict() for control in controls]
+        
+        # Create the response
+        response = Response(
+            jsonify(controls_data).data,
+            mimetype='application/json',
+            headers={'Content-Disposition': f'attachment;filename=cmmc_controls_export_{datetime.now().strftime("%Y%m%d")}.json'}
+        )
+        
+        return response
+    except Exception as e:
+        logger.error(f"Error exporting controls to JSON: {e}")
+        flash('Error exporting controls', 'error')
+        return redirect(url_for('controls.index'))

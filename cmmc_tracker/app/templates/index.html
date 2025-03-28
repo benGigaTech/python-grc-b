@@ -11,7 +11,15 @@
         {% if current_user.is_admin %}
         <a href="{{ url_for('controls.import_csv') }}" class="button-link">Import Controls</a>
         {% endif %}
-        <a href="{{ url_for('controls.export_csv') }}" class="button-link">Export Controls</a>
+        
+        <div class="dropdown">
+            <button class="button-link dropdown-toggle">Export Controls</button>
+            <div class="dropdown-content">
+                <a href="{{ url_for('controls.export_csv') }}">Export as CSV</a>
+                <a href="{{ url_for('controls.export_json') }}">Export as JSON</a>
+            </div>
+        </div>
+        
         <form method="GET" action="{{ url_for('controls.control_detail', control_id='placeholder') }}" id="view_details_form" style = "display: inline;">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <label for="control_select">Select Control:</label>
@@ -90,4 +98,45 @@
         }
     });
 </script>
+
+<style>
+    /* Dropdown styles */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 160px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+        z-index: 1;
+        border-radius: 4px;
+    }
+    
+    .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+        font-size: 14px;
+    }
+    
+    .dropdown-content a:hover {
+        background-color: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+    
+    .dropdown-toggle:after {
+        content: " ▼";
+        font-size: 10px;
+        vertical-align: middle;
+    }
+</style>
 {% endblock %}

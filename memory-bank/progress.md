@@ -93,38 +93,43 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Recent activities log
    - My Tasks panel with status indicators
    - Color-coded status visualization
+   - Domain-specific compliance metrics for granular view
    - Links to detailed views
+   - Responsive layout for different screen sizes
+
+10. **Reporting and Export**
+   - CSV export of control data with metadata
+   - JSON export for programmatic data consumption
+   - Dropdown menu for export format selection
+   - Consistent styling for export options
+   - Well-formatted file naming with timestamps
+   - Proper MIME type and attachment headers
+   - Error handling during export operations
 
 ## In Progress
 
 The following features appear to be in active development:
 
-1. **Dashboard Enhancements**
-   - Additional metrics and visualizations
-   - Customizable views for different user roles
-   - Performance optimizations for large datasets
-   - Trend analysis over time
-
-2. **Reporting System**
-   - Custom report generation
-   - Export formats (PDF, CSV)
+1. **Advanced Reporting**
+   - PDF report generation
+   - Customizable report parameters
    - Scheduled report delivery
    - Compliance status snapshots
    - Historical compliance tracking
 
-3. **Bulk Operations**
+2. **Bulk Operations**
    - Mass import/export of controls
    - Batch evidence uploads
    - Bulk task assignments
    - CSV templates for bulk operations
 
-4. **API Development**
+3. **API Development**
    - RESTful endpoints for programmatic access
    - API authentication and security
    - Documentation and client examples
    - Integration capabilities with other systems
 
-5. **Additional Security Improvements**
+4. **Additional Security Improvements**
    - Enhanced logging and monitoring
    - Server hardening measures
    - Additional CSP refinements
@@ -134,7 +139,6 @@ The following features appear to be in active development:
 These features have been planned but do not appear to be implemented yet:
 
 1. **Advanced Analytics**
-   - Trend analysis for compliance status
    - Predictive indicators for compliance risks
    - Custom metric definitions
    - Interactive data visualization
@@ -193,7 +197,29 @@ These features have been planned but do not appear to be implemented yet:
 
 ## Recent Milestones
 
-1. **Multi-Factor Authentication**
+1. **Enhanced Reporting System**
+   - Added JSON export functionality for control data
+   - Created dropdown menu UI for export format selection
+   - Fixed URL routing for export endpoints
+   - Implemented consistent styling for export options
+   - Added proper error handling for export operations
+   - Ensured cross-browser compatibility
+
+2. **Dashboard Refinement**
+   - Removed compliance trend chart feature based on stakeholder feedback
+   - Fixed layout issues with overlapping elements
+   - Enhanced domain compliance overview to utilize full width
+   - Improved table styling and responsiveness
+   - Fixed JavaScript calculation in progress bars
+   - Added consistent styling across all dashboard elements
+
+3. **Account Security**
+   - Implemented account lockout after multiple failed attempts
+   - Added admin interface to manage locked accounts
+   - Created mechanism for automatic account unlocking
+   - Added audit logging of lockout events
+
+4. **Multi-Factor Authentication**
    - Completed TOTP implementation
    - Added QR code generation
    - Implemented setup flow
@@ -201,7 +227,7 @@ These features have been planned but do not appear to be implemented yet:
    - Added admin reset capability
    - Integrated with login flow
 
-2. **Evidence Management System**
+5. **Evidence Management System**
    - File upload with type validation
    - Metadata tracking including expiration
    - Status indicators (current, expired, pending)
@@ -209,27 +235,10 @@ These features have been planned but do not appear to be implemented yet:
    - Sorting and pagination
    - Update and delete functionality
 
-3. **Docker Deployment**
+6. **Docker Deployment**
    - Containerized application
    - Docker Compose setup
    - Volume management for persistence
    - Redis container for rate limiting
    - Automated database initialization
-   - Environment-based configuration
-
-4. **Database Migrations**
-   - Migration script framework
-   - Version tracking
-   - Schema evolution support
-   - Idempotent migration patterns
-   - Command-line interface for applying migrations
-
-5. **Security Enhancements**
-   - Password strength enforcement
-   - HTTP security headers
-   - Redis-backed rate limiting
-   - Enhanced password reset security
-   - Input sanitization improvements
-   - Comprehensive audit logging
-   - Account lockout with configurability
-   - Admin management of locked accounts 
+   - Environment-based configuration 

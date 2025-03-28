@@ -86,37 +86,79 @@
         </div>
     </div>
 </div>
+</br>
+<!-- New: Domain Compliance Section -->
+<div class="dashboard-row">
+    <div class="dashboard-column full-width">
+        <div class="dashboard-card">
+            <h2>Domain Compliance Overview</h2>
+            <div class="domain-table-container">
+                <table class="domain-table">
+                    <thead>
+                        <tr>
+                            <th>Domain</th>
+                            <th>Total</th>
+                            <th>Compliant</th>
+                            <th>In Progress</th>
+                            <th>Non-Compliant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for domain in domain_metrics %}
+                        <tr>
+                            <td>{{ domain.name }}</td>
+                            <td>{{ domain.total }}</td>
+                            <td>{{ domain.compliant }}</td>
+                            <td>{{ domain.in_progress }}</td>
+                            <td>{{ domain.non_compliant }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not domain_metrics %}
+                        <tr>
+                            <td colspan="5">No domain data available.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</br>
 
 <!-- Recent Activities and Tasks Tables -->
 <div class="dashboard-row">
     <div class="dashboard-column">
         <div class="dashboard-card">
             <h2>Recent Activities</h2>
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>User</th>
-                        <th>Action</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in recent_activities %}
-                    <tr>
-                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') if log.timestamp else log.timestamp }}</td>
-                        <td>{{ log.username }}</td>
-                        <td>{{ log.action }}</td>
-                        <td>{{ log.objecttype }} {{ log.objectid }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not recent_activities %}
-                    <tr>
-                        <td colspan="4">No recent activities found.</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_activities %}
+                        <tr>
+                            <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') if log.timestamp else log.timestamp }}</td>
+                            <td>{{ log.username }}</td>
+                            <td>{{ log.action }}</td>
+                            <td>{{ log.objecttype }} {{ log.objectid }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not recent_activities %}
+                        <tr>
+                            <td colspan="4">No recent activities found.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
             <div class="view-all">
                 <a href="{{ url_for('reports.reports') }}" class="button-link">View All Reports</a>
             </div>
@@ -126,31 +168,33 @@
     <div class="dashboard-column">
         <div class="dashboard-card">
             <h2>My Tasks</h2>
-            <table class="dashboard-table">
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Control</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for task in my_tasks %}
-                    <tr class="{% if task.is_overdue %}overdue{% endif %}">
-                        <td><a href="{{ url_for('tasks.edit_task', task_id=task.task_id) }}">{{ task.task_description }}</a></td>
-                        <td>{{ task.control_id }}</td>
-                        <td>{{ task.due_date }}</td>
-                        <td>{{ task.status }}</td>
-                    </tr>
-                    {% endfor %}
-                    {% if not my_tasks %}
-                    <tr>
-                        <td colspan="4">No assigned tasks found.</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Control</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in my_tasks %}
+                        <tr class="{% if task.is_overdue %}overdue{% endif %}">
+                            <td><a href="{{ url_for('tasks.edit_task', task_id=task.task_id) }}">{{ task.task_description }}</a></td>
+                            <td>{{ task.control_id }}</td>
+                            <td>{{ task.due_date }}</td>
+                            <td>{{ task.status }}</td>
+                        </tr>
+                        {% endfor %}
+                        {% if not my_tasks %}
+                        <tr>
+                            <td colspan="4">No assigned tasks found.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
             <div class="view-all">
                 <a href="{{ url_for('tasks.calendar') }}" class="button-link">View Task Calendar</a>
             </div>
@@ -197,7 +241,7 @@
     
     .dashboard-row {
         display: flex;
-        margin-bottom: 20px;
+        margin-bottom: 30px;
         gap: 20px;
         flex-wrap: wrap;
     }
@@ -205,6 +249,11 @@
     .dashboard-column {
         flex: 1;
         min-width: 300px;
+    }
+    
+    .dashboard-column.full-width {
+        flex-basis: 100%;
+        width: 100%;
     }
     
     .dashboard-card {
@@ -274,24 +323,53 @@
         background-color: #ef4444;
     }
     
+    .table-container {
+        overflow-x: auto;
+        margin-top: 15px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
     .dashboard-table {
         width: 100%;
-        margin-top: 15px;
+        margin-top: 0;
+        border-collapse: collapse;
     }
     
     .dashboard-table th {
         background-color: #f1f5f9;
         color: #1e3a8a;
+        position: sticky;
+        top: 0;
+        z-index: 1;
     }
     
     .dashboard-table td, .dashboard-table th {
         padding: 8px 12px;
         font-size: 14px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
     }
     
     .view-all {
         text-align: center;
         margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid #e2e8f0;
+    }
+    
+    .button-link {
+        display: inline-block;
+        padding: 6px 12px;
+        background-color: #3b82f6;
+        color: white;
+        border-radius: 4px;
+        text-decoration: none;
+        font-size: 13px;
+    }
+    
+    .button-link:hover {
+        background-color: #2563eb;
     }
     
     .overdue {
@@ -311,23 +389,71 @@
         .dashboard-column {
             width: 100%;
         }
+        
+        .dashboard-column.full-width {
+            width: 100%;
+        }
+    }
+    
+    .domain-table-container {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 15px;
+    }
+    
+    .domain-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    
+    .domain-table th {
+        position: sticky;
+        top: 0;
+        font-weight: 600;
+        color: #334155;
+        background-color: #f8fafc;
+        z-index: 1;
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .domain-table td {
+        padding: 8px 10px;
+        text-align: left;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .no-data-message {
+        text-align: center;
+        padding: 20px;
+        color: #64748b;
+        font-style: italic;
+    }
+    
+    .error-message {
+        text-align: center;
+        padding: 20px;
+        color: #ef4444;
+        font-style: italic;
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Set progress bar widths for control metrics
-    const controlTotal = Number("{{ control_metrics.total|default(1) }}");
-    const controlCompliant = Number("{{ control_metrics.compliant|default(0) }}");
-    const controlInProgress = Number("{{ control_metrics.in_progress|default(0) }}");
-    const controlNonCompliant = Number("{{ control_metrics.non_compliant|default(0) }}");
-    const controlNotAssessed = Number("{{ control_metrics.not_assessed|default(0) }}");
+    var controlTotal = Number("{{ control_metrics.total|default(1) }}");
+    var controlCompliant = Number("{{ control_metrics.compliant|default(0) }}");
+    var controlInProgress = Number("{{ control_metrics.in_progress|default(0) }}");
+    var controlNonCompliant = Number("{{ control_metrics.non_compliant|default(0) }}");
+    var controlNotAssessed = Number("{{ control_metrics.not_assessed|default(0) }}");
     
     // Calculate percentages safely (prevent division by zero)
-    const compliantPercent = controlTotal > 0 ? (controlCompliant / controlTotal * 100) : 0;
-    const inProgressPercent = controlTotal > 0 ? (controlInProgress / controlTotal * 100) : 0;
-    const nonCompliantPercent = controlTotal > 0 ? (controlNonCompliant / controlTotal * 100) : 0;
-    const notAssessedPercent = controlTotal > 0 ? (controlNotAssessed / controlTotal * 100) : 0;
+    var compliantPercent = controlTotal > 0 ? (controlCompliant / controlTotal * 100) : 0;
+    var inProgressPercent = controlTotal > 0 ? (controlInProgress / controlTotal * 100) : 0;
+    var nonCompliantPercent = controlTotal > 0 ? (controlNonCompliant / controlTotal * 100) : 0;
+    var notAssessedPercent = controlTotal > 0 ? (controlNotAssessed / controlTotal * 100) : 0;
     
     // Set control progress bar widths
     document.getElementById('compliant-bar').style.width = compliantPercent + '%';
@@ -336,17 +462,17 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('not-assessed-bar').style.width = notAssessedPercent + '%';
     
     // Set progress bar widths for task metrics
-    const taskOpen = Number("{{ task_metrics.open|default(0) }}");
-    const taskInProgress = Number("{{ task_metrics.in_progress|default(0) }}");
-    const taskCompleted = Number("{{ task_metrics.completed|default(0) }}");
-    const taskOverdue = Number("{{ task_metrics.overdue|default(0) }}");
-    const taskTotal = taskOpen + taskInProgress + taskCompleted + taskOverdue;
+    var taskOpen = Number("{{ task_metrics.open|default(0) }}");
+    var taskInProgress = Number("{{ task_metrics.in_progress|default(0) }}");
+    var taskCompleted = Number("{{ task_metrics.completed|default(0) }}");
+    var taskOverdue = Number("{{ task_metrics.overdue|default(0) }}");
+    var taskTotal = taskOpen + taskInProgress + taskCompleted + taskOverdue;
     
     // Calculate percentages safely
-    const openPercent = taskTotal > 0 ? (taskOpen / taskTotal * 100) : 0;
-    const taskInProgressPercent = taskTotal > 0 ? (taskInProgress / taskTotal * 100) : 0;
-    const completedPercent = taskTotal > 0 ? (taskCompleted / taskTotal * 100) : 0;
-    const overduePercent = taskTotal > 0 ? (taskOverdue / taskTotal * 100) : 0;
+    var openPercent = taskTotal > 0 ? (taskOpen / taskTotal * 100) : 0;
+    var taskInProgressPercent = taskTotal > 0 ? (taskInProgress / taskTotal * 100) : 0;
+    var completedPercent = taskTotal > 0 ? (taskCompleted / taskTotal * 100) : 0;
+    var overduePercent = taskTotal > 0 ? (taskOverdue / taskTotal * 100) : 0;
     
     // Set task progress bar widths
     document.getElementById('open-bar').style.width = openPercent + '%';

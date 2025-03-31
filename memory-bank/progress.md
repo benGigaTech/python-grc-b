@@ -11,6 +11,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Docker containerization with PostgreSQL and Redis
    - Application factory pattern with environment-based configuration
    - Security headers automatically applied to all responses
+   - Settings system for application configuration
 
 2. **User Authentication**
    - Login and registration with CSRF protection
@@ -25,6 +26,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Account lockout after multiple failed login attempts
    - Admin interface to view and unlock locked accounts
    - Automatic unlocking of accounts after lockout period expires
+   - Configurable account lockout settings (threshold and duration)
 
 3. **Control Management**
    - CMMC control database with CRUD operations
@@ -58,13 +60,14 @@ Based on the codebase exploration, the following functionality appears to be ope
 6. **Admin Functions**
    - User management (create, edit, delete)
    - Role assignments (admin vs. regular user)
-   - System configuration
+   - System configuration through settings page
    - MFA reset capabilities
    - Manual notification triggering
    - User list with filtering and sorting
    - Admin dashboard with system metrics
    - Account lockout management
    - User activity monitoring
+   - Application settings management with categorized UI
 
 7. **Interactive Calendar**
    - Visual calendar showing control review dates
@@ -86,6 +89,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Role-based access control
    - Account lockout protection against brute force attacks
    - Configurable lockout thresholds and durations
+   - Settings-based security configuration
 
 9. **Dashboard**
    - Summary cards with key metrics
@@ -105,6 +109,16 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Well-formatted file naming with timestamps
    - Proper MIME type and attachment headers
    - Error handling during export operations
+
+11. **Application Settings**
+   - Database-backed settings storage
+   - In-memory caching for performance
+   - Admin settings page with tabbed interface
+   - Categorized settings (Application, Security, Notification)
+   - Context processor for global settings access
+   - Hierarchical key structure for organization
+   - Dynamic application branding
+   - Configurable security parameters
 
 ## In Progress
 
@@ -133,6 +147,13 @@ The following features appear to be in active development:
    - Enhanced logging and monitoring
    - Server hardening measures
    - Additional CSP refinements
+
+5. **Expanded Settings System**
+   - Evidence lifecycle configuration
+   - Email template customization
+   - Advanced branding options
+   - Notification preference management
+   - Report format configuration
 
 ## Not Yet Started
 
@@ -197,7 +218,16 @@ These features have been planned but do not appear to be implemented yet:
 
 ## Recent Milestones
 
-1. **Enhanced Reporting System**
+1. **Application Settings System**
+   - Created database-backed settings storage
+   - Implemented settings service with caching
+   - Developed admin settings page with tabbed interface
+   - Added context processor for global settings access
+   - Integrated application branding through settings
+   - Made security parameters configurable
+   - Updated User model to use settings for account lockout
+
+2. **Enhanced Reporting System**
    - Added JSON export functionality for control data
    - Created dropdown menu UI for export format selection
    - Fixed URL routing for export endpoints
@@ -205,7 +235,7 @@ These features have been planned but do not appear to be implemented yet:
    - Added proper error handling for export operations
    - Ensured cross-browser compatibility
 
-2. **Dashboard Refinement**
+3. **Dashboard Refinement**
    - Removed compliance trend chart feature based on stakeholder feedback
    - Fixed layout issues with overlapping elements
    - Enhanced domain compliance overview to utilize full width
@@ -213,13 +243,14 @@ These features have been planned but do not appear to be implemented yet:
    - Fixed JavaScript calculation in progress bars
    - Added consistent styling across all dashboard elements
 
-3. **Account Security**
+4. **Account Security**
    - Implemented account lockout after multiple failed attempts
    - Added admin interface to manage locked accounts
    - Created mechanism for automatic account unlocking
    - Added audit logging of lockout events
+   - Made lockout parameters configurable through settings
 
-4. **Multi-Factor Authentication**
+5. **Multi-Factor Authentication**
    - Completed TOTP implementation
    - Added QR code generation
    - Implemented setup flow
@@ -227,7 +258,7 @@ These features have been planned but do not appear to be implemented yet:
    - Added admin reset capability
    - Integrated with login flow
 
-5. **Evidence Management System**
+6. **Evidence Management System**
    - File upload with type validation
    - Metadata tracking including expiration
    - Status indicators (current, expired, pending)
@@ -235,7 +266,7 @@ These features have been planned but do not appear to be implemented yet:
    - Sorting and pagination
    - Update and delete functionality
 
-6. **Docker Deployment**
+7. **Docker Deployment**
    - Containerized application
    - Docker Compose setup
    - Volume management for persistence

@@ -18,23 +18,42 @@ The CMMC Compliance Tracker project is currently in active development. Based on
 
 7. **Docker Deployment**: Docker and Docker Compose configuration for containerized deployment with PostgreSQL and Redis.
 
+8. **Application Configuration**: Added admin settings page allowing configuration of core application parameters without code changes.
+
 ## Recent Changes
 
-1. **Enhanced Reporting Capabilities**:
+1. **Application Settings System**:
+   - Created a settings database table to store configurable application parameters
+   - Implemented a settings service with caching for performance
+   - Developed an administrator settings page with a tabbed interface
+   - Added context processor to make settings available to all templates
+   - Made security settings (account lockout thresholds/duration) configurable
+   - Applied hierarchical key naming convention for extensibility
+   - Integrated app name and branding settings throughout the UI
+
+2. **Enhanced Security Configuration**:
+   - Updated User model to use configurable settings for account lockout
+   - Made failed login attempt thresholds adjustable through admin interface
+   - Implemented configurable lockout duration settings
+   - Added detailed logging of security parameter changes
+   - Created default security configuration with fallback values
+   - Implemented audit logging for settings changes
+
+3. **Enhanced Reporting Capabilities**:
    - Added JSON export functionality for controls data
    - Improved the CSV export mechanism
    - Created a dropdown menu for different export format options
    - Added consistent styling for export buttons
    - Fixed URL routing issues for export endpoints
 
-2. **Dashboard Simplification**: 
+4. **Dashboard Simplification**: 
    - Removed the compliance progress trend chart as per stakeholder feedback
    - Fixed layout issues to prevent element overlapping
    - Enhanced the Domain Compliance Overview to use full width
    - Improved the responsiveness of tables with proper overflow handling
    - Added consistent styling for tables and elements
 
-3. **Security Improvements**: Several security enhancements have been implemented:
+5. **Security Improvements**: Several security enhancements have been implemented:
    - Password strength enforcement
    - HTTP security headers implementation
    - Enhanced password reset security with one-time use tokens
@@ -44,35 +63,41 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Account lockout after multiple failed login attempts
    - Admin interface to manage locked accounts
 
-4. **Evidence Management**: Added comprehensive evidence management system with:
+6. **Evidence Management**: Added comprehensive evidence management system with:
    - File upload with type validation
    - Metadata tracking including expiration dates
    - Status indicators (Current, Pending Review, Expired)
    - Secure file download mechanism
 
-5. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
+7. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
 
-6. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
+8. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
 
-7. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
+9. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
 
 ## Active Decisions
 
-1. **Reporting Format Support**: Decision to provide multiple data export formats (CSV and JSON) to accommodate different user needs and external system integration requirements.
+1. **Application Configuration Strategy**: Decision to use a database-backed settings service with in-memory caching for performance.
 
-2. **Dashboard Focus**: Decision to focus on domain-specific compliance metrics rather than historical trend analysis based on user feedback and usability considerations.
+2. **Settings Organization**: Decision to use a hierarchical key structure (app.*, security.*, notification.*) for logical organization and future extensibility.
 
-3. **Database Technology**: Using SQLite for development with migration path to PostgreSQL for production.
+3. **UI Design for Settings**: Decision to use a tabbed interface with categories to improve usability of the settings page.
 
-4. **File Storage Strategy**: Storing evidence files in a local filesystem directory with database metadata references.
+4. **Reporting Format Support**: Decision to provide multiple data export formats (CSV and JSON) to accommodate different user needs and external system integration requirements.
 
-5. **Authentication Approach**: Using Flask-Login with custom MFA implementation (TOTP) rather than a third-party auth provider.
+5. **Dashboard Focus**: Decision to focus on domain-specific compliance metrics rather than historical trend analysis based on user feedback and usability considerations.
 
-6. **UI Framework**: Utilizing Bootstrap for responsive design across desktop and mobile devices.
+6. **Database Technology**: Using SQLite for development with migration path to PostgreSQL for production.
 
-7. **Deployment Strategy**: Containerized deployment with Docker to ensure consistency across environments.
+7. **File Storage Strategy**: Storing evidence files in a local filesystem directory with database metadata references.
 
-8. **Rate Limiting Backend**: Using Redis for persistent storage of rate limiting data across application restarts.
+8. **Authentication Approach**: Using Flask-Login with custom MFA implementation (TOTP) rather than a third-party auth provider.
+
+9. **UI Framework**: Utilizing Bootstrap for responsive design across desktop and mobile devices.
+
+10. **Deployment Strategy**: Containerized deployment with Docker to ensure consistency across environments.
+
+11. **Rate Limiting Backend**: Using Redis for persistent storage of rate limiting data across application restarts.
 
 ## Next Steps
 
@@ -96,12 +121,18 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Add team/group management capabilities
    - Develop more granular access controls
 
-5. **Performance Optimization**: 
+5. **Expanded Application Settings**:
+   - Add configuration for evidence lifecycle management
+   - Create custom email template settings
+   - Implement branding customization options
+   - Develop report formatting preferences
+
+6. **Performance Optimization**: 
    - Identify and address performance bottlenecks for larger deployments
    - Implement caching for frequently accessed data
    - Optimize database queries and indexing
 
-6. **Additional Security Enhancements**: Implement planned security improvements:
+7. **Additional Security Enhancements**: Implement planned security improvements:
    - Advanced input validation
    - Enhanced logging and monitoring
    - Regular security scanning
@@ -109,12 +140,14 @@ The CMMC Compliance Tracker project is currently in active development. Based on
 
 ## Current Challenges
 
-1. **Evidence Lifecycle Management**: Developing a robust system for tracking evidence validity and expiration.
+1. **Settings Management**: Ensuring proper integration of settings throughout the application and providing appropriate defaults.
 
-2. **Notification System Reliability**: Ensuring email notifications are delivered reliably and on schedule.
+2. **Evidence Lifecycle Management**: Developing a robust system for tracking evidence validity and expiration.
 
-3. **Multi-Tenancy Considerations**: Evaluating requirements for supporting multiple organizations within the same instance.
+3. **Notification System Reliability**: Ensuring email notifications are delivered reliably and on schedule.
 
-4. **Security Hardening**: Ongoing assessment and improvement of application security measures.
+4. **Multi-Tenancy Considerations**: Evaluating requirements for supporting multiple organizations within the same instance.
 
-5. **UI/UX Refinement**: Enhancing user experience based on initial feedback and usability testing. 
+5. **Security Hardening**: Ongoing assessment and improvement of application security measures.
+
+6. **UI/UX Refinement**: Enhancing user experience based on initial feedback and usability testing. 

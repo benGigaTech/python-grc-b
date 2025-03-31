@@ -8,13 +8,14 @@ from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from app.services.database import get_by_id, insert, update, execute_query
+from app.services.settings import get_setting
 from app.utils.security import generate_reset_token
 
 logger = logging.getLogger(__name__)
 
-# Constants for account lockout
-MAX_FAILED_ATTEMPTS = 5  # Number of failed attempts before lockout
-LOCKOUT_DURATION = 15    # Lockout duration in minutes
+# These constants are used as fallbacks if settings can't be retrieved
+DEFAULT_MAX_FAILED_ATTEMPTS = 5  # Number of failed attempts before lockout
+DEFAULT_LOCKOUT_DURATION = 15    # Lockout duration in minutes
 
 class User(UserMixin):
     """User model class."""
@@ -35,6 +36,16 @@ class User(UserMixin):
         self.failed_login_attempts = failed_login_attempts
         self.account_locked_until = account_locked_until
         
+    @staticmethod
+    def get_max_failed_attempts():
+        """Get the maximum number of failed login attempts from settings."""
+        return get_setting('security.max_login_attempts', DEFAULT_MAX_FAILED_ATTEMPTS)
+    
+    @staticmethod
+    def get_lockout_duration():
+        """Get the lockout duration in minutes from settings."""
+        return get_setting('security.lockout_duration_minutes', DEFAULT_LOCKOUT_DURATION)
+    
     def check_password(self, password):
         """Check if the provided password matches the stored hash."""
         return check_password_hash(self.password, password)
@@ -89,15 +100,19 @@ class User(UserMixin):
         """
         self.failed_login_attempts += 1
         
+        # Get settings-based configuration
+        max_attempts = self.get_max_failed_attempts()
+        lockout_duration = self.get_lockout_duration()
+        
         # Check if we need to lock the account
-        if self.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=LOCKOUT_DURATION)
+        if self.failed_login_attempts >= max_attempts:
+            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=lockout_duration)
             update('users', 'userid', self.id, {
                 'failed_login_attempts': self.failed_login_attempts,
                 'account_locked_until': lockout_time.isoformat()
             })
             self.account_locked_until = lockout_time
-            logger.warning(f"Account {self.username} locked until {lockout_time} due to too many failed attempts")
+            logger.warning(f"Account {self.username} locked until {lockout_time} due to too many failed attempts. Threshold: {max_attempts}, Duration: {lockout_duration} minutes")
             return True
         else:
             # Just update the failed attempts count

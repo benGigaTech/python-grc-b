@@ -50,6 +50,20 @@ def create_app(config_name=None):
     # Register CSRF error handler
     register_error_handlers(app)
     
+    # Add context processor for application settings
+    @app.context_processor
+    def inject_settings():
+        """Add application settings to template context."""
+        from app.services.settings import get_setting
+        
+        def get_app_setting(key, default=None):
+            return get_setting(key, default)
+        
+        return dict(
+            get_app_setting=get_app_setting,
+            app_name=get_setting('app.name', 'CMMC Compliance Tracker')
+        )
+    
     # Add security headers
     @app.after_request
     def add_security_headers(response):

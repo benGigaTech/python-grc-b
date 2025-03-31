@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Settings{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Application Settings</h2>
+        <p class="mb-4">Configure application-wide settings</p>
+        
+        {% if settings %}
+        <form method="POST" action="{{ url_for('admin.settings') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="tab-container mb-4">
+                <!-- Tab navigation -->
+                <div class="tab-nav mb-3">
+                    {% for category in settings.keys() %}
+                    <button type="button" class="tab-button {% if loop.first %}active{% endif %}" 
+                            data-target="{{ category }}-tab">
+                        {{ category|title }}
+                    </button>
+                    {% endfor %}
+                </div>
+                
+                <!-- Tab content -->
+                <div class="tab-content">
+                    {% for category, category_settings in settings.items() %}
+                    <div id="{{ category }}-tab" class="tab-pane {% if loop.first %}active{% endif %}">
+                        <div class="settings-group mb-4">
+                            <h3 class="mb-3">{{ category|title }} Settings</h3>
+                            
+                            <div class="settings-table">
+                                <div class="settings-header">
+                                    <div class="settings-cell">Setting</div>
+                                    <div class="settings-cell">Value</div>
+                                    <div class="settings-cell">Description</div>
+                                </div>
+                                
+                                {% for name, setting in category_settings.items() %}
+                                <div class="settings-row">
+                                    <div class="settings-cell">
+                                        <label for="{{ setting.key }}">{{ name|replace('_', ' ')|title }}</label>
+                                        <input type="hidden" name="setting_key" value="{{ setting.key }}">
+                                    </div>
+                                    <div class="settings-cell">
+                                        {% if setting.type == 'boolean' %}
+                                            <select name="setting_value" id="{{ setting.key }}" class="form-control">
+                                                <option value="true" {% if setting.value %}selected{% endif %}>Enabled</option>
+                                                <option value="false" {% if not setting.value %}selected{% endif %}>Disabled</option>
+                                            </select>
+                                        {% elif setting.type == 'integer' %}
+                                            <input type="number" name="setting_value" id="{{ setting.key }}" 
+                                                   value="{{ setting.value }}" class="form-control">
+                                        {% elif setting.type == 'text' or setting.type == 'json' %}
+                                            <textarea name="setting_value" id="{{ setting.key }}" 
+                                                      class="form-control" rows="3">{{ setting.value }}</textarea>
+                                        {% else %}
+                                            <input type="text" name="setting_value" id="{{ setting.key }}" 
+                                                   value="{{ setting.value }}" class="form-control">
+                                        {% endif %}
+                                    </div>
+                                    <div class="settings-cell">
+                                        <span class="text-muted">{{ setting.description }}</span>
+                                        {% if setting.last_updated %}
+                                        <div class="settings-meta">
+                                            <small>Last updated: {{ setting.last_updated }}</small>
+                                            {% if setting.updated_by %}
+                                            <small>by {{ setting.updated_by }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <div class="form-group">
+                </br>
+                <button type="submit" class="button-link">Save Settings</button>
+                <a href="{{ url_for('controls.index') }}" class="btn btn-secondary ml-2">Cancel</a>
+            </div>
+        </form>
+        {% else %}
+        <div class="alert alert-warning">
+            No settings found. Please check the database configuration.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+/* Tab styling */
+.tab-container {
+    width: 100%;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    overflow: hidden;
+    border: 1px solid var(--card-border);
+}
+
+.tab-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.tab-button {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.tab-button:hover {
+    color: var(--heading-color);
+}
+
+.tab-button.active {
+    color: var(--heading-color);
+    border-bottom-color: var(--link-color);
+}
+
+.tab-content {
+    padding: 20px;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Settings table styling */
+.settings-group {
+    margin-bottom: 30px;
+}
+
+.settings-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.settings-header {
+    display: flex;
+    background-color: var(--table-header-bg);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.settings-row {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-row:last-child {
+    border-bottom: none;
+}
+
+.settings-cell {
+    padding: 12px 15px;
+    color: var(--text-color);
+}
+
+.settings-cell:nth-child(1) {
+    width: 25%;
+    font-weight: 500;
+}
+
+.settings-cell:nth-child(2) {
+    width: 30%;
+}
+
+.settings-cell:nth-child(3) {
+    width: 45%;
+}
+
+.settings-meta {
+    margin-top: 8px;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+.text-muted {
+    color: var(--text-color) !important;
+    opacity: 0.7;
+}
+
+.button-link {
+    display: inline-block;
+    padding: 6px 12px;
+    background-color: #3b82f6;
+    color: white;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 13px;
+}
+    
+.button-link:hover {
+    background-color: #2563eb;
+}
+
+@media (max-width: 768px) {
+    .settings-row {
+        flex-direction: column;
+    }
+    
+    .settings-header {
+        display: none;
+    }
+    
+    .settings-cell {
+        width: 100% !important;
+    }
+    
+    .settings-cell:nth-child(1) {
+        font-weight: 600;
+        background-color: var(--table-header-bg);
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Tabs functionality
+    var tabButtons = document.querySelectorAll('.tab-button');
+    
+    tabButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons and panes
+            document.querySelectorAll('.tab-button').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-pane').forEach(function(pane) {
+                pane.classList.remove('active');
+            });
+            
+            // Add active class to current button and corresponding pane
+            this.classList.add('active');
+            var targetId = this.getAttribute('data-target');
+            document.getElementById(targetId).classList.add('active');
+        });
+    });
+});
+</script>
+{% endblock %} 

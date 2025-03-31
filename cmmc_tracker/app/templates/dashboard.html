@@ -87,6 +87,7 @@
     </div>
 </div>
 </br>
+</br>
 <!-- New: Domain Compliance Section -->
 <div class="dashboard-row">
     <div class="dashboard-column full-width">
@@ -125,6 +126,7 @@
     </div>
 </div>
 
+</br>
 </br>
 
 <!-- Recent Activities and Tasks Tables -->
@@ -201,126 +203,132 @@
         </div>
     </div>
 </div>
+</br>
 
-<!-- Add custom styles for dashboard -->
 <style>
     .dashboard-summary {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 20px;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: 20px;
+        margin-bottom: 30px;
     }
     
     .summary-card {
-        background-color: white;
+        flex: 1;
+        min-width: 150px;
+        background-color: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
-        flex: 1;
-        min-width: 180px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 6px var(--shadow-color);
         text-align: center;
-        border-top: 4px solid #3b82f6;
-    }
-    
-    .summary-card.red-alert {
-        border-top-color: #ef4444;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid var(--card-border);
     }
     
     .summary-count {
-        font-size: 32px;
+        font-size: 2.5rem;
         font-weight: bold;
-        color: #1e40af;
-        margin-bottom: 5px;
+        color: var(--heading-color);
+        margin-bottom: 8px;
     }
     
     .summary-label {
-        color: #64748b;
-        font-size: 14px;
+        color: var(--text-color);
+        font-size: 0.9rem;
+    }
+    
+    .red-alert .summary-count {
+        color: var(--flash-danger-border);
     }
     
     .dashboard-row {
         display: flex;
-        margin-bottom: 30px;
         gap: 20px;
-        flex-wrap: wrap;
+        margin-bottom: 20px;
     }
     
     .dashboard-column {
         flex: 1;
-        min-width: 300px;
+        min-width: 0;
     }
     
     .dashboard-column.full-width {
-        flex-basis: 100%;
         width: 100%;
     }
     
     .dashboard-card {
-        background-color: white;
+        background-color: var(--card-bg);
         border-radius: 8px;
         padding: 20px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
         height: 100%;
+        box-shadow: 0 2px 6px var(--shadow-color);
+        border: 1px solid var(--card-border);
     }
     
     .dashboard-card h2 {
+        color: var(--heading-color);
+        font-size: 1.2rem;
         margin-top: 0;
-        font-size: 18px;
-        color: #1e3a8a;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .progress-container {
-        margin-top: 15px;
+        padding: 10px;
     }
     
     .progress-container label {
         display: block;
-        margin-top: 10px;
-        margin-bottom: 3px;
-        font-size: 14px;
+        margin-top: 15px;
+        margin-bottom: 5px;
+        font-size: 0.9rem;
+        color: var(--text-color);
     }
     
     .progress-bar {
         height: 20px;
-        background-color: #e2e8f0;
-        border-radius: 4px;
-        margin-bottom: 10px;
+        background-color: var(--progress-bar-bg);
+        border-radius: 10px;
         overflow: hidden;
+        margin-bottom: 15px;
     }
     
     .progress-fill {
         height: 100%;
-        transition: width 0.5s ease;
+        transition: width 1s ease-in-out;
     }
     
     .progress-fill.compliant {
-        background-color: #10b981;
+        background-color: var(--flash-success-border);
     }
     
     .progress-fill.in-progress {
-        background-color: #f59e0b;
+        background-color: var(--flash-warning-border);
     }
     
     .progress-fill.non-compliant {
-        background-color: #ef4444;
+        background-color: var(--flash-danger-border);
     }
     
     .progress-fill.not-assessed {
-        background-color: #94a3b8;
+        background-color: var(--border-color);
     }
     
     .progress-fill.open {
-        background-color: #60a5fa;
+        background-color: var(--link-color);
     }
     
     .progress-fill.completed {
-        background-color: #10b981;
+        background-color: var(--flash-success-border);
     }
     
     .progress-fill.overdue-bar {
-        background-color: #ef4444;
+        background-color: var(--flash-danger-border);
     }
     
     .table-container {
@@ -337,8 +345,8 @@
     }
     
     .dashboard-table th {
-        background-color: #f1f5f9;
-        color: #1e3a8a;
+        background-color: var(--table-header-bg);
+        color: var(--table-header-text);
         position: sticky;
         top: 0;
         z-index: 1;
@@ -347,7 +355,7 @@
     .dashboard-table td, .dashboard-table th {
         padding: 8px 12px;
         font-size: 14px;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--border-color);
         text-align: left;
     }
     
@@ -355,21 +363,7 @@
         text-align: center;
         margin-top: 15px;
         padding-top: 10px;
-        border-top: 1px solid #e2e8f0;
-    }
-    
-    .button-link {
-        display: inline-block;
-        padding: 6px 12px;
-        background-color: #3b82f6;
-        color: white;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 13px;
-    }
-    
-    .button-link:hover {
-        background-color: #2563eb;
+        border-top: 1px solid var(--border-color);
     }
     
     .overdue {
@@ -378,7 +372,7 @@
     }
     
     .overdue td {
-        color: #ef4444;
+        color: var(--flash-danger-text);
     }
     
     @media (max-width: 768px) {
@@ -411,31 +405,32 @@
         position: sticky;
         top: 0;
         font-weight: 600;
-        color: #334155;
-        background-color: #f8fafc;
+        color: var(--table-header-text);
+        background-color: var(--table-header-bg);
         z-index: 1;
         padding: 8px 10px;
         text-align: left;
-        border-bottom: 2px solid #e2e8f0;
+        border-bottom: 2px solid var(--border-color);
     }
     
     .domain-table td {
         padding: 8px 10px;
         text-align: left;
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 1px solid var(--border-color);
     }
     
     .no-data-message {
         text-align: center;
         padding: 20px;
-        color: #64748b;
+        color: var(--text-color);
+        opacity: 0.7;
         font-style: italic;
     }
     
     .error-message {
         text-align: center;
         padding: 20px;
-        color: #ef4444;
+        color: var(--flash-danger-text);
         font-style: italic;
     }
 </style>

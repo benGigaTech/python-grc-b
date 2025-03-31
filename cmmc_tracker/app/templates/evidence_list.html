@@ -120,25 +120,27 @@
     
     .table th, .table td {
         padding: 0.5rem;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
     }
     
     .table th {
-        background-color: #f1f5f9;
+        background-color: var(--table-header-bg);
         font-weight: 600;
+        color: var(--table-header-text);
     }
     
     tr.expired {
-        background-color: #fee2e2;
+        background-color: var(--flash-danger-bg);
     }
     
     .file-link {
-        color: #3b82f6;
+        color: var(--link-color);
         text-decoration: none;
     }
     
     .file-link:hover {
         text-decoration: underline;
+        color: var(--link-hover-color);
     }
     
     .badge {
@@ -149,22 +151,22 @@
     }
     
     .badge-success {
-        background-color: #10b981;
+        background-color: var(--flash-success-border);
         color: white;
     }
     
     .badge-warning {
-        background-color: #f59e0b;
+        background-color: var(--flash-warning-border);
         color: white;
     }
     
     .badge-danger {
-        background-color: #ef4444;
+        background-color: var(--flash-danger-border);
         color: white;
     }
     
     .no-items {
-        color: #64748b;
+        color: var(--text-color);
         font-style: italic;
         margin: 2rem 0;
     }

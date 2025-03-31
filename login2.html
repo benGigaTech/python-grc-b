@@ -15,6 +15,17 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
+    <!-- Theme toggle script - placed in head to execute before page renders -->
+    <script>
+        // Apply the theme immediately to prevent flash of unstyled content
+        (function() {
+            // IMPORTANT: This needs to be rendered on the server, not parsed by the linter
+            var isDarkMode = false;
+            var savedTheme = localStorage.getItem('theme') || (isDarkMode ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
     <!-- Custom styles -->
     <style>
         :root {
@@ -55,6 +66,10 @@
             --dropdown-bg: #fff;
             --dropdown-text: #1e40af;
             --dropdown-hover: #9da8b3;
+            --card-bg: #fff;
+            --card-border: #e2e8f0;
+            --progress-bar-bg: #e2e8f0;
+            --progress-bar-fill: #3b82f6;
         }
 
         [data-theme="dark"] {
@@ -95,6 +110,10 @@
             --dropdown-bg: #2d3748;
             --dropdown-text: #e2e8f0;
             --dropdown-hover: #4a5568;
+            --card-bg: #2d3748;
+            --card-border: #4a5568;
+            --progress-bar-bg: #4a5568;
+            --progress-bar-fill: #60a5fa;
         }
 
         /* --- Base Styles --- */
@@ -132,6 +151,33 @@
             font-size: 1.8rem;
             border-bottom: 2px solid var(--border-color);
             padding-bottom: 0.3em;
+        }
+
+        /* Card styles */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 1px 3px var(--shadow-color);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card-header, .card-footer {
+            background-color: var(--table-row-alt-bg);
+            border-color: var(--card-border);
+            color: var(--text-color);
+        }
+
+        .card-body {
+            color: var(--text-color);
+        }
+
+        /* Progress bar styles */
+        .progress {
+            background-color: var(--progress-bar-bg);
+        }
+
+        .progress-bar {
+            background-color: var(--progress-bar-fill);
         }
 
         /* --- Flash Messages --- */
@@ -719,7 +765,7 @@
 <h1>Login</h1>
 <div class="form-container">
     <form method="post">
-        <input type="hidden" name="csrf_token" value="ImZhNzA0OWM0Y2MxODZkMTdjYmRiZGQzOWRhYWRlM2M4YWVmYTkxNzgi.Z-btww.wHFzBuH9KNAq0pMu_ykBpVnxTOk">
+        <input type="hidden" name="csrf_token" value="ImZjOWEzZTE2OWVlZmFiMmNmYWRlOTIzYTM4NzFlZjRjOGMwNWM5Njci.Z-bu4w.tQfX0vH5l4wjy-qMx3HJswxRqNI">
         <div>
             <label for="username">Username:</label><br>
             <input type="text" id="username" name="username" required>
@@ -750,28 +796,26 @@
             const htmlElement = document.documentElement;
             const themeIcon = themeToggle.querySelector('i');
             
-            // Check for saved theme preference or use the default from settings
-            const savedTheme = localStorage.getItem('theme') || 
-                              (true ? 'dark' : 'light');
+            // Get the current theme from data-theme attribute
+            const currentTheme = htmlElement.getAttribute('data-theme');
             
-            // Apply the initial theme
-            applyTheme(savedTheme);
+            // Update the icon to match current theme
+            updateThemeIcon(currentTheme);
             
             // Toggle theme when button is clicked
             themeToggle.addEventListener('click', function() {
                 const currentTheme = htmlElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'light' ? 'dark' : 'light';
                 
-                applyTheme(newTheme);
+                // Apply the new theme
+                htmlElement.setAttribute('data-theme', newTheme);
+                updateThemeIcon(newTheme);
                 
                 // Save preference to localStorage
                 localStorage.setItem('theme', newTheme);
             });
             
-            function applyTheme(theme) {
-                htmlElement.setAttribute('data-theme', theme);
-                
-                // Update icon
+            function updateThemeIcon(theme) {
                 if (theme === 'dark') {
                     themeIcon.classList.remove('bi-moon');
                     themeIcon.classList.add('bi-sun');

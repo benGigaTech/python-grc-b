@@ -12,6 +12,7 @@ from werkzeug.security import generate_password_hash
 from app.services.email import check_and_notify_task_deadlines
 from app.services.auth import admin_required
 from app.services.audit import add_audit_log, get_recent_audit_logs
+from app.services.settings import get_all_settings, update_setting
 from app.utils.security import is_password_strong
 from app import limiter
 
@@ -464,3 +465,48 @@ def admin_unlock_account(user_id):
         flash('An error occurred while unlocking the account.', 'danger')
     
     return redirect(url_for('admin.users'))
+
+@admin_bp.route('/settings', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def settings():
+    """Admin settings page for application configuration."""
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('controls.index'))
+    
+    # Process POST requests (settings updates)
+    if request.method == 'POST':
+        try:
+            # Extract setting updates from form
+            setting_keys = request.form.getlist('setting_key')
+            setting_values = request.form.getlist('setting_value')
+            
+            # Update settings
+            for key, value in zip(setting_keys, setting_values):
+                update_setting(key, value, current_user.username)
+                
+            # Add audit log entry
+            add_audit_log(
+                current_user.username,
+                'update',
+                'settings',
+                'app',
+                'Updated application settings'
+            )
+            
+            flash('Settings updated successfully.', 'success')
+            return redirect(url_for('admin.settings'))
+            
+        except Exception as e:
+            logger.error(f"Error updating settings: {e}")
+            flash('An error occurred while updating settings.', 'danger')
+    
+    # Get all settings grouped by category
+    try:
+        settings = get_all_settings()
+        return render_template('admin_settings.html', settings=settings)
+    except Exception as e:
+        logger.error(f"Error retrieving settings: {e}")
+        flash('An error occurred while retrieving settings.', 'danger')
+        return redirect(url_for('controls.index'))

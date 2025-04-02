@@ -10,6 +10,10 @@ services:
       - DB_NAME=${DB_NAME:-cmmc_db}
       - DB_USER=${DB_USER:-cmmc_user}
       - DB_PASSWORD=${DB_PASSWORD:-password}
+      # Database connection pool settings
+      - DB_POOL_MIN_CONN=${DB_POOL_MIN_CONN:-5}
+      - DB_POOL_MAX_CONN=${DB_POOL_MAX_CONN:-25}
+      - DB_POOL_IDLE_TIMEOUT=${DB_POOL_IDLE_TIMEOUT:-60}
       - SECRET_KEY=${SECRET_KEY:-default_dev_key_change_in_production}
       # Email configuration
       - MAIL_SERVER=${MAIL_SERVER:-sandbox.smtp.mailtrap.io}

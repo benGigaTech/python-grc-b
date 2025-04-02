@@ -5,7 +5,11 @@
 ### Backend
 - **Python 3.x**: Core programming language
 - **Flask 2.3+**: Web framework
-- **SQLAlchemy**: ORM for database interactions
+- **psycopg2**: PostgreSQL database driver
+- **psycopg2.pool.ThreadedConnectionPool**: Database connection pooling
+- **threading**: Thread management for connection pooling
+- **atexit**: Cleanup registration for application shutdown
+- **Custom Database Service**: Abstraction layer for database operations
 - **Jinja2**: Template engine for rendering HTML
 
 ### Frontend
@@ -18,6 +22,7 @@
 - **SQLite**: Development and testing database
 - **PostgreSQL**: Production database
 - **SQL Migrations**: Version-controlled schema changes
+- **Connection Pooling**: Efficient connection management for concurrent requests
 
 ### Authentication & Security
 - **Flask-Login**: User session management
@@ -55,6 +60,7 @@
 - Redis container for rate limiting and task queue
 - Persistent volumes for database and uploads
 - Environment variables for configuration
+- Connection pool parameters configurable via environment variables
 
 ## Technical Constraints
 
@@ -62,6 +68,7 @@
 - Optimized for organizations with up to 500 controls
 - Up to 100 concurrent users
 - Evidence file size limited to 10MB per upload
+- Database connection pool configured with min=5, max=25 connections
 
 ### Security
 - HTTPS required for production deployment
@@ -97,6 +104,7 @@
 - Redis for session management, rate limiting, and task queue
 - Gunicorn workers for request handling
 - Nginx for static file serving and SSL termination
+- Connection pooling for efficient database resource utilization
 
 ## External Dependencies
 
@@ -130,6 +138,12 @@ Application configured through:
 - Role-based permissions (admin vs. regular users)
 - Resource ownership validation
 - Complete mediation of all requests
+
+### Database Security
+- Connection pooling with proper cleanup
+- Thread-safe connection management
+- Parameterized queries to prevent SQL injection
+- Transaction management with proper error handling
 
 ### Data Protection
 - Input validation and sanitization

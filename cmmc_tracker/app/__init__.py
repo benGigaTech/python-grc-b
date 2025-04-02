@@ -39,6 +39,10 @@ def create_app(config_name=None):
     mail.init_app(app)
     csrf.init_app(app)
     
+    # Initialize database service with connection pool
+    from app.services.database import init_app as init_db
+    init_db(app)
+    
     # Configure Limiter with appropriate storage
     if redis_uri:
         app.config['RATELIMIT_STORAGE_URI'] = redis_uri

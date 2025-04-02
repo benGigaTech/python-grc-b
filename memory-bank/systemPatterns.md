@@ -27,7 +27,7 @@ The application uses a layered architecture:
 ## Design Patterns
 
 ### Model-View-Controller (MVC)
-- **Models**: SQLAlchemy models in `app/models/` define the data structure
+- **Models**: Custom model classes in `app/models/` define the data structure and interact with the database service
 - **Views**: Jinja2 templates in `app/templates/` render the UI
 - **Controllers**: Route handlers in `app/routes/` process requests
 
@@ -59,14 +59,22 @@ The application uses a layered architecture:
 - Data access logic encapsulated in model classes
 - Standard methods for CRUD operations
 - Abstracts database interactions from business logic
-- Uses utility functions from `database.py` for SQL operations
+- Model classes use the database service (`database.py`) for SQL operations
+- Follows a custom Repository Pattern implementation without ORM
 
-### Database Connection Pool
-- Connection management through `get_db_connection()` function
-- Connection created for each request and closed after use
-- PostgreSQL connection with psycopg2
-- SQL execution with parameterized queries for security
-- Error handling with try/except blocks and transaction management
+### Database Connection Pooling
+- Implemented using `psycopg2.pool.ThreadedConnectionPool`
+- Connection pool initialized at application startup
+- Global connection pool with thread safety via mutex lock
+- Thread-local storage to track connections per thread
+- Connections managed based on request context lifecycle
+- Proper connection release back to pool during request teardown
+- Configurable minimum and maximum pool size via environment variables
+- Connection acquisition with thread-specific keys
+- Comprehensive error handling and logging
+- Automatic cleanup during application shutdown via atexit module
+- Avoids common connection leaks with proper teardown registration
+- Supports high-concurrency workloads with efficient connection reuse
 
 ## Key Components
 
@@ -149,6 +157,16 @@ The application uses a layered architecture:
 10. Session cookie issued for authenticated requests
 11. User redirected to dashboard
 
+### Database Connection Flow
+1. Application starts and initializes connection pool with min/max connections
+2. Request arrives and gets routed to appropriate handler
+3. Database operation needed, system requests connection from pool
+4. If connection exists for current thread, reuse it
+5. Otherwise, acquire new connection from pool with thread-specific key
+6. Execute database operation with connection
+7. When request completes, return connection to pool during teardown
+8. On application shutdown, close all connections in the pool
+
 ### Control Management Flow
 1. Controls loaded from database
 2. User performs CRUD operations
@@ -195,6 +213,7 @@ The application uses a layered architecture:
 13. **Account Lockout**: Temporary account lockout after multiple failed authentication attempts
 14. **Progressive Timeouts**: Increasing lockout durations for repeated authentication failures
 15. **Administrative Override**: Admin capability to unlock accounts in legitimate cases
+16. **Connection Pooling**: Efficient database connection management for performance and security
 
 ## Database Migration Pattern
 

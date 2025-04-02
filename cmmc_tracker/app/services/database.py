@@ -1,32 +1,98 @@
 """Database service for the CMMC Tracker application."""
 
 import logging
+import threading
+import atexit
 import psycopg2
 from psycopg2.extras import DictCursor
 from psycopg2 import sql
-from flask import current_app
+from psycopg2.pool import ThreadedConnectionPool
+from flask import current_app, g
 
 logger = logging.getLogger(__name__)
 
-def get_db_connection():
+# Global connection pool and lock
+_pool = None
+_pool_lock = threading.Lock()
+
+# Track connections globally by thread ID to avoid issues with g context
+_thread_local = threading.local()
+
+def get_pool():
     """
-    Establish a new database connection.
+    Get or create the database connection pool.
     
     Returns:
-        Connection: A PostgreSQL database connection
+        ThreadedConnectionPool: The connection pool
     """
+    global _pool
+    
+    # If pool exists and is not closed, return it
+    if _pool is not None and not _pool.closed:
+        return _pool
+    
+    # Use lock to prevent multiple threads from creating pools simultaneously
+    with _pool_lock:
+        # Check again inside the lock
+        if _pool is not None and not _pool.closed:
+            return _pool
+            
+        # Create a new pool
+        try:
+            _pool = ThreadedConnectionPool(
+                current_app.config['DB_POOL_MIN_CONN'],
+                current_app.config['DB_POOL_MAX_CONN'],
+                host=current_app.config['DB_HOST'],
+                port=current_app.config['DB_PORT'],
+                database=current_app.config['DB_NAME'],
+                user=current_app.config['DB_USER'],
+                password=current_app.config['DB_PASSWORD']
+            )
+            logger.info(f"Created new database connection pool with min={current_app.config['DB_POOL_MIN_CONN']}, max={current_app.config['DB_POOL_MAX_CONN']} connections")
+            return _pool
+        except psycopg2.Error as e:
+            logger.error(f"Failed to create connection pool: {e}")
+            raise
+
+def get_db_connection():
+    """
+    Get a connection from the pool.
+    
+    Returns:
+        Connection: A PostgreSQL database connection from the pool
+    """
+    # Get thread ID for this request
+    thread_id = threading.get_ident()
+    
+    # Check if we already have a connection for this thread
+    if hasattr(_thread_local, 'connection'):
+        logger.debug(f"Reusing existing connection for thread {thread_id}")
+        return _thread_local.connection
+    
+    # Otherwise, get a new connection from the pool
+    pool = get_pool()
     try:
-        conn = psycopg2.connect(
-            host=current_app.config['DB_HOST'],
-            port=current_app.config['DB_PORT'],
-            database=current_app.config['DB_NAME'],
-            user=current_app.config['DB_USER'],
-            password=current_app.config['DB_PASSWORD']
-        )
+        conn = pool.getconn(key=thread_id)
+        _thread_local.connection = conn
+        
+        # Track this connection in Flask context for teardown if available
+        if has_app_context():
+            if not hasattr(g, 'db_connections'):
+                g.db_connections = {}
+            g.db_connections[thread_id] = conn
+            
+        logger.debug(f"Obtained new connection from pool for thread {thread_id}")
         return conn
     except psycopg2.Error as e:
-        logger.error(f"Failed to connect to database: {e}")
+        logger.error(f"Failed to get connection from pool: {e}")
         raise
+
+def has_app_context():
+    """Check if we're in a Flask application context"""
+    try:
+        return current_app is not None
+    except RuntimeError:
+        return False
 
 def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=False):
     """
@@ -72,8 +138,69 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=F
         # Rethrow as a custom exception that can be caught and handled appropriately
         raise Exception(f"Database operation failed: {str(e)}")
     finally:
-        if conn:
-            conn.close()
+        # Don't close connections here, they're managed by thread local and app context
+        pass
+
+def release_connection():
+    """Release the current thread's database connection back to the pool."""
+    thread_id = threading.get_ident()
+    
+    if hasattr(_thread_local, 'connection'):
+        try:
+            # Get the pool, but don't create a new one if it doesn't exist
+            global _pool
+            if _pool is not None and not _pool.closed:
+                _pool.putconn(_thread_local.connection, key=thread_id)
+                logger.debug(f"Released connection back to pool for thread {thread_id}")
+        except Exception as e:
+            logger.error(f"Error returning connection to pool for thread {thread_id}: {e}")
+        finally:
+            # Clean up thread local storage
+            delattr(_thread_local, 'connection')
+
+def close_pool():
+    """Close the connection pool."""
+    global _pool
+    
+    with _pool_lock:
+        if _pool is not None:
+            try:
+                # Release all thread-local connections before closing pool
+                _pool.closeall()
+                logger.info("Closed all database connections in the pool")
+            except Exception as e:
+                logger.error(f"Error closing connection pool: {e}")
+            finally:
+                _pool = None
+
+# Register functions to be called when the application starts and shuts down
+def init_app(app):
+    """Initialize the database service with the application."""
+    # Close all database connections when the request ends
+    @app.teardown_appcontext
+    def close_db_connections(exception=None):
+        """Release database connections when the application context ends."""
+        if hasattr(g, 'db_connections'):
+            pool = get_pool()
+            for thread_id, conn in list(g.db_connections.items()):
+                try:
+                    if pool is not None and not pool.closed:
+                        pool.putconn(conn, key=thread_id)
+                        logger.debug(f"Released connection back to pool for thread {thread_id}")
+                except Exception as e:
+                    logger.error(f"Error returning connection to pool for thread {thread_id}: {e}")
+                finally:
+                    try:
+                        if hasattr(_thread_local, 'connection') and _thread_local.connection == conn:
+                            delattr(_thread_local, 'connection')
+                    except:
+                        pass
+                    
+                    if thread_id in g.db_connections:
+                        del g.db_connections[thread_id]
+    
+    # Register cleanup function to close pool at process shutdown
+    atexit.register(close_pool)
 
 def get_by_id(table, id_column, id_value):
     """

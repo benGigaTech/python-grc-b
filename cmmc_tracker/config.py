@@ -15,6 +15,11 @@ class Config:
     DB_USER = os.environ.get('DB_USER', 'cmmc_user')
     DB_PASSWORD = os.environ.get('DB_PASSWORD', 'password')
     
+    # Database connection pool settings
+    DB_POOL_MIN_CONN = int(os.environ.get('DB_POOL_MIN_CONN', 1))
+    DB_POOL_MAX_CONN = int(os.environ.get('DB_POOL_MAX_CONN', 10))
+    DB_POOL_IDLE_TIMEOUT = int(os.environ.get('DB_POOL_IDLE_TIMEOUT', 60))  # seconds
+    
     # Database URI for SQLAlchemy (if you decide to use it)
     SQLALCHEMY_DATABASE_URI = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False

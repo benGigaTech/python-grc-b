@@ -332,3 +332,13 @@ These features have been planned but do not appear to be implemented yet:
    - Redis container for rate limiting
    - Automated database initialization
    - Environment-based configuration 
+
+15. **UI Theme System Improvements**
+   - Fixed calendar page tables not respecting dark mode theme toggle
+   - Identified and resolved conflict between Bootstrap table styling and custom theme variables
+   - Created more specific CSS selectors with proper specificity for theme consistency
+   - Implemented CSS variable overrides to ensure theme consistency
+   - Reset Bootstrap's internal table variables for proper dark mode rendering
+   - Verified fix works correctly across the application
+   - Maintained responsive design and cross-browser compatibility
+   - Used proper CSS encapsulation to prevent theme issues in other components 

@@ -1,52 +1,25 @@
-Docker Entrypoint started at Wed Apr  2 19:10:19 UTC 2025
+Docker Entrypoint started at Thu Apr  3 13:39:35 UTC 2025
 Waiting for database to be ready...
-Waiting for database... attempt 1/30
-Waiting for database... attempt 2/30
 Database is ready!
 Starting database migrations...
 Ensuring migration tracking table exists...
 Checking migration: 01_init.sql
-Applying migration: 01_init.sql...
-Successfully applied and recorded: 01_init.sql
+Migration already applied: 01_init.sql
 Checking migration: 03_evidence_migration.sql
-Applying migration: 03_evidence_migration.sql...
-Successfully applied and recorded: 03_evidence_migration.sql
+Migration already applied: 03_evidence_migration.sql
 Checking migration: 04_mfa_migration.sql
-Applying migration: 04_mfa_migration.sql...
-Successfully applied and recorded: 04_mfa_migration.sql
+Migration already applied: 04_mfa_migration.sql
 Checking migration: 05_account_lockout_migration.sql
-Applying migration: 05_account_lockout_migration.sql...
-Successfully applied and recorded: 05_account_lockout_migration.sql
+Migration already applied: 05_account_lockout_migration.sql
 Checking migration: 06_settings_migration.sql
-Applying migration: 06_settings_migration.sql...
-Successfully applied and recorded: 06_settings_migration.sql
+Migration already applied: 06_settings_migration.sql
 Checking migration: 07_dark_mode_setting.sql
-Applying migration: 07_dark_mode_setting.sql...
-Successfully applied and recorded: 07_dark_mode_setting.sql
+Migration already applied: 07_dark_mode_setting.sql
 Database migrations complete!
 RUN_FULL_SEED is set to true. Running full database seed...
-2025-04-02 19:10:24,581 - INFO - Starting database initialization...
-2025-04-02 19:10:24,588 - INFO - Database connection successful
-2025-04-02 19:10:24,592 - INFO - Tables exist but no users found. Need to populate with data.
-2025-04-02 19:10:24,597 - INFO - Database connection successful
-2025-04-02 19:10:24,598 - INFO - Creating tables...
-2025-04-02 19:10:24,600 - INFO - Tables created successfully
-2025-04-02 19:10:24,607 - INFO - Database connection successful
-2025-04-02 19:10:24,610 - INFO - Creating admin user...
-2025-04-02 19:10:24,697 - INFO - Admin user created
-2025-04-02 19:10:24,698 - INFO - Creating regular user...
-2025-04-02 19:10:24,772 - INFO - Regular user created
-2025-04-02 19:10:24,785 - INFO - Loaded 110 controls from JSON file
-2025-04-02 19:10:24,791 - INFO - Database connection successful
-2025-04-02 19:10:24,793 - INFO - Importing 110 controls...
-2025-04-02 19:10:24,829 - INFO - Added review dates to sample controls
-2025-04-02 19:10:24,833 - INFO - Successfully imported controls from /app/cmmc_controls.json
-
-2025-04-02 19:10:24,838 - INFO - Database connection successful
-2025-04-02 19:10:24,840 - INFO - Creating sample tasks...
-2025-04-02 19:10:24,846 - INFO - Sample tasks created successfully
-2025-04-02 19:10:24,846 - INFO - Database initialization complete!
-2025-04-02 19:10:24,846 - INFO - Default admin credentials: username=admin, password=adminpassword
-2025-04-02 19:10:24,847 - INFO - Default user credentials: username=user, password=userpassword
+2025-04-03 13:39:36,441 - INFO - Starting database initialization...
+2025-04-03 13:39:36,447 - INFO - Database connection successful
+2025-04-03 13:39:36,452 - INFO - Database already contains 2 users. Skipping initialization.
+2025-04-03 13:39:36,452 - INFO - Database already initialized. Skipping.
 Seed script (seed_db.py) finished with exit code 0
 Starting application (exec /app/start.sh)...

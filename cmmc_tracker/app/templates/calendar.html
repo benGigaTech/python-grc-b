@@ -107,7 +107,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped calendar-table">
                 <thead>
                     <tr>
                         <th>Control ID</th>
@@ -133,7 +133,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary">View</a>
+                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary" style="text-decoration-color: #fff;">View</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -176,7 +176,7 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped calendar-table">
                 <thead>
                     <tr>
                         <th>Task Description</th>
@@ -461,6 +461,44 @@ tr.upcoming td {
 /* Ensure text muted uses theme */
 .text-muted {
     color: var(--text-color);
+}
+
+/* Force tables in calendar to respect theme variables */
+.calendar-table {
+    color: var(--text-color) !important;
+    background-color: var(--table-row-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+.calendar-table th,
+.calendar-table td {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.calendar-table thead th {
+    background-color: var(--table-header-bg) !important;
+    color: var(--table-header-text) !important;
+}
+
+.calendar-table tbody tr {
+    background-color: var(--table-row-bg) !important;
+}
+
+.calendar-table tbody tr:nth-of-type(odd) {
+    background-color: var(--table-row-alt-bg) !important;
+}
+
+.calendar-table tbody tr:hover {
+    background-color: var(--table-row-hover-bg) !important;
+}
+
+/* Fix for Bootstrap overriding our table styles */
+[data-theme="dark"] .calendar-table {
+    --bs-table-bg: transparent !important;
+    --bs-table-striped-bg: transparent !important;
+    --bs-table-striped-color: var(--text-color) !important;
 }
 
 </style>

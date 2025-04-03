@@ -44,7 +44,17 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Applied hierarchical key naming convention for extensibility
    - Integrated app name and branding settings throughout the UI
 
-3. **Enhanced Security Configuration**:
+3. **UI Theme Fix**:
+   - Resolved calendar page dark mode issues where bottom tables weren't respecting theme toggle
+   - Identified conflict between Bootstrap table styling and custom theme variables
+   - Added specific CSS class `.calendar-table` to target affected tables
+   - Created CSS rules with proper specificity to override Bootstrap defaults
+   - Used CSS variables to ensure consistent theming across the application
+   - Reset Bootstrap's internal table variables for dark mode with `[data-theme="dark"]` selector
+   - Tested fix using Docker Compose to ensure changes worked properly
+   - Maintained cross-browser compatibility and responsive design
+
+4. **Enhanced Security Configuration**:
    - Updated User model to use configurable settings for account lockout
    - Made failed login attempt thresholds adjustable through admin interface
    - Implemented configurable lockout duration settings
@@ -52,19 +62,19 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Created default security configuration with fallback values
    - Implemented audit logging for settings changes
 
-4. **MFA Backup Code Improvements**:
+5. **MFA Backup Code Improvements**:
    - Enhanced error handling and logging in the backup code verification process.
    - Added specific checks for JSON decoding and database update failures.
    - Implemented a UI warning on the MFA management page when backup codes are low (<= 2).
 
-5. **Database Migration System Overhaul**:
+6. **Database Migration System Overhaul**:
    - Replaced old `seed_db.py` initialization logic with a robust migration system in `docker-entrypoint.sh`.
    - Entrypoint now uses `psql` to apply numbered SQL scripts (`db/0*.sql`) sequentially, tracking applied migrations in `migration_history` table.
    - Added error handling and logging to the migration process.
    - Simplified `start.sh` to only start Gunicorn.
    - Removed duplicate `db/init.sql`.
 
-6. **Docker Entrypoint & Seeding Fixes**:
+7. **Docker Entrypoint & Seeding Fixes**:
    - Corrected `Dockerfile` to use `docker-entrypoint.sh` as `ENTRYPOINT`.
    - Added `postgresql-client` to `Dockerfile` to enable `psql` commands.
    - Debugged and fixed database wait loop in `docker-entrypoint.sh`.
@@ -72,31 +82,31 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Implemented conditional full database seeding using `seed_db.py` controlled by `RUN_FULL_SEED` environment variable (default: false).
    - Removed separate `create_admin.py` script.
 
-7. **Strengthened File Upload Validation**:
+8. **Strengthened File Upload Validation**:
    - Implemented file content validation using magic numbers (`python-magic`) in addition to extension checks for evidence uploads.
    - Added `python-magic` dependency and `libmagic1` system library to Dockerfile.
    - Updated `add_evidence` route and `save_evidence_file` service function.
    - Requires `ALLOWED_MIME_TYPES` to be defined in Flask app configuration.
 
-8. **Automatic Admin User Seeding**:
+9. **Automatic Admin User Seeding**:
    - Created `/app/create_admin.py` script to check for and create the default `admin` user.
    - Modified `docker-entrypoint.sh` to run this script after migrations on startup.
 
-9. **Enhanced Reporting Capabilities**:
+10. **Enhanced Reporting Capabilities**:
    - Added JSON export functionality for controls data
    - Improved the CSV export mechanism
    - Created a dropdown menu for different export format options
    - Added consistent styling for export buttons
    - Fixed URL routing issues for export endpoints
 
-10. **Dashboard Simplification**: 
+11. **Dashboard Simplification**: 
    - Removed the compliance progress trend chart as per stakeholder feedback
    - Fixed layout issues to prevent element overlapping
    - Enhanced the Domain Compliance Overview to use full width
    - Improved the responsiveness of tables with proper overflow handling
    - Added consistent styling for tables and elements
 
-11. **Security Improvements**: Several security enhancements have been implemented:
+12. **Security Improvements**: Several security enhancements have been implemented:
    - **File Upload Security:** Added content-based validation (magic numbers) via `python-magic`.
    - Password strength enforcement
    - HTTP security headers implementation
@@ -107,11 +117,11 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Account lockout after multiple failed login attempts
    - Admin interface to manage locked accounts
 
-12. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
+13. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
 
-13. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
+14. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
 
-14. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
+15. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
 
 ## Active Decisions
 

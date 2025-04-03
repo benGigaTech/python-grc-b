@@ -1,7 +1,8 @@
 import os
 import logging
+import json
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, request, jsonify
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
@@ -38,6 +39,10 @@ def create_app(config_name=None):
     # Initialize extensions with app
     login_manager.init_app(app)
     mail.init_app(app)
+    
+    # Configure CSRF protection
+    app.config['WTF_CSRF_ENABLED'] = True  # Enable CSRF protection
+    app.config['WTF_CSRF_CHECK_DEFAULT'] = False  # Disable by default, enable explicitly on forms
     csrf.init_app(app)
     
     # Initialize database service with connection pool
@@ -52,50 +57,95 @@ def create_app(config_name=None):
     # Configure and Initialize Talisman (CSP & other headers)
     # Define the Content Security Policy
     csp = {
+        # Defines valid sources for all resources not explicitly listed
         'default-src': [
             "'self'"
-            ], 
+        ],
+        
+        # Sources for JavaScript
         'script-src': [
-            "'self'", 
+            "'self'",                       # Allow scripts from same origin
             'https://cdnjs.cloudflare.com', # Allow jQuery, Bootstrap JS
-            "'unsafe-hashes'", # Reinstate unsafe-hashes (correctly quoted)
+            "'unsafe-hashes'",              # Allow certain event handlers
+            # Specific inline scripts that are allowed via hash
             "'sha256-U+tHSwYpCxaYh39elIShq5VNWTHsDCM263NYsqVDPTo='", 
             "'sha256-WKH3DN0mpznMXa6fDS+33+w7+vnfV9Rb+a1q1SasDFs='", 
             "'sha256-ehPVrgdV2GwJCE7DAMSg8aCgaSH3TZmA66nZZv8XrTg='", 
             "'sha256-nGcvoycun3J6WC44OPlTRh4BiXSlaDZj7YlCQ7h2N3o='"
             # Nonce will be added automatically by Talisman for blocks
-            ], 
+        ],
+        
+        # Sources for CSS
         'style-src': [
-            "'self'", 
+            "'self'",                       # Allow CSS from same origin
             'https://cdnjs.cloudflare.com', # Allow Bootstrap CSS
-            'https://cdn.jsdelivr.net',    # Allow Bootstrap Icons CSS
-            "'unsafe-hashes'", # Reinstate unsafe-hashes (correctly quoted)
+            'https://cdn.jsdelivr.net',     # Allow Bootstrap Icons CSS
+            "'unsafe-hashes'",              # Allow certain style attributes
+            # Specific inline styles that are allowed via hash
             "'sha256-Et55ArTi+JMSbDReKb8DWpwdUtWcCoOGZibzhzGZSoU='", 
             "'sha256-NjYDAvf3Yswi9GqXn8q5mE3okYa3Q4PuzJ0DkAhe4yQ='", 
             "'sha256-R4pTFj1Hb1VrJAU4UoeiL+dbxZFpZ9IpcB5jA6lEfrQ='", 
-            "'sha256-NjYDAvf3Yswi9GqXn8q5mE3okYa3Q4PuzJ0DkAhe4yQ='", # Added from dashboard errors
-            "'sha256-ZVKgq1hdIBoPQgzFyefUpPwkQ0ClJDqnWKId/EgjQlY='"  # Added from calendar JS style
+            "'sha256-NjYDAvf3Yswi9GqXn8q5mE3okYa3Q4PuzJ0DkAhe4yQ='",  # Dashboard styles
+            "'sha256-ZVKgq1hdIBoPQgzFyefUpPwkQ0ClJDqnWKId/EgjQlY='"   # Calendar styles
             # Nonce will be added automatically by Talisman for blocks
-            ], 
+        ],
+        
+        # Sources for images
         'img-src': [
-            "'self'", 
-            'data:' # Allow data: URIs (for QR codes)
-            ], 
+            "'self'",  # Allow images from same origin
+            'data:'    # Allow data: URIs (for QR codes)
+        ],
+        
+        # Sources for fonts
         'font-src': [
-            "'self'", 
-            'https://cdn.jsdelivr.net'    # Allow Bootstrap Icons fonts
-            ], 
-        'object-src': ["'none'"], 
-        'base-uri': ["'self'"], 
-        'frame-ancestors': ["'self'"]
+            "'self'",             # Allow fonts from same origin
+            'https://cdn.jsdelivr.net'  # Allow Bootstrap Icons fonts
+        ],
+        
+        # Sources for AJAX, WebSockets, and other connections
+        'connect-src': [
+            "'self'"  # Only allow connections to same origin
+        ],
+        
+        # Prohibit embedding this site in iframes
+        'frame-ancestors': ["'self'"],
+        
+        # Block plugins like Flash and Java
+        'object-src': ["'none'"],
+        
+        # Restricts use of the <base> tag
+        'base-uri': ["'self'"],
+        
+        # Form submissions only to same origin
+        'form-action': ["'self'"],
+        
+        # Allowed sources for media (audio/video)
+        'media-src': [
+            "'self'"
+        ],
+        
+        # Control where manifests can be loaded from
+        'manifest-src': ["'self'"],
+        
+        # Report CSP violations to this endpoint
+        'report-uri': ["/csp-report"]
     }
+    
     # Initialize Talisman
-    # force_https=False for development/testing if not behind TLS proxy
     Talisman(
         app,
         content_security_policy=csp,
-        content_security_policy_nonce_in=['script-src', 'style-src'], # Apply nonces
-        force_https=False # Set to True in production if app is directly exposed or behind non-TLS proxy
+        content_security_policy_nonce_in=['script-src', 'style-src'],    # Apply nonces to scripts and styles
+        force_https=False,    # Should be True in production
+        strict_transport_security=True,     # Enable HSTS
+        session_cookie_secure=app.config.get('SESSION_COOKIE_SECURE', False),  # Secure cookies when HTTPS is used
+        session_cookie_http_only=True,      # Prevent JavaScript access to cookies
+        feature_policy={      # Set permissions policy (formerly feature policy)
+            'geolocation': "'none'",
+            'microphone': "'none'",
+            'camera': "'none'"
+        },
+        referrer_policy='strict-origin-when-cross-origin'  # Control referrer information
     )
     
     # Set up logging
@@ -151,8 +201,31 @@ def configure_logging(app):
 
 def register_error_handlers(app):
     """Register error handlers with the app."""
-    from flask import flash, redirect, url_for
+    from flask import flash, redirect, url_for, render_template
     from flask_wtf.csrf import CSRFError
+    
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('errors/403.html'), 403
+    
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
+    
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template('errors/500.html'), 500
+    
+    @app.route('/csp-report', methods=['POST'])
+    def csp_report():
+        """Handle CSP violation reports."""
+        try:
+            report = json.loads(request.data.decode('utf-8'))
+            app.logger.warning(f"CSP Violation: {json.dumps(report)}")
+            return jsonify({'status': 'received'}), 204
+        except Exception as e:
+            app.logger.error(f"Error processing CSP report: {str(e)}")
+            return jsonify({'status': 'error', 'message': str(e)}), 500
     
     @app.errorhandler(CSRFError)
     def handle_csrf_error(e):

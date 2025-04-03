@@ -143,6 +143,13 @@ Application configured through:
 - Resource ownership validation
 - Complete mediation of all requests
 
+### CSRF Protection
+- Global CSRF protection enabled (`WTF_CSRF_ENABLED = True`)
+- Opt-in CSRF checking with `WTF_CSRF_CHECK_DEFAULT = False`
+- This allows explicit CSRF protection where needed while avoiding unnecessary validation
+- Maintains security on state-changing requests (POST, PUT, DELETE)
+- Forms can explicitly enable CSRF protection as needed
+
 ### Database Security
 - Connection pooling with proper cleanup
 - Thread-safe connection management
@@ -151,6 +158,5 @@ Application configured through:
 
 ### Data Protection
 - Input validation and sanitization
-- CSRF protection on all forms
 - Comprehensive audit logging
 - Secure file storage for evidence files 

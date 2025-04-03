@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}500 Internal Server Error{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">500</div>
+    <h1>Internal Server Error</h1>
+    <p>Something went wrong on our end. We've been notified and are working to fix the issue.</p>
+    <p>You can try refreshing the page or come back later.</p>
+    <a href="{{ url_for('controls.dashboard') }}" class="button-link">Return to Dashboard</a>
+</div>
+
+<style nonce="{{ csp_nonce() }}">
+    .error-container {
+        text-align: center;
+        padding: 40px;
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px var(--shadow-color);
+    }
+    
+    .error-code {
+        font-size: 72px;
+        font-weight: bold;
+        color: var(--flash-danger-border);
+        margin-bottom: 20px;
+    }
+    
+    .error-container h1 {
+        color: var(--heading-color);
+        margin-bottom: 20px;
+    }
+    
+    .error-container p {
+        color: var(--text-color);
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}CSRF Error{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code"><i class="bi bi-shield-exclamation"></i></div>
+    <h1>Security Error</h1>
+    <p>There was a security issue with your request:</p>
+    <div class="error-reason">{{ reason }}</div>
+    <p>This may happen if:</p>
+    <ul class="error-list">
+        <li>Your session has expired</li>
+        <li>You've submitted an old form</li>
+        <li>You're using multiple browser tabs</li>
+    </ul>
+    <p>Please try again from the dashboard.</p>
+    <a href="{{ url_for('controls.dashboard') }}" class="button-link">Return to Dashboard</a>
+</div>
+
+<style nonce="{{ csp_nonce() }}">
+    .error-container {
+        text-align: center;
+        padding: 40px;
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: var(--card-bg);
+        border-radius: 10px;
+        box-shadow: 0 2px 10px var(--shadow-color);
+    }
+    
+    .error-code {
+        font-size: 60px;
+        color: var(--flash-danger-border);
+        margin-bottom: 20px;
+    }
+    
+    .error-container h1 {
+        color: var(--heading-color);
+        margin-bottom: 20px;
+    }
+    
+    .error-container p {
+        color: var(--text-color);
+        margin-bottom: 15px;
+    }
+    
+    .error-reason {
+        color: var(--flash-danger-text);
+        background-color: var(--flash-danger-bg);
+        border: 1px solid var(--flash-danger-border);
+        border-radius: 6px;
+        padding: 10px 15px;
+        margin: 10px 0 20px 0;
+        font-weight: 500;
+    }
+    
+    .error-list {
+        text-align: left;
+        display: inline-block;
+        margin: 0 auto 20px auto;
+        color: var(--text-color);
+    }
+</style>
+{% endblock %} 

@@ -10,6 +10,7 @@ from flask_login import UserMixin
 from app.services.database import get_by_id, insert, update, execute_query
 from app.services.settings import get_setting
 from app.utils.security import generate_reset_token
+from json import JSONDecodeError
 
 logger = logging.getLogger(__name__)
 
@@ -227,39 +228,52 @@ class User(UserMixin):
     
     def verify_backup_code(self, code):
         """
-        Verify and consume a backup code.
+        Verify and consume a backup code. Logs success, invalid code, or errors.
         
         Args:
             code: The backup code to verify
             
         Returns:
-            bool: True if code is valid, False otherwise
+            bool: True if code is valid and consumed, False otherwise
         """
         if not self.mfa_backup_codes:
+            logger.warning(f"Attempted backup code verification for user {self.username} with no codes stored.")
             return False
         
         try:
             backup_codes = json.loads(self.mfa_backup_codes)
             
             if code in backup_codes:
-                # Remove the used code
-                backup_codes.remove(code)
+                remaining_codes = list(backup_codes) # Create a copy
+                remaining_codes.remove(code)
+                remaining_codes_json = json.dumps(remaining_codes)
                 
-                # Update database
-                backup_codes_json = json.dumps(backup_codes)
-                update('users', 'userid', self.id, {
-                    'mfa_backup_codes': backup_codes_json
-                })
+                # Attempt to update the database first
+                try:
+                    update('users', 'userid', self.id, {
+                        'mfa_backup_codes': remaining_codes_json
+                    })
+                except Exception as db_err:
+                    logger.error(f"Database error consuming backup code for user {self.username}: {db_err}")
+                    # Don't update the object state if DB update fails
+                    return False 
+
+                # Update object property ONLY after successful DB update
+                self.mfa_backup_codes = remaining_codes_json
                 
-                # Update object property
-                self.mfa_backup_codes = backup_codes_json
-                
-                logger.info(f"Backup code used for user {self.username}")
+                logger.info(f"Backup code verified and consumed for user {self.username}. {len(remaining_codes)} codes remaining.")
                 return True
-            
+            else:
+                # Log invalid code attempt
+                logger.warning(f"Invalid backup code provided for user {self.username}.")
+                return False
+                
+        except JSONDecodeError as json_err:
+            logger.error(f"Error decoding backup codes JSON for user {self.username}: {json_err}")
             return False
         except Exception as e:
-            logger.error(f"Error verifying backup code for user {self.username}: {e}")
+            # Catch any other unexpected errors during verification
+            logger.error(f"Unexpected error verifying backup code for user {self.username}: {e}")
             return False
     
     def _generate_backup_codes(self, count=10, length=8):

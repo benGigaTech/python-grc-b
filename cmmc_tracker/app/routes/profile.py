@@ -105,7 +105,8 @@ def manage_mfa():
         return redirect(url_for('profile.setup_mfa'))
     
     backup_codes = current_user.get_backup_codes()
-    return render_template('manage_mfa.html', backup_codes=backup_codes)
+    backup_codes_count = len(backup_codes)
+    return render_template('manage_mfa.html', backup_codes=backup_codes, backup_codes_count=backup_codes_count)
 
 @profile_bp.route('/profile/disable-mfa', methods=['POST'])
 @login_required

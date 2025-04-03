@@ -15,6 +15,16 @@
             <h2>Backup Codes</h2>
             <p>If you lose access to your authenticator app, you can use one of these backup codes to access your account. Each code can only be used once.</p>
             
+            {% if backup_codes_count <= 2 and backup_codes_count > 0 %}
+            <div class="status-banner status-warning">
+                <strong>Warning:</strong> You have only {{ backup_codes_count }} backup code(s) remaining. Consider regenerating your codes soon.
+            </div>
+            {% elif backup_codes_count == 0 %}
+            <div class="status-banner status-danger">
+                <strong>Warning:</strong> You have no backup codes remaining. Regenerate your codes immediately.
+            </div>
+            {% endif %}
+            
             <div class="backup-codes">
                 {% if backup_codes %}
                 <ul>
@@ -68,7 +78,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 function copyCodes() {
     const codeElements = document.querySelectorAll('.backup-codes li');
     const codes = Array.from(codeElements).map(el => el.textContent.trim()).join('\n');
@@ -115,7 +125,7 @@ function printCodes() {
 {% endblock %}
 
 {% block styles %}
-<style>
+<style nonce="{{ csp_nonce() }}">
     .mfa-sections {
         display: flex;
         flex-direction: column;
@@ -141,6 +151,18 @@ function printCodes() {
         background-color: #ecfdf5;
         color: #065f46;
         border-left: 4px solid #10b981;
+    }
+    
+    .status-warning {
+        background-color: #fffbeb;
+        color: #92400e;
+        border-left: 4px solid #f59e0b;
+    }
+
+    .status-danger {
+        background-color: #fef2f2;
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
     }
     
     .backup-codes {

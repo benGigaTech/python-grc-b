@@ -136,7 +136,7 @@
     </tbody>
 </table>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.getElementById('export-csv').addEventListener('click', function() {
     // Simple CSV export of first visible table
     const table = document.querySelector('table');
@@ -174,7 +174,7 @@ document.getElementById('export-csv').addEventListener('click', function() {
 });
 </script>
 
-<style>
+<style nonce="{{ csp_nonce() }}">
 /* Dashboard Summary */
 .dashboard-summary {
     display: flex;

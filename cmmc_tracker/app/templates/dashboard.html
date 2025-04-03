@@ -205,7 +205,7 @@
 </div>
 </br>
 
-<style>
+<style nonce="{{ csp_nonce() }}">
     .dashboard-summary {
         display: flex;
         justify-content: space-between;
@@ -435,7 +435,7 @@
     }
 </style>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Set progress bar widths for control metrics
     var controlTotal = Number("{{ control_metrics.total|default(1) }}");

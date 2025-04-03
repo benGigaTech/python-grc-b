@@ -45,7 +45,7 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
+<script nonce="{{ csp_nonce() }}">
 function copySecret() {
     const secretText = document.querySelector('.secret-key code').textContent;
     navigator.clipboard.writeText(secretText).then(() => {
@@ -60,7 +60,7 @@ function copySecret() {
 {% endblock %}
 
 {% block styles %}
-<style>
+<style nonce="{{ csp_nonce() }}">
     .setup-steps {
         display: flex;
         flex-direction: column;

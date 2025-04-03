@@ -69,6 +69,21 @@ class Config:
     UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join(os.getcwd(), 'uploads'))
     MAX_CONTENT_LENGTH = int(os.environ.get('MAX_CONTENT_LENGTH', 16 * 1024 * 1024))  # 16MB default
     ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'}
+    ALLOWED_MIME_TYPES = {
+        'application/pdf',
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+        'text/plain',
+        'text/csv',
+        'application/msword', # .doc
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document', # .docx
+        'application/vnd.ms-excel', # .xls
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', # .xlsx
+        'application/vnd.ms-powerpoint', # .ppt
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation', # .pptx
+        # Add other valid MIME types if needed, e.g., for specific text encodings
+    }
     EVIDENCE_STATUS = {
         'CURRENT': 'Current',
         'EXPIRED': 'Expired',

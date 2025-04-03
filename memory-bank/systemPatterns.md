@@ -108,7 +108,7 @@ The application uses a layered architecture:
 - Secure file naming and organization
 - File metadata tracked in database
 - Status tracking (Current, Pending Review, Expired)
-- File type validation and size limits
+- **File type validation:** Includes checks for allowed extensions (config: `ALLOWED_EXTENSIONS`), content validation via magic numbers (config: `ALLOWED_MIME_TYPES`, uses `python-magic`), and size limits (config: `MAX_CONTENT_LENGTH`).
 - Secure file download through Flask's `send_file`
 
 ### Task Scheduling
@@ -217,10 +217,11 @@ The application uses a layered architecture:
 
 ## Database Migration Pattern
 
-1. **SQL-Based Migrations**: Versioned SQL scripts for schema changes
-2. **Version Tracking**: Migration tracking table in database
-3. **Idempotent Operations**: Safe to run multiple times
-4. **Migration Application Script**: Centralized script for applying migrations
+1.  **SQL-Based Migrations**: Versioned SQL scripts (`db/0*.sql`) for schema changes.
+2.  **Version Tracking**: `migration_history` table tracks applied migrations by filename.
+3.  **Idempotent Operations**: Scripts generally use `IF NOT EXISTS` or similar to be safely re-runnable.
+4.  **Automated Application**: The `docker-entrypoint.sh` script (set as `ENTRYPOINT` in `Dockerfile`) automatically applies pending migrations during container startup using `psql` after waiting for the database.
+5.  **Conditional Seeding**: After migrations, `docker-entrypoint.sh` checks the `RUN_FULL_SEED` environment variable and runs `seed_db.py` if set to `true` (primarily for development).
 
 ## UI Design Patterns
 

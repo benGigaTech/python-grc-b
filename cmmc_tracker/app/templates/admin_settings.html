@@ -94,7 +94,7 @@
     </div>
 </div>
 
-<style>
+<style nonce="{{ csp_nonce() }}">
 /* Tab styling */
 .tab-container {
     width: 100%;
@@ -233,7 +233,7 @@
 }
 </style>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Tabs functionality
     var tabButtons = document.querySelectorAll('.tab-button');

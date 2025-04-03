@@ -2,6 +2,7 @@
 
 import os
 import logging
+import magic
 from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -22,6 +23,30 @@ def allowed_file(filename):
     """Check if a filename has an allowed extension."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in current_app.config['ALLOWED_EXTENSIONS']
+
+def validate_file_type(file_stream):
+    """Validate the file type using magic numbers and check against allowed MIME types."""
+    try:
+        # Read the first few bytes to determine the file type
+        # Increasing buffer size for better detection of certain formats (e.g., docx)
+        file_header = file_stream.read(2048) 
+        file_stream.seek(0) # Reset stream position after reading
+        
+        # Use python-magic to get the MIME type
+        detected_mime_type = magic.from_buffer(file_header, mime=True)
+        
+        # Check if the detected MIME type is in the allowed list
+        allowed_mime_types = current_app.config.get('ALLOWED_MIME_TYPES', set())
+        if detected_mime_type in allowed_mime_types:
+            logger.info(f"File type validated via magic number: {detected_mime_type}")
+            return True, detected_mime_type
+        else:
+            logger.warning(f"File type validation failed. Detected MIME type: {detected_mime_type}, Allowed: {allowed_mime_types}")
+            return False, detected_mime_type
+            
+    except Exception as e:
+        logger.error(f"Error during file type validation: {e}")
+        return False, None
 
 @evidence_bp.route('/control/<control_id>/evidence')
 @login_required
@@ -120,12 +145,22 @@ def add_evidence(control_id):
                 flash('No file selected.', 'danger')
                 return render_template('add_evidence.html', control=control.to_dict())
                 
-            if not allowed_file(file.filename):
-                flash(f'File type not allowed. Allowed types: {", ".join(current_app.config["ALLOWED_EXTENSIONS"])}', 'danger')
+            # --- Enhanced File Validation ---
+            # 1. Check extension first (quick check)
+            file_extension = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else None
+            if file_extension not in current_app.config['ALLOWED_EXTENSIONS']:
+                flash(f'File extension ".{file_extension}" not allowed. Allowed extensions: {", ".join(current_app.config["ALLOWED_EXTENSIONS"])}', 'danger')
                 return render_template('add_evidence.html', control=control.to_dict())
-            
-            # Save the file
-            file_path, file_type, file_size = save_evidence_file(file, control_id)
+
+            # 2. Validate content using magic numbers
+            is_valid_type, detected_mime = validate_file_type(file.stream)
+            if not is_valid_type:
+                flash(f'File content validation failed. Detected type "{detected_mime}" is not allowed. Allowed MIME types: {", ".join(current_app.config.get("ALLOWED_MIME_TYPES", set()))}', 'danger')
+                return render_template('add_evidence.html', control=control.to_dict())
+            # --- End Enhanced File Validation ---
+
+            # Save the file (use detected_mime if available, otherwise fallback)
+            file_path, saved_file_type, file_size = save_evidence_file(file, control_id, detected_mime or file.content_type)
             if not file_path:
                 flash('Failed to save evidence file.', 'danger')
                 return render_template('add_evidence.html', control=control.to_dict())
@@ -136,7 +171,7 @@ def add_evidence(control_id):
                 title,
                 description,
                 file_path,
-                file_type,
+                saved_file_type,
                 file_size,
                 current_user.username,
                 expiration_date

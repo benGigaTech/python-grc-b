@@ -19,7 +19,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Password hashing with Werkzeug's functions
    - Session management via Flask-Login
    - Multi-factor authentication (TOTP) with QR code
-   - Backup codes for MFA recovery
+   - Backup codes for MFA recovery (Improved robustness & logging)
    - Admin ability to reset user MFA
    - Rate limiting (10 attempts per minute for login)
    - Password strength validation during registration and resets
@@ -197,7 +197,6 @@ These features have been planned but do not appear to be implemented yet:
 ## Known Issues
 
 1. **Authentication**
-   - MFA backup codes need implementation improvement
    - Session timeout handling can be inconsistent
    - Clock synchronization issues can affect TOTP validation
 
@@ -224,12 +223,9 @@ These features have been planned but do not appear to be implemented yet:
    - Content Security Policy needs refinement
    - Rate limiting configuration may need tuning
    - Additional XSS protections required in some areas
-   - File type validation could be strengthened
 
 6. **Database Migrations**
-   - Migration failures during Docker initialization
    - Potential issues with PostgreSQL version compatibility
-   - Error handling in migration scripts could be improved
    - No automated migration testing
 
 ## Recent Milestones
@@ -255,7 +251,37 @@ These features have been planned but do not appear to be implemented yet:
    - Made security parameters configurable
    - Updated User model to use settings for account lockout
 
-3. **Enhanced Reporting System**
+3. **MFA Backup Code Improvements**
+   - Enhanced error handling and logging in backup code verification (`User.verify_backup_code`).
+   - Added specific checks for JSON decoding and database update errors.
+   - Implemented UI warning on `manage_mfa` page when backup codes are low.
+
+4. **Database Migration System Overhaul**
+   - Replaced old `seed_db.py` initialization logic with a robust migration system in `docker-entrypoint.sh`.
+   - Entrypoint now uses `psql` to apply numbered SQL scripts (`db/0*.sql`) sequentially.
+   - Uses `db/02_migration_tracking.sql` to create a `migration_history` table.
+   - Checks `migration_history` to apply only pending migrations.
+   - Added error handling and logging to the migration process in the entrypoint script.
+   - Simplified `start.sh` to only start Gunicorn, removing redundant DB checks and seeding.
+   - Removed duplicate `db/init.sql`.
+
+5. **Automatic Admin User Seeding Fixes**
+   - Resolved issues preventing automatic admin user creation.
+   - Added file logging and `set -x` to `docker-entrypoint.sh` for debugging.
+   - Fixed `Dockerfile` to set `ENTRYPOINT` correctly.
+   - Added `postgresql-client` package to `Dockerfile` for `psql` command.
+   - Refactored database wait loop in `docker-entrypoint.sh`.
+   - Confirmed admin user (`admin`/`adminpassword`) is now created automatically on first startup.
+
+6. **Conditional Database Seeding**
+   - Removed automatic call to `create_admin.py`.
+   - Added conditional execution of `seed_db.py` in `docker-entrypoint.sh` based on `RUN_FULL_SEED` environment variable.
+   - Updated `docker-compose.yml` to include `RUN_FULL_SEED` (defaulting to `false`).
+
+7. **Security Enhancements**
+   - **File Upload Validation:** Strengthened evidence file upload validation by adding magic number checking (`python-magic`) in addition to extension checks. Requires `ALLOWED_MIME_TYPES` in `config.py` and `libmagic1` in `Dockerfile`.
+
+8. **Enhanced Reporting System**
    - Added JSON export functionality for control data
    - Created dropdown menu UI for export format selection
    - Fixed URL routing for export endpoints
@@ -263,12 +289,12 @@ These features have been planned but do not appear to be implemented yet:
    - Added proper error handling for export operations
    - Ensured cross-browser compatibility
 
-4. **Documentation Corrections**
+9. **Documentation Corrections**
    - Updated techContext.md to correctly reflect the use of psycopg2 instead of SQLAlchemy
    - Clarified custom Repository Pattern implementation in systemPatterns.md
    - Documented database connection handling approach and future improvements
 
-5. **Dashboard Refinement**
+10. **Dashboard Refinement**
    - Removed compliance trend chart feature based on stakeholder feedback
    - Fixed layout issues with overlapping elements
    - Enhanced domain compliance overview to utilize full width
@@ -276,14 +302,14 @@ These features have been planned but do not appear to be implemented yet:
    - Fixed JavaScript calculation in progress bars
    - Added consistent styling across all dashboard elements
 
-6. **Account Security**
+11. **Account Security**
    - Implemented account lockout after multiple failed attempts
    - Added admin interface to manage locked accounts
    - Created mechanism for automatic account unlocking
    - Added audit logging of lockout events
    - Made lockout parameters configurable through settings
 
-7. **Multi-Factor Authentication**
+12. **Multi-Factor Authentication**
    - Completed TOTP implementation
    - Added QR code generation
    - Implemented setup flow
@@ -291,7 +317,7 @@ These features have been planned but do not appear to be implemented yet:
    - Added admin reset capability
    - Integrated with login flow
 
-8. **Evidence Management System**
+13. **Evidence Management System**
    - File upload with type validation
    - Metadata tracking including expiration
    - Status indicators (current, expired, pending)
@@ -299,7 +325,7 @@ These features have been planned but do not appear to be implemented yet:
    - Sorting and pagination
    - Update and delete functionality
 
-9. **Docker Deployment**
+14. **Docker Deployment**
    - Containerized application
    - Docker Compose setup
    - Volume management for persistence

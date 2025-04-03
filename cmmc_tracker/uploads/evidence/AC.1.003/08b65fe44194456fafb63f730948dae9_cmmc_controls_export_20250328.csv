@@ -1,0 +1,111 @@
+Control ID,Control Name,Control Description,NIST Mapping,Review Frequency,Last Review Date,Next Review Date
+AC.1.001,"Limit information system access to authorized users, processes acting on behalf of authorized users, or devices (including other information systems).",Control who has access to your systems and what they can do.,3.1.1,Annual,2025-02-26,2026-02-26
+AC.1.002,Limit information system access to the types of transactions and functions that authorized users are permitted to execute.,Restrict user actions to only those necessary for their job.,3.1.2,Annual,2025-02-26,2026-02-26
+AC.1.003,Verify and control/limit connections to and use of external information systems.,Manage connections to systems outside your control.,3.1.3,Annual,2025-02-26,2026-02-26
+AC.2.001,Separate duties of individuals to reduce the risk of malevolent activity without collusion.,Divide critical tasks among different people to prevent fraud or misuse.,3.1.4,Annual,2025-02-26,2026-02-26
+AC.2.002,"Employ the principle of least privilege, including for specific security functions and privileged accounts.",Grant users and processes only the necessary privileges to do their jobs.,3.1.5,Annual,2025-02-26,2026-02-26
+AC.2.003,Use non-privileged accounts or roles when accessing nonsecurity functions.,Don’t use powerful accounts for everyday tasks to limit potential damage.,3.1.6,Annual,2025-02-26,2026-02-26
+AC.2.004,Prevent non-privileged users from executing privileged functions and capture the execution of such functions in audit logs.,Regular users should not be able to do administrator tasks.,3.1.7,Annual,2025-02-26,2026-02-26
+AC.2.005,Limit unsuccessful logon attempts.,Protect against attackers repeatedly trying to guess passwords.,3.1.8,Annual,2025-02-26,2026-02-26
+AC.2.006,Provide privacy and security notices consistent with applicable CUI rules.,Inform users of the rules and restrictions for using systems with CUI.,3.1.9,Annual,2025-02-26,2026-02-26
+AC.2.007,Use session lock with pattern-hiding displays to prevent access and viewing of data after a period of inactivity.,Quickly lock your screen to prevent unauthorized access.,3.1.10,Annual,2025-02-26,2026-02-26
+AC.2.008,Terminate (automatically) a user session after a defined condition.,Log users off automatically after a certain condition (e.g. inactivity).,3.1.11,Annual,2025-02-26,2026-02-26
+AC.2.009,Control remote access sessions.,Keep an eye on who is connecting to your network remotely.,3.1.12,Annual,2025-02-26,2026-02-26
+AC.2.010,Employ cryptographic mechanisms to protect the confidentiality of remote access sessions.,Use encryption to protect remote access connections.,3.1.13,Annual,2025-02-26,2026-02-26
+AC.2.011,Route remote access via managed access control points.,Control remote access through a limited number of points.,3.1.14,Annual,2025-02-26,2026-02-26
+AC.2.012,Authorize remote execution of privileged commands and remote access to security-relevant information.,Control the use of powerful commands and sensitive information remotely.,3.1.15,Annual,2025-02-26,2026-02-26
+AC.2.013,Authorize wireless access prior to allowing such connections.,Control the use of wireless networks and devices.,3.1.16,Annual,2025-02-26,2026-02-26
+AC.2.014,Protect wireless access using authentication and encryption.,Secure wireless connections with strong passwords and encryption.,3.1.17,Annual,2025-02-26,2026-02-26
+AC.2.015,Control connection of mobile devices.,Manage the use of mobile devices like phones and tablets.,3.1.18,Annual,2025-02-26,2026-02-26
+AC.2.016,Encrypt CUI on mobile devices and mobile computing platforms.,Protect CUI on mobile devices with encryption.,3.1.19,Annual,2025-02-26,2026-02-26
+AC.2.017,Verify and control/limit connections to and use of external systems.,Manage connections between your network and external systems.,3.1.20,Annual,2025-02-26,2026-02-26
+AC.2.018,Limit use of portable storage devices on external systems.,Control the use of portable storage devices like USB drives.,3.1.21,Annual,,
+AC.2.019,Control CUI posted or processed on publicly accessible systems.,Safeguard CUI on public systems.,3.1.22,Annual,,
+AT.1.001,"Ensure that managers, systems administrators, and users of organizational systems are made aware of the security risks associated with their activities and of the applicable policies, standards, and procedures related to the security of those systems.",Train staff on security awareness and their roles.,3.2.1,Annual,,
+AT.2.001,Ensure that personnel are trained to carry out their assigned information security-related duties and responsibilities.,Provide role-based training to staff.,3.2.2,Annual,,
+AT.3.001,Provide security awareness training on recognizing and reporting potential indicators of insider threat.,Train staff on insider threat awareness.,3.2.3,Annual,,
+AU.1.001,"Create and retain system audit logs and records to the extent needed to enable the monitoring, analysis, investigation, and reporting of unlawful or unauthorized system activity.",Create and keep audit logs.,3.3.1,Annual,,
+AU.2.001,Ensure that the actions of individual system users can be uniquely traced to those users so they can be held accountable for their actions.,Trace user actions for accountability.,3.3.2,Annual,,
+AU.3.001,Review and update logged events.,Regularly check and update what events are being logged.,3.3.3,Annual,,
+AU.3.002,Alert in the event of an audit logging process failure.,Set up alerts for audit log failures.,3.3.4,Annual,,
+AU.3.003,"Correlate audit record review, analysis, and reporting processes for investigation and response to indications of unlawful, unauthorized, suspicious, or unusual activity.",Analyze audit records for signs of suspicious activity.,3.3.5,Annual,,
+AU.3.004,Provide audit record reduction and report generation to support on-demand analysis and reporting.,Make audit records easier to analyze and report on.,3.3.6,Annual,,
+AU.3.005,Provide a system capability that compares and synchronizes internal system clocks with an authoritative source to generate time stamps for audit records.,Synchronize system clocks with an accurate time source.,3.3.7,Annual,,
+AU.3.006,"Protect audit information and audit logging tools from unauthorized access, modification, and deletion.",Secure audit logs and tools.,3.3.8,Annual,,
+AU.3.007,Limit management of audit logging functionality to a subset of privileged users.,Restrict access to audit log management functions.,3.3.9,Annual,,
+CA.1.001,Assess security controls.,Regularly assess security controls to ensure they are effective.,3.12.1,Annual,,
+CA.2.001,Develop and implement a plan of action.,Create and implement plans to fix security issues.,3.12.2,Annual,,
+CA.3.001,Monitor security controls.,Continuously monitor security controls.,3.12.3,Annual,,
+CA.4.001,Develop and update a system security plan.,Create and maintain a system security plan.,3.12.4,Annual,,
+CM.1.001,"Establish and maintain baseline configurations and inventories of organizational systems (including hardware, software, firmware, and documentation) throughout the respective system development life cycles.",Establish and maintain secure configurations.,3.4.1,Annual,,
+CM.1.002,Establish and enforce security configuration settings for information technology products employed in organizational systems.,Set and enforce secure configurations for IT products.,3.4.2,Annual,,
+CM.2.001,"Track, review, approve or disapprove, and log changes to organizational systems.",Manage changes to systems.,3.4.3,Annual,,
+CM.2.002,Analyze the security impact of changes prior to implementation.,Review changes for security impacts.,3.4.4,Annual,,
+CM.2.003,"Define, document, approve, and enforce physical and logical access restrictions associated with changes to organizational systems.",Control access to systems during changes.,3.4.5,Annual,,
+CM.2.004,Employ the principle of least functionality by configuring organizational systems to provide only essential capabilities.,Use the principle of least functionality.,3.4.6,Annual,,
+CM.2.005,"Restrict, disable, or prevent the use of nonessential programs, functions, ports, protocols, and services.",Limit unnecessary programs and services.,3.4.7,Annual,2024-04-12,2025-04-12
+CM.2.006,"Apply deny-by-exception (blacklisting) policy to prevent the use of unauthorized software or deny-all, permit-by-exception (whitelisting) policy to allow the execution of authorized software.",Use blacklisting or whitelisting to control software execution.,3.4.8,Annual,2024-04-12,2025-04-12
+CM.2.007,Control and monitor user-installed software.,Manage user-installed software.,3.4.9,Annual,2024-04-12,2025-04-12
+IA.1.001,"Identify system users, processes acting on behalf of users, and devices.","Assign unique IDs to users, processes, and devices.",3.5.1,Annual,2024-04-12,2025-04-12
+IA.1.002,"Authenticate (or verify) the identities of those users, processes, or devices, as a prerequisite to allowing access to organizational systems.",Verify identities before granting access.,3.5.2,Annual,2024-04-12,2025-04-12
+IA.1.003,Use multifactor authentication for local and network access to privileged accounts and for network access to non-privileged accounts.,Use multiple authentication factors.,3.5.3,Annual,,
+IA.1.004,Employ replay-resistant authentication mechanisms for network access to privileged and non-privileged accounts.,Use authentication methods that resist replay attacks.,3.5.4,Annual,,
+IA.1.005,Prevent reuse of identifiers for a defined period.,Don't reuse user IDs for a certain time.,3.5.5,Annual,,
+IA.2.006,Identifier Handling,Disable inactive user IDs.,3.5.6,Annual,,
+IA.2.007,Employ strong password composition.,Use strong passwords.,3.5.7,Annual,,
+IA.2.008,Prevent password reuse.,Don't reuse old passwords.,3.5.8,Annual,2024-02-22,2025-02-21
+IA.2.009,Use one-time passwords.,Use passwords that are valid for only one login session or a short period of time.,3.5.9,Annual,2024-02-22,2025-02-21
+IA.2.010,"Protect (i.e., encrypt) stored passwords.",Store passwords securely.,3.5.10,Annual,2024-02-22,2025-02-21
+IA.2.011,"Mask (i.e., obscure) authentication information.",Hide passwords and other authentication information.,3.5.11,Annual,,
+IR.1.001,Create an incident response plan.,Develop a plan for responding to security incidents.,3.6.1,Annual,,
+IR.2.001,Report incidents.,Report security incidents to the appropriate people.,3.6.2,Annual,,
+IR.3.001,Test incident response plan.,Regularly test your incident response plan.,3.6.3,Annual,,
+MA.1.001,Perform maintenance.,Regularly maintain your systems.,3.7.1,Annual,,
+MA.2.001,Control maintenance tools.,Manage the tools used for maintenance.,3.7.2,Annual,,
+MA.2.002,Sanitize media.,Clean or destroy media before reusing or discarding it.,3.7.3,Annual,,
+MA.2.003,Inspect media.,Check media for malicious code before using it.,3.7.4,Annual,,
+MA.2.004,Use multi-factor authentication for remote maintenance.,Use strong authentication for remote maintenance sessions.,3.7.5,Annual,,
+MA.2.005,Supervise maintenance personnel.,Supervise maintenance activities.,3.7.6,Annual,,
+MP.1.001,Protect CUI.,Protect the confidentiality of CUI.,3.8.1,Annual,,
+MP.2.001,Limit CUI access.,Limit access to CUI to authorized users.,3.8.2,Annual,,
+MP.2.002,Sanitize or destroy CUI media.,Clean or destroy media containing CUI before disposal or reuse.,3.8.3,Annual,,
+MP.3.001,Mark CUI media.,Mark media containing CUI with appropriate labels.,3.8.4,Annual,,
+MP.4.001,Control CUI media.,Control access to media containing CUI.,3.8.5,Annual,,
+MP.5.001,Encrypt CUI.,Encrypt CUI on portable storage devices.,3.8.6,Annual,,
+MP.6.001,Control removable media.,Control the use of removable media.,3.8.7,Annual,,
+MP.7.001,Prohibit shared media.,Do not allow the use of portable storage devices that have no identifiable owner.,3.8.8,Annual,,
+MP.8.001,Protect backups.,Protect the confidentiality of CUI backups.,3.8.9,Annual,,
+PE.1.001,Limit physical access.,"Limit physical access to organizational systems, equipment, and operating environments to authorized individuals.",3.10.1,Annual,,
+PE.2.001,Monitor physical access.,Monitor physical access to facilities and infrastructure.,3.10.2,Annual,,
+PE.2.002,Escort visitors.,Escort visitors and monitor their activity.,3.10.3,Annual,,
+PE.2.003,Maintain physical access logs.,Keep records of physical access.,3.10.4,Annual,,
+PE.2.004,Manage physical access devices.,Control and manage physical access devices.,3.10.5,Annual,,
+PE.2.005,Enforce safeguarding measures.,Enforce safeguards for CUI at alternate work sites.,3.10.6,Annual,,
+PS.1.001,Screen personnel.,Screen individuals before allowing them access to CUI.,3.9.1,Annual,,
+PS.2.001,Protect CUI during personnel actions.,Protect CUI when employees are terminated or transferred.,3.9.2,Annual,,
+RA.1.001,Conduct risk assessments.,"Regularly assess risk to organizational operations, assets, and individuals.",3.11.1,Annual,,
+RA.2.001,Scan for vulnerabilities.,Regularly scan for vulnerabilities in systems and applications.,3.11.2,Annual,,
+RA.3.001,Remediate vulnerabilities.,Fix vulnerabilities based on risk assessments.,3.11.3,Annual,,
+SC.1.001,Protect CUI.,Protect the confidentiality of CUI.,3.13.1,Annual,,
+SC.2.001,Employ security engineering.,Use secure design principles when building and updating systems.,3.13.2,Annual,,
+SC.3.001,Separate user functionality.,Separate user functions from system management functions.,3.13.3,Annual,,
+SC.3.002,Prevent information transfer.,Prevent unauthorized information transfer via shared system resources.,3.13.4,Annual,,
+SC.3.003,Implement subnetworks.,Use separate subnetworks for publicly accessible systems.,3.13.5,Annual,,
+SC.3.004,Deny network communications traffic.,Block network traffic by default and allow only authorized traffic.,3.13.6,Annual,,
+SC.3.005,Prevent split tunneling.,Prevent remote devices from connecting to both internal and external networks simultaneously.,3.13.7,Annual,,
+SC.3.006,Encrypt CUI.,Encrypt CUI during transmission.,3.13.8,Annual,,
+SC.3.007,Terminate network connections.,End network connections after a period of inactivity.,3.13.9,Annual,,
+SC.3.008,Establish cryptographic keys.,Establish and manage cryptographic keys.,3.13.10,Annual,,
+SC.3.009,Use FIPS-validated cryptography.,Use FIPS-validated cryptography to protect CUI.,3.13.11,Annual,,
+SC.3.010,Control collaborative devices.,Control and monitor the use of collaborative computing devices.,3.13.12,Annual,,
+SC.3.011,Control mobile code.,Control and monitor the use of mobile code.,3.13.13,Annual,,
+SC.3.012,Control VoIP.,Control and monitor the use of Voice over Internet Protocol (VoIP) technologies.,3.13.14,Annual,,
+SC.3.013,Protect communications sessions.,Protect the authenticity of communications sessions.,3.13.15,Annual,,
+SC.3.014,Protect CUI.,Protect the confidentiality of CUI at rest.,3.13.16,Annual,,
+SI.1.001,Correct system flaws.,"Identify, report, and correct system flaws.",3.14.1,Annual,,
+SI.1.002,Identify malicious code.,Identify malicious code.,3.14.2,Annual,,
+SI.1.003,Quarantine malicious code.,Isolate malicious code.,3.14.3,Annual,,
+SI.1.004,Remove malicious code.,Remove malicious code.,3.14.4,Annual,,
+SI.1.005,Report malicious code.,Report malicious code.,3.14.5,Annual,,
+SI.1.006,Update malicious code protection mechanisms.,Update malicious code protection mechanisms.,3.14.6,Annual,,
+SI.1.007,Monitor for malicious code.,Monitor for malicious code.,3.14.7,Annual,,

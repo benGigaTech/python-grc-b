@@ -21,16 +21,18 @@ def get_evidence_upload_dir():
         os.makedirs(upload_dir, exist_ok=True)
     return upload_dir
 
-def save_evidence_file(file, control_id):
+def save_evidence_file(file, control_id, detected_mime_type=None):
     """
     Save an uploaded evidence file to disk.
     
     Args:
         file: The uploaded file object
         control_id: The ID of the control this evidence is for
+        detected_mime_type (str, optional): MIME type detected by magic number validation.
+                                          Defaults to None.
         
     Returns:
-        tuple: (file_path, file_type, file_size) or (None, None, None) on failure
+        tuple: (relative_path, file_type, file_size) or (None, None, None) on failure
     """
     try:
         if not file:
@@ -55,9 +57,10 @@ def save_evidence_file(file, control_id):
         
         # Get file metadata
         file_size = os.path.getsize(file_path)
-        file_type = file.content_type or 'application/octet-stream'
+        # Use detected MIME type if available and valid, otherwise fallback to browser-provided type
+        file_type = detected_mime_type if detected_mime_type else (file.content_type or 'application/octet-stream')
         
-        logger.info(f"Saved evidence file: {file_path}")
+        logger.info(f"Saved evidence file: {file_path} (Type: {file_type})")
         return relative_path, file_type, file_size
         
     except Exception as e:

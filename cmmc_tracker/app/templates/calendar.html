@@ -234,7 +234,7 @@
 </div>
 {% endif %}
 
-<style>
+<style nonce="{{ csp_nonce() }}">
 /* Card Styles */
 .card {
     border-radius: 10px;
@@ -441,116 +441,28 @@
     padding: 20px 0;
 }
 
-/* Table Enhancements */
-.table-responsive {
-    overflow-x: auto;
+/* Row Status Highlighting (ensure border is used) */
+tr.past-due td {
+    border-left: 3px solid var(--flash-danger-border);
+}
+tr.upcoming td {
+    border-left: 3px solid var(--flash-warning-border);
 }
 
-tr.past-due {
-    background-color: var(--flash-danger-bg) !important;
-}
-
-tr.upcoming {
-    background-color: var(--flash-warning-bg) !important;
-}
-
+/* Badge styles override if needed */
 .badge {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-weight: 500;
+    color: #fff;
 }
+.badge.bg-danger { background-color: var(--flash-danger-border) !important; }
+.badge.bg-warning { background-color: var(--flash-warning-border) !important; color: #333 !important; }
+.badge.bg-success { background-color: var(--flash-success-border) !important; }
+.badge.bg-primary { background-color: var(--link-color) !important; }
 
-/* Bootstrap Pagination Override Styles */
-.bootstrap-pagination {
-    display: flex !important;
-    flex-direction: row !important;
-    margin-top: 20px;
-    gap: 5px;
-}
-
-.bootstrap-pagination .page-item {
-    margin: 0 2px;
-}
-
-.bootstrap-pagination .page-link {
-    padding: 0.375rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    color: var(--link-color);
-    background-color: var(--form-bg);
-    text-decoration: none;
-}
-
-.bootstrap-pagination .page-item.active .page-link {
-    background-color: var(--link-color);
-    border-color: var(--link-hover-color);
-    color: white;
-}
-
-.bootstrap-pagination .page-item.disabled .page-link {
+/* Ensure text muted uses theme */
+.text-muted {
     color: var(--text-color);
-    opacity: 0.6;
-    pointer-events: none;
-    background-color: var(--form-bg);
-    border-color: var(--border-color);
 }
 
-/* Remove any existing calendar pagination styles to avoid conflicts */
-.calendar-pagination.pagination,
-.card-body nav .pagination,
-.card-body nav .pagination a,
-.card-body nav .pagination .active a {
-    /* Reset all properties to avoid conflicts */
-}
-
-/* Pagination Styles - Override for Bootstrap */
-.pagination {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    padding-left: 0 !important;
-    list-style: none !important;
-    border-radius: 0.25rem !important;
-    justify-content: center !important;
-    margin-top: 1rem !important;
-}
-
-.page-link {
-    position: relative !important;
-    display: block !important;
-    padding: 0.5rem 0.75rem !important;
-    margin-left: -1px !important;
-    line-height: 1.25 !important;
-    color: #3b82f6 !important;
-    background-color: #fff !important;
-    border: 1px solid #dee2e6 !important;
-    text-decoration: none !important;
-}
-
-.page-item:first-child .page-link {
-    margin-left: 0 !important;
-    border-top-left-radius: 0.25rem !important;
-    border-bottom-left-radius: 0.25rem !important;
-}
-
-.page-item:last-child .page-link {
-    border-top-right-radius: 0.25rem !important;
-    border-bottom-right-radius: 0.25rem !important;
-}
-
-.page-item.active .page-link {
-    z-index: 3 !important;
-    color: #fff !important;
-    background-color: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-}
-
-.page-item.disabled .page-link {
-    color: #6c757d !important;
-    pointer-events: none !important;
-    cursor: auto !important;
-    background-color: #fff !important;
-    border-color: #dee2e6 !important;
-}
 </style>
 
 <!-- Prepare the calendar data for JavaScript to avoid template issues -->
@@ -567,7 +479,7 @@ tr.upcoming {
 ]
 </script>
 
-<script>
+<script nonce="{{ csp_nonce() }}">
 document.addEventListener('DOMContentLoaded', function() {
     // Get calendar data from the hidden JSON
     const controlReviewsJson = document.getElementById('calendar-data').textContent;

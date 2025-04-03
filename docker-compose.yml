@@ -27,6 +27,8 @@ services:
       - REDIS_PORT=6379
       - REDIS_URL=redis://redis:6379/0
       - PYTHONPATH=/app/cmmc_tracker
+      # Control Seeding Behavior (set to true to run seed_db.py on startup)
+      - RUN_FULL_SEED=${RUN_FULL_SEED:-true}
     depends_on:
       - db
       - redis

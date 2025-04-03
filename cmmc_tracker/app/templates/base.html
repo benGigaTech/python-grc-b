@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+    <!-- Favicon -->
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <!-- Immediate theme application to prevent FOUC -->
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         // Execute immediately, don't wait for DOM to be ready
         (function() {
             var savedTheme = localStorage.getItem('theme');
@@ -26,7 +28,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     
     <!-- Theme toggle script - placed in head to execute before page renders -->
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         // Apply the theme immediately to prevent flash of unstyled content
         (function() {
             // IMPORTANT: This needs to be rendered on the server, not parsed by the linter
@@ -37,7 +39,7 @@
     </script>
     
     <!-- Custom styles -->
-    <style>
+    <style nonce="{{ csp_nonce() }}">
         :root {
             /* Light mode variables */
             --bg-color: #f5f7fa;
@@ -66,7 +68,7 @@
             --flash-danger-text: #991b1b;
             --flash-warning-bg: #fffbeb;
             --flash-warning-border: #f59e0b;
-            --flash-warning-text: #92400e;
+            --flash-warning-text: #fefcbf;
             --nav-bg: #1e40af;
             --nav-text: #ffffff;
             --footer-bg: #1e40af;
@@ -738,6 +740,73 @@
             background-color: rgba(255, 255, 255, 0.1);
             text-decoration: none;
         }
+
+        /* --- Global Table Theme Styles --- */
+        .table {
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .table th, 
+        .table > tbody > tr > td {
+            border: 1px solid var(--border-color);
+            color: var(--text-color) !important; 
+        }
+
+        .table thead th {
+            background-color: var(--table-header-bg) !important; 
+            color: var(--table-header-text) !important; 
+        }
+
+        .table > tbody > tr {
+            background-color: var(--table-row-bg) !important; 
+        }
+
+        .table-striped > tbody > tr:nth-of-type(odd) {
+            background-color: var(--table-row-alt-bg) !important; 
+        }
+
+        .table > tbody > tr:hover {
+             background-color: var(--table-row-hover-bg) !important; 
+        }
+
+        .table > tbody > tr > td a {
+            color: var(--link-color) !important; 
+        }
+        .table > tbody > tr > td a:hover {
+            color: var(--link-hover-color) !important; 
+        }
+        
+        /* --- Global Pagination Theme Styles --- */
+        .pagination > li > .page-link {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--link-color);
+        }
+
+        .pagination > li > .page-link:hover {
+            background-color: var(--table-row-alt-bg);
+        }
+
+        .pagination > li.active > .page-link {
+            background-color: var(--button-bg);
+            border-color: var(--button-bg);
+            color: var(--button-text);
+        }
+
+        .pagination > li.disabled > .page-link {
+            background-color: var(--table-row-alt-bg);
+            border-color: var(--border-color);
+            color: var(--text-color);
+            opacity: 0.6;
+        }
+
+        /* --- Table Styles (Base Bootstrap Overrides, might be redundant) --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            /* background-color: var(--table-row-bg); Set per row */
+        }
     </style>
 </head>
 <body>
@@ -803,12 +872,12 @@
         {% block content %}{% endblock %}
     </main>
 
-    <footer>
+    <footer class="footer mt-auto py-3">
         &copy; <script>document.write(new Date().getFullYear())</script> {{ app_name }} | 
         Version 1.0 | <a href="#" onclick="alert('Contact your system administrator for support.')">Support</a>
     </footer>
 
-    <script>
+    <script nonce="{{ csp_nonce() }}">
         // Theme toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
             const themeToggle = document.getElementById('theme-toggle');
@@ -845,5 +914,8 @@
             }
         });
     </script>
+
+    <!-- Add any page-specific JavaScript here -->
+    {% block scripts %}{% endblock %}
 </body>
 </html>

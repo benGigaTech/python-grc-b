@@ -7,6 +7,7 @@
 - **Flask 2.3+**: Web framework
 - **psycopg2**: PostgreSQL database driver
 - **psycopg2.pool.ThreadedConnectionPool**: Database connection pooling
+- **python-magic**: File type detection via magic numbers
 - **threading**: Thread management for connection pooling
 - **atexit**: Cleanup registration for application shutdown
 - **Custom Database Service**: Abstraction layer for database operations
@@ -41,6 +42,8 @@
 - **Docker**: Containerization for consistent deployment
 - **Docker Compose**: Multi-container orchestration
 - **Gunicorn**: WSGI HTTP server for production
+- **PostgreSQL Client (`psql`)**: Used by entrypoint script for migrations
+- **Libmagic (`libmagic1`)**: Required by `python-magic`
 
 ## Development Environment
 
@@ -67,7 +70,7 @@
 ### Performance
 - Optimized for organizations with up to 500 controls
 - Up to 100 concurrent users
-- Evidence file size limited to 10MB per upload
+- Evidence file size limited to 10MB per upload (via `MAX_CONTENT_LENGTH` config)
 - Database connection pool configured with min=5, max=25 connections
 
 ### Security
@@ -76,6 +79,7 @@
 - Content-Security-Policy implementation
 - HTTP security headers (X-XSS-Protection, X-Frame-Options, etc.)
 - Redis-backed rate limiting for authentication endpoints
+- Evidence file validation using extension (`ALLOWED_EXTENSIONS` config) and content/MIME type (`ALLOWED_MIME_TYPES` config, `python-magic`).
 - Password strength enforcement
 - TOTP-based multi-factor authentication with backup codes
 - One-time use password reset tokens
@@ -121,8 +125,8 @@
 ## Configuration Management
 
 Application configured through:
-1. Environment variables
-2. Configuration files (config.py)
+1. Environment variables (defined in `docker-compose.yml`, including `RUN_FULL_SEED` for seeding)
+2. Configuration files (`cmmc_tracker/config.py`, defining `ALLOWED_EXTENSIONS`, `ALLOWED_MIME_TYPES`, etc.)
 3. Database settings
 4. Feature flags for controlled rollout
 

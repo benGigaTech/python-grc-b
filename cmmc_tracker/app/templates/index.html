@@ -5,13 +5,14 @@
 {% block content %}
 <h1>CMMC Level 2 Controls</h1>
 
-<div class="top-controls">
-    <div class="form-container" style="margin-right: 15px; margin-left:0px">
+<!-- Top Action Bar -->
+<div class="action-bar">
+    <!-- Left Side: Actions -->
+    <div class="action-group">
         <a href="{{ url_for('controls.create_control') }}" class="button-link create-button">Create New Control</a>
         {% if current_user.is_admin %}
         <a href="{{ url_for('controls.import_csv') }}" class="button-link">Import Controls</a>
         {% endif %}
-        
         <div class="dropdown">
             <button class="button-link dropdown-toggle">Export Controls</button>
             <div class="dropdown-content">
@@ -19,30 +20,35 @@
                 <a href="{{ url_for('controls.export_json') }}">Export as JSON</a>
             </div>
         </div>
-        
-        <form method="GET" action="{{ url_for('controls.control_detail', control_id='placeholder') }}" id="view_details_form" style = "display: inline;">
+    </div>
+    
+    <!-- Center: Control Selection/Actions -->
+    <div class="action-group">
+        <form method="GET" action="{{ url_for('controls.control_detail', control_id='placeholder') }}" id="view_details_form" class="inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="control_select">Select Control:</label>
-            <select id="control_select" name="control_id" required>
+            <label for="control_select" class="form-label">Select Control:</label>
+            <select id="control_select" name="control_id" required class="form-control">
                 <option value="">-- Select a Control --</option>
                 {% for control in controls %}
                     <option value="{{ control.controlid }}">{{ control.controlid }} - {{ control.controlname }}</option>
                 {% endfor %}
             </select>
-            <button type="submit" class = "form-button">View Details</button>
+            <button type="submit" class="form-button">View Details</button>
         </form>
-        <form method="GET" action="{{ url_for('controls.edit_control', control_id='placeholder') }}" style = "display: inline;" id="edit_control_form">
+        <form method="GET" action="{{ url_for('controls.edit_control', control_id='placeholder') }}" id="edit_control_form" class="inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class = "form-button" id="edit_button" disabled>Edit Control</button>
+            <button type="submit" class="form-button" id="edit_button" disabled>Edit Control</button>
         </form>
     </div>
-    <div class = "form-container" style="margin-right: 0px; margin-left:0px">
-        <form method="GET" action="{{ url_for('controls.index') }}">
+    
+    <!-- Right Side: Search -->
+    <div class="action-group">
+        <form method="GET" action="{{ url_for('controls.index') }}" class="inline-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <label for="search">Search:</label>
-            <input type="text" id="search" name="q" placeholder="Search controls..." value="{{ search_term }}">
-            <button type="submit" class = "form-button">Search</button>
-            <a href="{{ url_for('controls.index') }}" class = "button-link">Clear</a>
+            <label for="search" class="form-label">Search:</label>
+            <input type="text" font-color="white" id="search" name="q" placeholder="Search controls..." value="{{ search_term }}" class="form-control">
+            <button type="submit" class="form-button">Search</button>
+            <a href="{{ url_for('controls.index') }}" class="button-link secondary">Clear</a>
         </form>
     </div>
 </div>
@@ -83,7 +89,7 @@
         <a href="{{ url_for('controls.index', page=page+1, q=search_term, sort_by=sort_by, sort_order=sort_order) }}" class = "button-link">Next</a>
     {% endif %}
 </div>
-<script>
+<script nonce="{{ csp_nonce() }}">
     const controlSelect = document.getElementById('control_select');
     const editButton = document.getElementById('edit_button');
     const viewDetailsForm = document.getElementById('view_details_form');
@@ -99,7 +105,92 @@
     });
 </script>
 
-<style>
+<style nonce="{{ csp_nonce() }}">
+    /* Action Bar Styles */
+    .action-bar {
+        display: flex;
+        justify-content: space-between; /* Distribute groups */
+        align-items: center; /* Vertically align items */
+        flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        gap: 15px; /* Space between groups */
+        background-color: var(--card-bg); /* Match card background */
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px var(--shadow-color);
+        margin-bottom: 25px;
+    }
+    
+    .action-group {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between items in a group */
+    }
+    
+    .inline-form {
+        display: flex;
+        align-items: center;
+        gap: 8px; /* Space within forms */
+    }
+    
+    .form-label {
+        margin-bottom: 0; /* Override default label margin if any */
+        white-space: nowrap; /* Prevent label wrapping */
+    }
+    
+    .form-control {
+        padding: 6px 10px;
+        border: 1px solid var(--form-border);
+        border-radius: 4px;
+        background-color: var(--form-bg);
+        color: var(--form-text);
+        min-width: 150px; /* Ensure inputs have some width */
+    }
+    
+    .form-button, .button-link {
+        padding: 6px 12px;
+        border-radius: 4px;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    
+    .form-button {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        border: 1px solid transparent;
+    }
+    .form-button:hover {
+        background-color: var(--button-hover-bg);
+    }
+    
+    .button-link {
+        background-color: var(--button-bg);
+        color: var(--button-text);
+        display: inline-block;
+        border: 1px solid transparent;
+    }
+    .button-link:hover {
+        background-color: var(--button-hover-bg);
+        text-decoration: none;
+        color: var(--button-text);
+    }
+    .button-link.secondary {
+        background-color: transparent;
+        color: var(--text-color);
+        border: 1px solid var(--border-color);
+    }
+    .button-link.secondary:hover {
+        background-color: var(--table-row-hover-bg);
+        color: var(--text-color);
+    }
+    .button-link.create-button {
+        background-color: var(--flash-success-border); /* Use success color */
+    }
+    .button-link.create-button:hover {
+        opacity: 0.9;
+    }
+
     /* Dropdown styles */
     .dropdown {
         position: relative;

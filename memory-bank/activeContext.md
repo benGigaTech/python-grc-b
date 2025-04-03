@@ -52,21 +52,52 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Created default security configuration with fallback values
    - Implemented audit logging for settings changes
 
-4. **Enhanced Reporting Capabilities**:
+4. **MFA Backup Code Improvements**:
+   - Enhanced error handling and logging in the backup code verification process.
+   - Added specific checks for JSON decoding and database update failures.
+   - Implemented a UI warning on the MFA management page when backup codes are low (<= 2).
+
+5. **Database Migration System Overhaul**:
+   - Replaced old `seed_db.py` initialization logic with a robust migration system in `docker-entrypoint.sh`.
+   - Entrypoint now uses `psql` to apply numbered SQL scripts (`db/0*.sql`) sequentially, tracking applied migrations in `migration_history` table.
+   - Added error handling and logging to the migration process.
+   - Simplified `start.sh` to only start Gunicorn.
+   - Removed duplicate `db/init.sql`.
+
+6. **Docker Entrypoint & Seeding Fixes**:
+   - Corrected `Dockerfile` to use `docker-entrypoint.sh` as `ENTRYPOINT`.
+   - Added `postgresql-client` to `Dockerfile` to enable `psql` commands.
+   - Debugged and fixed database wait loop in `docker-entrypoint.sh`.
+   - Confirmed migrations and application startup sequence now function correctly.
+   - Implemented conditional full database seeding using `seed_db.py` controlled by `RUN_FULL_SEED` environment variable (default: false).
+   - Removed separate `create_admin.py` script.
+
+7. **Strengthened File Upload Validation**:
+   - Implemented file content validation using magic numbers (`python-magic`) in addition to extension checks for evidence uploads.
+   - Added `python-magic` dependency and `libmagic1` system library to Dockerfile.
+   - Updated `add_evidence` route and `save_evidence_file` service function.
+   - Requires `ALLOWED_MIME_TYPES` to be defined in Flask app configuration.
+
+8. **Automatic Admin User Seeding**:
+   - Created `/app/create_admin.py` script to check for and create the default `admin` user.
+   - Modified `docker-entrypoint.sh` to run this script after migrations on startup.
+
+9. **Enhanced Reporting Capabilities**:
    - Added JSON export functionality for controls data
    - Improved the CSV export mechanism
    - Created a dropdown menu for different export format options
    - Added consistent styling for export buttons
    - Fixed URL routing issues for export endpoints
 
-5. **Dashboard Simplification**: 
+10. **Dashboard Simplification**: 
    - Removed the compliance progress trend chart as per stakeholder feedback
    - Fixed layout issues to prevent element overlapping
    - Enhanced the Domain Compliance Overview to use full width
    - Improved the responsiveness of tables with proper overflow handling
    - Added consistent styling for tables and elements
 
-6. **Security Improvements**: Several security enhancements have been implemented:
+11. **Security Improvements**: Several security enhancements have been implemented:
+   - **File Upload Security:** Added content-based validation (magic numbers) via `python-magic`.
    - Password strength enforcement
    - HTTP security headers implementation
    - Enhanced password reset security with one-time use tokens
@@ -76,17 +107,11 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Account lockout after multiple failed login attempts
    - Admin interface to manage locked accounts
 
-7. **Evidence Management**: Added comprehensive evidence management system with:
-   - File upload with type validation
-   - Metadata tracking including expiration dates
-   - Status indicators (Current, Pending Review, Expired)
-   - Secure file download mechanism
+12. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
 
-8. **Database Migrations**: Added migration framework and scripts to handle schema evolution over time.
+13. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
 
-9. **Rate Limiting**: Implemented Redis-backed rate limiting for security-sensitive endpoints.
-
-10. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
+14. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
 
 ## Active Decisions
 
@@ -120,55 +145,23 @@ The CMMC Compliance Tracker project is currently in active development. Based on
 
 ## Next Steps
 
-1. **Advanced Reporting System**: 
-   - Develop PDF report templates for compliance status
-   - Create additional customizable export options
-   - Implement scheduled report generation and delivery
+With the migration system, entrypoint logic, file validation, and conditional seeding now working, the next steps in **Phase 1: Stabilization and Known Issues** are:
 
-2. **Bulk Operations**: 
-   - Add batch import/export for controls and evidence
-   - Implement mass task assignments 
-   - Create bulk status update functionality
+1.  **Critical Security Refinements:** 
+    - Refine Content Security Policy (CSP).
+    - Review and tune Rate Limiting configuration.
+    - Review for additional XSS protections.
+2.  **Address High-Priority Performance Issues:** Investigate and attempt to resolve critical performance bottlenecks like large evidence upload timeouts or slow dashboard loading (`Known Issues > Performance`).
+3.  **Authentication Issues:** Address remaining known issues like inconsistent session timeout handling.
 
-3. **API Development**:
-   - Design RESTful endpoints for programmatic access
-   - Implement authentication for API consumers
-   - Create comprehensive API documentation
-
-4. **User Management Improvements**: 
-   - Enhance user profile management and role-based permissions
-   - Add team/group management capabilities
-   - Develop more granular access controls
-
-5. **Expanded Application Settings**:
-   - Add configuration for evidence lifecycle management
-   - Create custom email template settings
-   - Implement branding customization options
-   - Develop report formatting preferences
-
-6. **Performance Optimization**: 
-   - Implement caching for frequently accessed data
-   - Further optimize database queries and indexing
-   - Fine-tune connection pool parameters based on load testing
-
-7. **Additional Security Enhancements**: Implement planned security improvements:
-   - Advanced input validation
-   - Enhanced logging and monitoring
-   - Regular security scanning
-   - Server hardening measures
+Once these stabilization tasks are complete, we can move to **Phase 2: Implement Core "In Progress" Features**.
 
 ## Current Challenges
 
 1. **Connection Pool Management**: Ensuring optimal configuration and monitoring of database connection pool to balance resource utilization with performance needs.
-
 2. **Settings Management**: Ensuring proper integration of settings throughout the application and providing appropriate defaults.
-
 3. **Evidence Lifecycle Management**: Developing a robust system for tracking evidence validity and expiration.
-
 4. **Notification System Reliability**: Ensuring email notifications are delivered reliably and on schedule.
-
 5. **Multi-Tenancy Considerations**: Evaluating requirements for supporting multiple organizations within the same instance.
-
 6. **Security Hardening**: Ongoing assessment and improvement of application security measures.
-
 7. **UI/UX Refinement**: Enhancing user experience based on initial feedback and usability testing. 

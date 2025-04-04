@@ -35,7 +35,7 @@
         </select>
         
         <button type="button" id="export-csv" class="button-link">Export to CSV</button>
-        <button type="button" class="button-link secondary" onclick="window.print()">Print</button>
+        <button type="button" id="print-report-button" class="button-link secondary">Print</button>
     </form>
 </div>
 
@@ -171,6 +171,10 @@ document.getElementById('export-csv').addEventListener('click', function() {
     a.href = url;
     a.download = 'cmmc-report.csv';
     a.click();
+});
+
+document.getElementById('print-report-button').addEventListener('click', function() {
+    window.print();
 });
 </script>
 

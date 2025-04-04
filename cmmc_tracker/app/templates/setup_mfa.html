@@ -20,7 +20,7 @@
             <p>If you can't scan the QR code, enter this code manually in your authenticator app:</p>
             <div class="secret-key">
                 <code>{{ secret }}</code>
-                <button type="button" onclick="copySecret()" class="copy-button">Copy</button>
+                <button type="button" id="copy-secret-button" class="copy-button">Copy</button>
             </div>
         </div>
         
@@ -56,6 +56,13 @@ function copySecret() {
         }, 2000);
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const copyButton = document.getElementById('copy-secret-button');
+    if (copyButton) {
+        copyButton.addEventListener('click', copySecret);
+    }
+});
 </script>
 {% endblock %}
 

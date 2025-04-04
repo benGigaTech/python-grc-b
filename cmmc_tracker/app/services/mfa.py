@@ -83,7 +83,8 @@ def verify_totp(secret, token):
         
     try:
         totp = pyotp.TOTP(secret)
-        return totp.verify(token)
+        # Check current, previous, and next interval (window=1) for clock skew tolerance
+        return totp.verify(token, valid_window=1)
     except Exception as e:
         logger.error(f"Error verifying TOTP token: {e}")
         return False 

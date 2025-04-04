@@ -2,7 +2,7 @@ import os
 import logging
 import json
 from logging.handlers import RotatingFileHandler
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_wtf.csrf import CSRFProtect
@@ -66,7 +66,7 @@ def create_app(config_name=None):
         'script-src': [
             "'self'",                       # Allow scripts from same origin
             'https://cdnjs.cloudflare.com', # Allow jQuery, Bootstrap JS
-            "'unsafe-hashes'",              # Allow certain event handlers
+            # "'unsafe-hashes'",            # Temporarily removed to identify specific violations
             # Specific inline scripts that are allowed via hash
             "'sha256-U+tHSwYpCxaYh39elIShq5VNWTHsDCM263NYsqVDPTo='", 
             "'sha256-WKH3DN0mpznMXa6fDS+33+w7+vnfV9Rb+a1q1SasDFs='", 
@@ -80,7 +80,8 @@ def create_app(config_name=None):
             "'self'",                       # Allow CSS from same origin
             'https://cdnjs.cloudflare.com', # Allow Bootstrap CSS
             'https://cdn.jsdelivr.net',     # Allow Bootstrap Icons CSS
-            "'unsafe-hashes'",              # Allow certain style attributes
+            "'unsafe-inline'",              # TEMPORARY WORKAROUND: Re-added to allow dynamic styles until JS can be debugged
+            # "'unsafe-hashes'",            # Allows inline event handlers/style attributes - REMOVED
             # Specific inline styles that are allowed via hash
             "'sha256-Et55ArTi+JMSbDReKb8DWpwdUtWcCoOGZibzhzGZSoU='", 
             "'sha256-NjYDAvf3Yswi9GqXn8q5mE3okYa3Q4PuzJ0DkAhe4yQ='", 
@@ -167,6 +168,11 @@ def create_app(config_name=None):
             get_app_setting=get_app_setting,
             app_name=get_setting('app.name', 'CMMC Compliance Tracker')
         )
+
+    # Ensure sessions are permanent to use the configured lifetime
+    @app.before_request
+    def make_session_permanent():
+        session.permanent = True
     
     # Register blueprints
     register_blueprints(app)
@@ -220,8 +226,22 @@ def register_error_handlers(app):
     def csp_report():
         """Handle CSP violation reports."""
         try:
-            report = json.loads(request.data.decode('utf-8'))
-            app.logger.warning(f"CSP Violation: {json.dumps(report)}")
+            report_data = request.data.decode('utf-8')
+            app.logger.info(f"Received CSP Report Data: {report_data}") # Log raw report data
+            report = json.loads(report_data)
+            report_details = report.get('csp-report', {})
+            violated_directive = report_details.get('violated-directive', 'N/A')
+            blocked_uri = report_details.get('blocked-uri', 'N/A')
+            document_uri = report_details.get('document-uri', 'N/A')
+            source_file = report_details.get('source-file', 'N/A')
+            line_number = report_details.get('line-number', 'N/A')
+            column_number = report_details.get('column-number', 'N/A')
+            app.logger.warning(
+                f"CSP Violation: Directive='{violated_directive}', "
+                f"Blocked='{blocked_uri}', Document='{document_uri}', "
+                f"Source='{source_file}:{line_number}:{column_number}', "
+                f"Full Report='{json.dumps(report)}'"
+            )
             return jsonify({'status': 'received'}), 204
         except Exception as e:
             app.logger.error(f"Error processing CSP report: {str(e)}")

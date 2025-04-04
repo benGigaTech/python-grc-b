@@ -593,6 +593,11 @@
             flex-wrap: wrap;
             gap: 20px;
         }
+        
+        /* --- Sort Link Styles (Moved from inline) --- */
+        .sort-links {
+            font-size: smaller; 
+        }
 
         /* --- Sort Link Styles --- */
         .sort-links a {
@@ -808,6 +813,75 @@
             /* background-color: var(--table-row-bg); Set per row */
         }
     </style>
+
+    <!-- Styles moved from evidence_list.html and add_evidence.html -->
+    <style nonce="{{ csp_nonce() }}">
+        /* (Assuming .table styles here are compatible or intended globally) */
+        /* If more specific targeting is needed, wrap evidence_list content in a div */
+        
+        /* .table specific styles from evidence_list - might need adjustment/scoping */
+        /* Base .table styles are already likely defined above or by Bootstrap */
+        /* Consider if these are needed globally or should be scoped */
+        
+        /* tr.expired { background-color: var(--flash-danger-bg); } */ /* Already likely covered by global styles */
+        
+        .file-link {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+        
+        .file-link:hover {
+            text-decoration: underline;
+            color: var(--link-hover-color);
+        }
+        
+        /* Note: Explicit badge background colors might override theme consistency */
+        /* Consider using theme variables if possible */
+        .badge-success { background-color: var(--flash-success-border); color: white; }
+        .badge-warning { background-color: var(--flash-warning-border); color: white; } /* Consider dark text for light theme */
+        .badge-danger { background-color: var(--flash-danger-border); color: white; }
+        
+        .no-items { color: var(--text-color); font-style: italic; margin: 2rem 0; }
+        
+        /* Styles moved from add_evidence.html */
+        /* These might need scoping if they conflict with other forms */
+        /* .form-container { max-width: 700px; } */ /* Potentially conflicts */
+        
+        .form-group { /* Generic, likely okay */
+            margin-bottom: 1.5rem;
+        }
+        
+        /* .form-control styles likely duplicate/conflict global ones */
+        /* .form-control { display: block; width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid #d1d5db; border-radius: 0.25rem; } */
+        
+        .form-control-file { /* Specific enough */
+            display: block;
+            width: 100%;
+            margin-top: 0.25rem;
+        }
+        
+        /* label styles likely duplicate/conflict global ones */
+        /* label { display: block; margin-bottom: 0.5rem; font-weight: 500; } */
+        
+        .form-text { /* Likely duplicates global, but might be okay */
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #64748b; /* Use theme variable: var(--text-color) with opacity? */
+        }
+        
+        .form-buttons { /* Generic, likely okay */
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .allowed-types { /* Specific enough */
+            margin-top: 0.5rem; padding: 0.5rem; background-color: #e0f2fe; border-radius: 0.25rem; font-size: 0.875rem; color: #0369a1; 
+        } /* Consider theming this background/text color */
+        /* End styles moved from add_evidence.html */
+        
+    </style>
 </head>
 <body>
     <header class="site-header">
@@ -873,8 +947,8 @@
     </main>
 
     <footer class="footer mt-auto py-3">
-        &copy; <script>document.write(new Date().getFullYear())</script> {{ app_name }} | 
-        Version 1.0 | <a href="#" onclick="alert('Contact your system administrator for support.')">Support</a>
+        &copy; <span id="current-year"></span> {{ app_name }} |
+        Version 1.0 | <a href="#" id="support-link">Support</a>
     </footer>
 
     <script nonce="{{ csp_nonce() }}">
@@ -912,6 +986,33 @@
                     themeIcon.classList.add('bi-moon');
                 }
             }
+
+            // Add event listener for the support link
+            const supportLink = document.getElementById('support-link');
+            if (supportLink) {
+                supportLink.addEventListener('click', function(event) {
+                    event.preventDefault(); // Prevent default link behavior
+                    alert('Contact your system administrator for support.');
+                });
+            }
+
+            // Add event listener for forms requiring confirmation
+            document.querySelectorAll('form[data-confirm-message]').forEach(form => {
+                form.addEventListener('submit', function(event) {
+                    const message = form.getAttribute('data-confirm-message');
+                    if (!confirm(message)) {
+                        event.preventDefault(); // Stop submission if user cancels
+                    }
+                    // If user confirms, the form submits normally
+                });
+            });
+            
+            // Set current year in footer
+            const yearSpan = document.getElementById('current-year');
+            if (yearSpan) {
+                yearSpan.textContent = new Date().getFullYear();
+            }
+
         });
     </script>
 

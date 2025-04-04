@@ -133,7 +133,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary" style="text-decoration-color: #fff;">View</a>
+                            <a href="{{ url_for('controls.control_detail', control_id=control.controlid) }}" class="btn btn-sm btn-primary btn-primary-white-underline">View</a>
                         </td>
                     </tr>
                     {% endfor %}
@@ -501,6 +501,22 @@ tr.upcoming td {
     --bs-table-striped-color: var(--text-color) !important;
 }
 
+/* Style for white underline on primary buttons */
+.btn-primary-white-underline {
+    text-decoration-color: #fff !important; /* Use !important if needed to override Bootstrap */
+}
+
+/* Styles for the dynamically created indicator container */
+.calendar-indicators-container {
+    display: flex;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 2px;
+}
+/* Style for white underline on primary buttons */
+.btn-primary-white-underline {
+    text-decoration-color: #fff !important; /* Use !important if needed to override Bootstrap */
+}
 </style>
 
 <!-- Prepare the calendar data for JavaScript to avoid template issues -->
@@ -597,10 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Add indicators in a containing div
             if (hasPastDue || hasUpcoming || hasRegular) {
                 const indicatorsContainer = document.createElement('div');
-                indicatorsContainer.style.display = 'flex';
-                indicatorsContainer.style.justifyContent = 'center';
-                indicatorsContainer.style.gap = '3px';
-                indicatorsContainer.style.marginTop = '2px';
+                indicatorsContainer.classList.add('calendar-indicators-container');
                 
                 if (hasPastDue) {
                     const indicator = document.createElement('div');
@@ -637,6 +650,8 @@ document.addEventListener('DOMContentLoaded', function() {
             currentMonth = 11;
             currentYear--;
         }
+        
+        // Stray CSS removed from here
         renderCalendar();
     });
     

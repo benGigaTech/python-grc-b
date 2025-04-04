@@ -198,12 +198,12 @@ These features have been planned but do not appear to be implemented yet:
 ## Known Issues
 
 1. **Authentication**
-   - Session timeout handling can be inconsistent
-   - Clock synchronization issues can affect TOTP validation
+   - ~Session timeout handling can be inconsistent~ (FIXED: Enforced permanent sessions)
+   - ~Clock synchronization issues can affect TOTP validation~ (MITIGATED: Increased valid_window to 1)
 
 2. **Performance**
-   - Large evidence uploads may cause timeouts
-   - Dashboard loading can be slow with many controls
+   - ~Large evidence uploads may cause timeouts~ (MITIGATED: Increased Gunicorn timeout to 120s)
+   - ~Dashboard loading can be slow with many controls~ (IMPROVED: Optimized domain/status queries)
    - Large audit log queries may cause timeout issues
    - Connection pool may need further tuning for optimal performance
    - Additional monitoring needed to ensure connection pool behavior under high load
@@ -225,7 +225,9 @@ These features have been planned but do not appear to be implemented yet:
    - ~CSRF validation issues on the calendar page~ (FIXED: Implemented opt-in CSRF checking)
    - Rate limiting configuration may need tuning
    - Additional XSS protections required in some areas
-
+   - [2025-04-04 10:09:48] CSP: Refactoring complete, but testing revealed persistent `style-src-attr` violation (likely dynamic JS) and functional issues (calendar render, add evidence theme bug). Requires interactive debugging. Task 1.1 paused.
+   - [2025-04-04 10:09:48] Rate Limiting: Reviewed configuration (Task 1.2). Current limits seem reasonable; deferring tuning until issues arise. Task complete for now.
+   - [2025-04-04 10:18:03] XSS Review: Reviewed templates for `|safe`, unsafe JS, and download headers. Made minor improvement to footer year display. Task 1.3 complete for now.
 6. **Database Migrations**
   - *Consideration:* Potential issues with complex schema changes requiring manual intervention despite the automated system.
   - *Consideration:* Lack of automated testing specifically for the migration scripts themselves.
@@ -338,4 +340,5 @@ These features have been planned but do not appear to be implemented yet:
    - Reset Bootstrap's internal table variables for proper dark mode rendering
    - Verified fix works correctly across the application
    - Maintained responsive design and cross-browser compatibility
-   - Used proper CSS encapsulation to prevent theme issues in other components 
+   - Used proper CSS encapsulation to prevent theme issues in other components
+17. **[2025-04-04 12:06:00] Phase 1 Stabilization**: Completed initial pass. Refactored CSP (static issues), reviewed rate limits/XSS/pool/audit logs, improved dashboard perf, fixed session timeout & TOTP skew. Temporarily re-added `'unsafe-inline'` to `style-src` as workaround for dynamic JS styling issues. Remaining issues (CSP dynamic styles, calendar render, add evidence theme bug) deferred pending interactive debugging.

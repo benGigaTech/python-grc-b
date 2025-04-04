@@ -127,6 +127,17 @@ The CMMC Compliance Tracker project is currently in active development. Based on
 
 16. **Email Notifications**: Set up automated email notifications for task assignments and approaching deadlines.
 
+17. **[2025-04-04 12:05:25] Phase 1 Stabilization Progress**: Addressed several items:
+    - **CSP Refinement (Task 1.1)**: Refactored static inline styles/scripts & nonces. Fixed calendar JS syntax error. Added missing nonces to style blocks. Consolidated styles into base.html. Temporarily re-added `'unsafe-inline'` to `style-src` as a workaround for persistent `style-src-attr` violation (likely dynamic JS) and related functional issues (calendar render, add evidence theme bug) which require interactive debugging. Task paused.
+    - **Rate Limiting (Task 1.2)**: Reviewed configuration. Tuning deferred. Task complete for now.
+    - **XSS Review (Task 1.3)**: Reviewed templates for `|safe`, unsafe JS methods, and download headers. Refactored footer year display. Task complete for now.
+    - **Upload Timeouts (Task 2.1)**: Increased Gunicorn timeout to 120s in `start.sh`. Further action deferred. Task complete for now.
+    - **Dashboard Perf (Task 2.2)**: Optimized domain metrics and status count queries in `controls.py`. Indexing review deferred. Task complete for now.
+    - **Audit Log Queries (Task 2.3)**: Reviewed; no large queries found. Indexing recommended. Task complete for now.
+    - **Connection Pool (Task 2.4)**: Reviewed configuration. Tuning deferred. Task complete for now.
+    - **Session Timeout (Task 3.1)**: Addressed inconsistency by enforcing permanent sessions in `__init__.py`. Task complete.
+    - **TOTP Clock Skew (Task 3.2)**: Addressed by increasing validation window to 1 in `mfa.py`. Task complete.
+
 ## Active Decisions
 
 1. **Database Connection Management Strategy**: Decision to implement connection pooling with psycopg2's ThreadedConnectionPool to improve performance and scalability under concurrent load, with configurable pool sizes for different deployment scenarios.

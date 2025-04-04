@@ -12,7 +12,7 @@
 </div>
 
 <h2>Evidence Files
-    <span class="sort-links" style="font-size: smaller;">
+    <span class="sort-links">
         (Sort By:
         <a href="{{ url_for('evidence.list_evidence', control_id=control.controlid, sort_by='title', sort_order='asc' if sort_by != 'title' or sort_order == 'desc' else 'desc') }}"
             class="{% if sort_by == 'title' %}active{% endif %}">Title</a>,
@@ -82,9 +82,9 @@
                 <td>
                     <div class="action-buttons">
                         <a href="{{ url_for('evidence.update_evidence', evidence_id=evidence.evidenceid) }}" class="button-link">Edit</a>
-                        <form action="{{ url_for('evidence.delete_evidence', evidence_id=evidence.evidenceid) }}" method="post" style="display: inline;">
+                        <form action="{{ url_for('evidence.delete_evidence', evidence_id=evidence.evidenceid) }}" method="post" class="d-inline" data-confirm-message="Are you sure you want to delete this evidence?">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="form-button" onclick="return confirm('Are you sure you want to delete this evidence?');">Delete</button>
+                            <button type="submit" class="form-button">Delete</button>
                         </form>
                     </div>
                 </td>
@@ -111,68 +111,4 @@
 <p class="no-items">No evidence has been uploaded for this control.</p>
 {% endif %}
 
-<style>
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-bottom: 1rem;
-    }
-    
-    .table th, .table td {
-        padding: 0.5rem;
-        border: 1px solid var(--border-color);
-    }
-    
-    .table th {
-        background-color: var(--table-header-bg);
-        font-weight: 600;
-        color: var(--table-header-text);
-    }
-    
-    tr.expired {
-        background-color: var(--flash-danger-bg);
-    }
-    
-    .file-link {
-        color: var(--link-color);
-        text-decoration: none;
-    }
-    
-    .file-link:hover {
-        text-decoration: underline;
-        color: var(--link-hover-color);
-    }
-    
-    .badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 9999px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-    
-    .badge-success {
-        background-color: var(--flash-success-border);
-        color: white;
-    }
-    
-    .badge-warning {
-        background-color: var(--flash-warning-border);
-        color: white;
-    }
-    
-    .badge-danger {
-        background-color: var(--flash-danger-border);
-        color: white;
-    }
-    
-    .no-items {
-        color: var(--text-color);
-        font-style: italic;
-        margin: 2rem 0;
-    }
-    
-    .action-buttons {
-        margin: 1rem 0;
-    }
-</style>
 {% endblock %} 

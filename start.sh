@@ -5,4 +5,4 @@ set -e
 
 echo "Starting the application..."
 cd /app/cmmc_tracker
-exec gunicorn --bind 0.0.0.0:80 --workers 4 run:app 
+exec gunicorn --bind 0.0.0.0:80 --workers 4 --timeout 120 run:app

@@ -33,8 +33,8 @@
                     {% endfor %}
                 </ul>
                 <div class="code-actions">
-                    <button type="button" onclick="printCodes()" class="form-button secondary">Print Codes</button>
-                    <button type="button" onclick="copyCodes()" class="form-button secondary">Copy Codes</button>
+                    <button type="button" id="print-codes-button" class="form-button secondary">Print Codes</button>
+                    <button type="button" id="copy-codes-button" class="form-button secondary">Copy Codes</button>
                 </div>
                 {% else %}
                 <p>No backup codes available.</p>
@@ -121,6 +121,17 @@ function printCodes() {
     printWindow.print();
     printWindow.close();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const printButton = document.getElementById('print-codes-button');
+    if (printButton) {
+        printButton.addEventListener('click', printCodes);
+    }
+    const copyButton = document.getElementById('copy-codes-button');
+    if (copyButton) {
+        copyButton.addEventListener('click', copyCodes);
+    }
+});
 </script>
 {% endblock %}
 

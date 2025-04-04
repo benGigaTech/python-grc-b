@@ -129,6 +129,7 @@ Application configured through:
 2. Configuration files (`cmmc_tracker/config.py`, defining `ALLOWED_EXTENSIONS`, `ALLOWED_MIME_TYPES`, etc.)
 3. Database settings
 4. Feature flags for controlled rollout
+5. **Note:** `config.py` includes `SQLALCHEMY_DATABASE_URI` and `SQLALCHEMY_TRACK_MODIFICATIONS`, but these appear unused as the application interacts with the database via `psycopg2` and a custom service layer, not SQLAlchemy.
 
 ## Security Features
 

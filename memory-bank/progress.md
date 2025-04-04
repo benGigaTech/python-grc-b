@@ -13,6 +13,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Security headers automatically applied to all responses
    - Settings system for application configuration
    - Database connection pooling for scalable concurrent access
+   - Automated database migrations on startup via `docker-entrypoint.sh`
 
 2. **User Authentication**
    - Login and registration with CSRF protection
@@ -40,7 +41,7 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Paginated display of controls
 
 4. **Evidence Management**
-   - File upload mechanism with type validation
+   - File upload mechanism with type validation (extension and magic number checks)
    - Metadata tracking including expiration dates
    - Status indicators (Current, Pending Review, Expired)
    - File download functionality with proper MIME types
@@ -226,8 +227,8 @@ These features have been planned but do not appear to be implemented yet:
    - Additional XSS protections required in some areas
 
 6. **Database Migrations**
-   - Potential issues with PostgreSQL version compatibility
-   - No automated migration testing
+  - *Consideration:* Potential issues with complex schema changes requiring manual intervention despite the automated system.
+  - *Consideration:* Lack of automated testing specifically for the migration scripts themselves.
 
 ## Recent Milestones
 
@@ -274,18 +275,10 @@ These features have been planned but do not appear to be implemented yet:
    - Simplified `start.sh` to only start Gunicorn, removing redundant DB checks and seeding.
    - Removed duplicate `db/init.sql`.
 
-6. **Automatic Admin User Seeding Fixes**
-   - Resolved issues preventing automatic admin user creation.
-   - Added file logging and `set -x` to `docker-entrypoint.sh` for debugging.
-   - Fixed `Dockerfile` to set `ENTRYPOINT` correctly.
-   - Added `postgresql-client` package to `Dockerfile` for `psql` command.
-   - Refactored database wait loop in `docker-entrypoint.sh`.
-   - Confirmed admin user (`admin`/`adminpassword`) is now created automatically on first startup.
-
 7. **Conditional Database Seeding**
    - Removed automatic call to `create_admin.py`.
    - Added conditional execution of `seed_db.py` in `docker-entrypoint.sh` based on `RUN_FULL_SEED` environment variable.
-   - Updated `docker-compose.yml` to include `RUN_FULL_SEED` (defaulting to `false`).
+   - Updated `docker-compose.yml` to include `RUN_FULL_SEED` (defaulting to `true`).
 
 8. **Security Enhancements**
    - **File Upload Validation:** Strengthened evidence file upload validation by adding magic number checking (`python-magic`) in addition to extension checks. Requires `ALLOWED_MIME_TYPES` in `config.py` and `libmagic1` in `Dockerfile`.
@@ -297,11 +290,6 @@ These features have been planned but do not appear to be implemented yet:
    - Implemented consistent styling for export options
    - Added proper error handling for export operations
    - Ensured cross-browser compatibility
-
-10. **Documentation Corrections**
-   - Updated techContext.md to correctly reflect the use of psycopg2 instead of SQLAlchemy
-   - Clarified custom Repository Pattern implementation in systemPatterns.md
-   - Documented database connection handling approach and future improvements
 
 11. **Dashboard Refinement**
    - Removed compliance trend chart feature based on stakeholder feedback

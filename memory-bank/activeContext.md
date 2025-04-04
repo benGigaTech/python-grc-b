@@ -87,18 +87,14 @@ The CMMC Compliance Tracker project is currently in active development. Based on
    - Added `postgresql-client` to `Dockerfile` to enable `psql` commands.
    - Debugged and fixed database wait loop in `docker-entrypoint.sh`.
    - Confirmed migrations and application startup sequence now function correctly.
-   - Implemented conditional full database seeding using `seed_db.py` controlled by `RUN_FULL_SEED` environment variable (default: false).
-   - Removed separate `create_admin.py` script.
+   - Implemented conditional full database seeding using `seed_db.py` controlled by `RUN_FULL_SEED` environment variable (default: `true` in `docker-compose.yml`).
+   - Removed separate `create_admin.py` script; seeding (including default user creation) is now handled by `seed_db.py`.
 
 9. **Strengthened File Upload Validation**:
    - Implemented file content validation using magic numbers (`python-magic`) in addition to extension checks for evidence uploads.
    - Added `python-magic` dependency and `libmagic1` system library to Dockerfile.
    - Updated `add_evidence` route and `save_evidence_file` service function.
    - Requires `ALLOWED_MIME_TYPES` to be defined in Flask app configuration.
-
-10. **Automatic Admin User Seeding**:
-   - Created `/app/create_admin.py` script to check for and create the default `admin` user.
-   - Modified `docker-entrypoint.sh` to run this script after migrations on startup.
 
 11. **Enhanced Reporting Capabilities**:
    - Added JSON export functionality for controls data

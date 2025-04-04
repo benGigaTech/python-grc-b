@@ -59,27 +59,20 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 3. Access the application at http://localhost:80
 
-The database will be automatically initialized with sample data on first startup. No manual initialization is required.
+The database schema is automatically migrated on startup. Initial sample data (users, controls) is seeded if the `RUN_FULL_SEED` environment variable is set to `true` (default is `true` in `docker-compose.yml`).
 
 ### Database Migrations
 
-When schema changes are required, SQL migration files are provided in the `db` directory. To apply migrations:
+Database schema migrations are handled automatically when the `web` container starts. The `docker-entrypoint.sh` script performs the following steps:
 
-1. **Using the migration script**:
-   ```
-   # Apply all migrations
-   python apply_migration.py
-   
-   # Apply a specific migration
-   python apply_migration.py db/evidence_migration.sql
-   ```
+1.  Waits for the PostgreSQL database (`db` service) to become available.
+2.  Ensures the `migration_history` table exists (by running `db/02_migration_tracking.sql`).
+3.  Iterates through all `db/0*.sql` files in numerical order.
+4.  For each script, it checks the `migration_history` table.
+5.  If the script has not been applied previously, it executes the script using `psql`.
+6.  On successful execution, it records the script filename in the `migration_history` table.
 
-2. **Within Docker**:
-   ```
-   docker compose exec web python apply_migration.py
-   ```
-
-Migration files are named descriptively (e.g., `evidence_migration.sql`) to indicate their purpose.
+This ensures that the database schema is always up-to-date with the SQL scripts present in the `db/` directory. Manual migration application is generally not required when using Docker Compose.
 
 ### Default Credentials
 

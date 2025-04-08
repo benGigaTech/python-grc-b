@@ -3,9 +3,11 @@
 import os
 import logging
 import magic
+from datetime import date, timedelta # Add date and timedelta
 from flask import Blueprint, render_template, redirect, url_for, request, flash, send_file, current_app
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from app.services.settings import get_setting # Import get_setting
 from app.models.evidence import Evidence
 from app.models.control import Control
 from app.services.audit import add_audit_log
@@ -165,7 +167,32 @@ def add_evidence(control_id):
                 flash('Failed to save evidence file.', 'danger')
                 return render_template('add_evidence.html', control=control.to_dict())
             
-            # Create evidence record
+            # --- Calculate Expiration Date based on Settings ---
+            final_expiration_date_str = None
+            user_expiration_date_str = expiration_date # Already fetched from form on line 126
+            
+            enable_auto_expiration = get_setting('evidence.enable_auto_expiration', default=False)
+            default_validity_days = get_setting('evidence.default_validity_days', default=365)
+
+            if user_expiration_date_str:
+                # Use user-provided date if valid
+                if is_date_valid(user_expiration_date_str):
+                     final_expiration_date_str = user_expiration_date_str
+                else:
+                    # Already flashed error earlier, just proceed without expiration
+                    pass
+            elif enable_auto_expiration:
+                # Calculate default expiration if auto-expiration is enabled and user didn't provide one
+                try:
+                    today = date.today()
+                    calculated_expiration = today + timedelta(days=int(default_validity_days))
+                    final_expiration_date_str = calculated_expiration.isoformat()
+                except (ValueError, TypeError):
+                     logger.error(f"Invalid default_validity_days setting: {default_validity_days}. Cannot calculate default expiration.")
+                     # Proceed without expiration date if setting is invalid
+            # --- End Expiration Date Calculation ---
+
+            # Create evidence record using the final calculated/provided expiration date
             evidence = Evidence.create(
                 control_id,
                 title,
@@ -174,7 +201,7 @@ def add_evidence(control_id):
                 saved_file_type,
                 file_size,
                 current_user.username,
-                expiration_date
+                final_expiration_date_str # Use the processed date string
             )
             
             if evidence:

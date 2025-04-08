@@ -53,8 +53,9 @@
                                             <input type="number" name="setting_value" id="{{ setting.key }}" 
                                                    value="{{ setting.value }}" class="form-control">
                                         {% elif setting.type == 'text' or setting.type == 'json' %}
-                                            <textarea name="setting_value" id="{{ setting.key }}" 
-                                                      class="form-control" rows="3">{{ setting.value }}</textarea>
+                                            {# Use larger textarea for footer text #}
+                                            <textarea name="setting_value" id="{{ setting.key }}"
+                                                      class="form-control" rows="{{ 5 if setting.key == 'app.footer_text' else 3 }}">{{ setting.value }}</textarea>
                                         {% else %}
                                             <input type="text" name="setting_value" id="{{ setting.key }}" 
                                                    value="{{ setting.value }}" class="form-control">

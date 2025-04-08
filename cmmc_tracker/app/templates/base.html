@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
 <head>
     <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <link rel="icon" href="{{ get_app_setting('app.favicon_url', '/static/img/favicon.ico') }}">
     <!-- Immediate theme application to prevent FOUC -->
     <script nonce="{{ csp_nonce() }}">
         // Execute immediately, don't wait for DOM to be ready
@@ -947,8 +947,7 @@
     </main>
 
     <footer class="footer mt-auto py-3">
-        &copy; <span id="current-year"></span> {{ app_name }} |
-        Version 1.0 | <a href="#" id="support-link">Support</a>
+        {{ get_app_setting('app.footer_text', '&copy; ' + current_year|string + ' CMMC Compliance Tracker. All rights reserved.')|safe }}
     </footer>
 
     <script nonce="{{ csp_nonce() }}">

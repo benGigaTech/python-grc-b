@@ -4,6 +4,7 @@ import logging
 from flask import current_app, render_template
 from flask_mail import Message
 from app import mail
+from app.services.settings import get_setting # Import get_setting
 from app.models.task import Task
 from app.services.database import execute_query
 from app.utils.date import parse_date
@@ -24,7 +25,11 @@ def send_email(to, subject, template, **kwargs):
         bool: True if successful, False otherwise
     """
     try:
-        msg = Message(subject, recipients=[to] if isinstance(to, str) else to)
+        # Get subject prefix from settings
+        prefix = get_setting('notification.email_subject_prefix', default='').strip()
+        full_subject = f"{prefix} {subject}".strip() if prefix else subject
+        
+        msg = Message(full_subject, recipients=[to] if isinstance(to, str) else to)
         msg.html = render_template(template, **kwargs)
         mail.send(msg)
         logger.info(f"Email sent to {to}: {subject}")
@@ -139,7 +144,11 @@ def send_test_email(email):
     """
     
     try:
-        msg = Message(subject, recipients=[email])
+        # Get subject prefix from settings
+        prefix = get_setting('notification.email_subject_prefix', default='').strip()
+        full_subject = f"{prefix} {subject}".strip() if prefix else subject
+        
+        msg = Message(full_subject, recipients=[email])
         msg.html = html
         mail.send(msg)
         logger.info(f"Test email sent to {email}")

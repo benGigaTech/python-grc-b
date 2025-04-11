@@ -25,7 +25,14 @@ Current focus is on **Expanded Settings System** (Evidence Lifecycle, Email Temp
 
 ## Recent Changes
 
-1. **Fixed CSRF Validation on Calendar Page**:
+1. **Evidence Lifecycle Settings Improvements**:
+   - Added client-side validation with `min="1"` attribute for the `evidence.default_validity_days` setting
+   - Implemented server-side validation in the admin settings route to ensure positive integer values
+   - Improved error handling in the evidence routes with clear user feedback when settings are invalid
+   - Added documentation for a future enhancement to automatically update evidence status when it expires
+   - Ensured robust handling of edge cases and invalid settings values
+
+2. **Fixed CSRF Validation on Calendar Page**:
    - Identified CSRF token validation errors affecting the calendar page functionality
    - Implemented a configuration fix by setting `WTF_CSRF_CHECK_DEFAULT` to False
    - Maintained CSRF protection globally while only enabling it explicitly for forms
@@ -104,7 +111,7 @@ Current focus is on **Expanded Settings System** (Evidence Lifecycle, Email Temp
    - Added consistent styling for export buttons
    - Fixed URL routing issues for export endpoints
 
-12. **Dashboard Simplification**: 
+12. **Dashboard Simplification**:
    - Removed the compliance progress trend chart as per stakeholder feedback
    - Fixed layout issues to prevent element overlapping
    - Enhanced the Domain Compliance Overview to use full width
@@ -176,10 +183,11 @@ Current focus is on **Expanded Settings System** (Evidence Lifecycle, Email Temp
 **Phase 2: Implement Core "In Progress" Features** has begun.
 
 1.  **Current Task:** Implement **Expanded Settings System**:
-    *   Evidence lifecycle configuration (e.g., default validity period).
-    *   Email template customization options.
-    *   Advanced branding settings.
-    *   User notification preferences management.
+    *   ✅ Evidence lifecycle configuration (default validity period, auto-expiration toggle).
+    *   ✅ Basic branding settings (footer text, favicon URL).
+    *   ✅ Email notification settings (subject prefix).
+    *   ⏳ Email template customization options (deferred).
+    *   ⏳ User notification preferences management (deferred).
 2.  **Upcoming Tasks (Phase 2):**
     *   Bulk Operations (Import/Export, Evidence, Tasks)
     *   Advanced Reporting (PDF generation)
@@ -190,8 +198,8 @@ Current focus is on **Expanded Settings System** (Evidence Lifecycle, Email Temp
 
 1. **Connection Pool Management**: Ensuring optimal configuration and monitoring of database connection pool to balance resource utilization with performance needs.
 2. **Settings Management**: Ensuring proper integration of settings throughout the application and providing appropriate defaults.
-3. **Evidence Lifecycle Management**: Developing a robust system for tracking evidence validity and expiration.
+3. **Evidence Lifecycle Management**: Implemented basic evidence validity and expiration tracking with configurable settings. Future enhancement needed for automatically updating evidence status when expiration date is reached.
 4. **Notification System Reliability**: Ensuring email notifications are delivered reliably and on schedule.
 5. **Multi-Tenancy Considerations**: Evaluating requirements for supporting multiple organizations within the same instance.
 6. **Security Hardening**: Ongoing assessment and improvement of application security measures.
-7. **UI/UX Refinement**: Enhancing user experience based on initial feedback and usability testing. 
+7. **UI/UX Refinement**: Enhancing user experience based on initial feedback and usability testing.

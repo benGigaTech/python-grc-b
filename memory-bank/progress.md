@@ -330,7 +330,7 @@ These features have been planned but do not appear to be implemented yet:
    - Volume management for persistence
    - Redis container for rate limiting
    - Automated database initialization
-   - Environment-based configuration 
+   - Environment-based configuration
 
 16. **UI Theme System Improvements**
    - Fixed calendar page tables not respecting dark mode theme toggle
@@ -345,3 +345,8 @@ These features have been planned but do not appear to be implemented yet:
 18. **[2025-04-04 13:32:08] Phase Transition**: Completed Phase 1 (Stabilization). Transitioning to Phase 2 (Implement Core "In Progress" Features).
 19. **[2025-04-04 13:32:08] Phase 2 Start**: Began work on the "Expanded Settings System" feature (Evidence Lifecycle, Email Templates, Branding, Notification Preferences).
 20. **[2025-04-04 13:48:10] Expanded Settings System**: Completed implementation and verification. Added settings for evidence validity/auto-expiration, email subject prefix, footer text, and favicon URL. Integrated settings into relevant services and templates.
+21. **[2025-04-05 10:15:22] Evidence Lifecycle Settings Improvements**: Enhanced the evidence lifecycle settings implementation with improved validation and error handling:
+    - Added client-side validation with `min="1"` attribute for the `evidence.default_validity_days` setting
+    - Implemented server-side validation in the admin settings route to ensure positive integer values
+    - Improved error handling in the evidence routes with clear user feedback when settings are invalid
+    - Added documentation for a future enhancement to automatically update evidence status when it expires

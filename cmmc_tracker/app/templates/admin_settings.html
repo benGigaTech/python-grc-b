@@ -7,36 +7,36 @@
     <div class="col-md-12">
         <h2>Application Settings</h2>
         <p class="mb-4">Configure application-wide settings</p>
-        
+
         {% if settings %}
         <form method="POST" action="{{ url_for('admin.settings') }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            
+
             <div class="tab-container mb-4">
                 <!-- Tab navigation -->
                 <div class="tab-nav mb-3">
                     {% for category in settings.keys() %}
-                    <button type="button" class="tab-button {% if loop.first %}active{% endif %}" 
+                    <button type="button" class="tab-button {% if loop.first %}active{% endif %}"
                             data-target="{{ category }}-tab">
                         {{ category|title }}
                     </button>
                     {% endfor %}
                 </div>
-                
+
                 <!-- Tab content -->
                 <div class="tab-content">
                     {% for category, category_settings in settings.items() %}
                     <div id="{{ category }}-tab" class="tab-pane {% if loop.first %}active{% endif %}">
                         <div class="settings-group mb-4">
                             <h3 class="mb-3">{{ category|title }} Settings</h3>
-                            
+
                             <div class="settings-table">
                                 <div class="settings-header">
                                     <div class="settings-cell">Setting</div>
                                     <div class="settings-cell">Value</div>
                                     <div class="settings-cell">Description</div>
                                 </div>
-                                
+
                                 {% for name, setting in category_settings.items() %}
                                 <div class="settings-row">
                                     <div class="settings-cell">
@@ -50,14 +50,15 @@
                                                 <option value="false" {% if not setting.value %}selected{% endif %}>Disabled</option>
                                             </select>
                                         {% elif setting.type == 'integer' %}
-                                            <input type="number" name="setting_value" id="{{ setting.key }}" 
-                                                   value="{{ setting.value }}" class="form-control">
+                                            <input type="number" name="setting_value" id="{{ setting.key }}"
+                                                   value="{{ setting.value }}" class="form-control"
+                                                   {% if setting.key == 'evidence.default_validity_days' %}min="1"{% endif %}>
                                         {% elif setting.type == 'text' or setting.type == 'json' %}
                                             {# Use larger textarea for footer text #}
                                             <textarea name="setting_value" id="{{ setting.key }}"
                                                       class="form-control" rows="{{ 5 if setting.key == 'app.footer_text' else 3 }}">{{ setting.value }}</textarea>
                                         {% else %}
-                                            <input type="text" name="setting_value" id="{{ setting.key }}" 
+                                            <input type="text" name="setting_value" id="{{ setting.key }}"
                                                    value="{{ setting.value }}" class="form-control">
                                         {% endif %}
                                     </div>
@@ -80,7 +81,7 @@
                     {% endfor %}
                 </div>
             </div>
-            
+
             <div class="form-group">
                 </br>
                 <button type="submit" class="button-link">Save Settings</button>
@@ -209,7 +210,7 @@
     text-decoration: none;
     font-size: 13px;
 }
-    
+
 .button-link:hover {
     background-color: #2563eb;
 }
@@ -218,15 +219,15 @@
     .settings-row {
         flex-direction: column;
     }
-    
+
     .settings-header {
         display: none;
     }
-    
+
     .settings-cell {
         width: 100% !important;
     }
-    
+
     .settings-cell:nth-child(1) {
         font-weight: 600;
         background-color: var(--table-header-bg);
@@ -238,18 +239,18 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Tabs functionality
     var tabButtons = document.querySelectorAll('.tab-button');
-    
+
     tabButtons.forEach(function(button) {
         button.addEventListener('click', function() {
             // Remove active class from all buttons and panes
             document.querySelectorAll('.tab-button').forEach(function(btn) {
                 btn.classList.remove('active');
             });
-            
+
             document.querySelectorAll('.tab-pane').forEach(function(pane) {
                 pane.classList.remove('active');
             });
-            
+
             // Add active class to current button and corresponding pane
             this.classList.add('active');
             var targetId = this.getAttribute('data-target');
@@ -258,4 +259,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %} 
+{% endblock %}

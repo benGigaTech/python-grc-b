@@ -1,7 +1,6 @@
-Docker Entrypoint started at Fri Apr 11 17:44:29 UTC 2025
+Docker Entrypoint started at Mon Apr 14 15:30:38 UTC 2025
 Waiting for database to be ready...
 Waiting for database... attempt 1/30
-Waiting for database... attempt 2/30
 Database is ready!
 Starting database migrations...
 Ensuring migration tracking table exists...
@@ -28,28 +27,28 @@ Applying migration: 08_expanded_settings.sql...
 Successfully applied and recorded: 08_expanded_settings.sql
 Database migrations complete!
 RUN_FULL_SEED is set to true. Running full database seed...
-2025-04-11 17:44:36,136 - INFO - Starting database initialization...
-2025-04-11 17:44:36,142 - INFO - Database connection successful
-2025-04-11 17:44:36,145 - INFO - Tables exist but no users found. Need to populate with data.
-2025-04-11 17:44:36,151 - INFO - Database connection successful
-2025-04-11 17:44:36,152 - INFO - Creating tables...
-2025-04-11 17:44:36,154 - INFO - Tables created successfully
-2025-04-11 17:44:36,159 - INFO - Database connection successful
-2025-04-11 17:44:36,161 - INFO - Creating admin user...
-2025-04-11 17:44:36,263 - INFO - Admin user created
-2025-04-11 17:44:36,264 - INFO - Creating regular user...
-2025-04-11 17:44:36,353 - INFO - Regular user created
-2025-04-11 17:44:36,360 - INFO - Loaded 110 controls from JSON file
-2025-04-11 17:44:36,365 - INFO - Database connection successful
-2025-04-11 17:44:36,366 - INFO - Importing 110 controls...
-2025-04-11 17:44:36,398 - INFO - Added review dates to sample controls
-2025-04-11 17:44:36,401 - INFO - Successfully imported controls from /app/cmmc_controls.json
+2025-04-14 15:30:42,475 - INFO - Starting database initialization...
+2025-04-14 15:30:42,488 - INFO - Database connection successful
+2025-04-14 15:30:42,491 - INFO - Tables exist but no users found. Need to populate with data.
+2025-04-14 15:30:42,496 - INFO - Database connection successful
+2025-04-14 15:30:42,496 - INFO - Creating tables...
+2025-04-14 15:30:42,497 - INFO - Tables created successfully
+2025-04-14 15:30:42,502 - INFO - Database connection successful
+2025-04-14 15:30:42,503 - INFO - Creating admin user...
+2025-04-14 15:30:42,621 - INFO - Admin user created
+2025-04-14 15:30:42,623 - INFO - Creating regular user...
+2025-04-14 15:30:42,698 - INFO - Regular user created
+2025-04-14 15:30:42,713 - INFO - Loaded 110 controls from JSON file
+2025-04-14 15:30:42,718 - INFO - Database connection successful
+2025-04-14 15:30:42,719 - INFO - Importing 110 controls...
+2025-04-14 15:30:42,765 - INFO - Added review dates to sample controls
+2025-04-14 15:30:42,768 - INFO - Successfully imported controls from /app/cmmc_controls.json
 
-2025-04-11 17:44:36,406 - INFO - Database connection successful
-2025-04-11 17:44:36,407 - INFO - Creating sample tasks...
-2025-04-11 17:44:36,413 - INFO - Sample tasks created successfully
-2025-04-11 17:44:36,414 - INFO - Database initialization complete!
-2025-04-11 17:44:36,414 - INFO - Default admin credentials: username=admin, password=adminpassword
-2025-04-11 17:44:36,414 - INFO - Default user credentials: username=user, password=userpassword
+2025-04-14 15:30:42,772 - INFO - Database connection successful
+2025-04-14 15:30:42,773 - INFO - Creating sample tasks...
+2025-04-14 15:30:42,778 - INFO - Sample tasks created successfully
+2025-04-14 15:30:42,778 - INFO - Database initialization complete!
+2025-04-14 15:30:42,778 - INFO - Default admin credentials: username=admin, password=adminpassword
+2025-04-14 15:30:42,778 - INFO - Default user credentials: username=user, password=userpassword
 Seed script (seed_db.py) finished with exit code 0
 Starting application (exec /app/start.sh)...

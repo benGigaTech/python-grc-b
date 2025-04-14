@@ -184,3 +184,48 @@ The application can be configured using the following environment variables:
 - `NOTIFICATION_ENABLED`: Enable/disable email notifications (true/false)
 - `NOTIFICATION_HOUR`: Hour of the day to send daily notifications (0-23)
 
+## Project Structure
+
+The application follows a modular structure to maintain clean separation of concerns:
+
+```
+/
+├── cmmc_tracker/           # Main application package
+│   ├── app/                # Core application code
+│   │   ├── models/         # Data models
+│   │   ├── routes/         # Route definitions (blueprints)
+│   │   ├── services/       # Business logic services
+│   │   ├── templates/      # Jinja2 HTML templates
+│   │   ├── utils/          # Utility functions
+│   │   └── __init__.py     # Application factory
+│   ├── config.py           # Configuration classes
+│   └── run.py              # Application entry point
+├── db/                     # Database migration scripts
+├── memory-bank/            # Project documentation
+├── docker-compose.yml      # Docker configuration
+├── Dockerfile              # Container definition
+├── requirements.txt        # Python dependencies
+└── seed_db.py              # Database seeding script
+```
+
+### Key Support Scripts
+
+- **apply_migration.py**: Handles database schema migrations
+- **docker-entrypoint.sh**: Container startup script that initializes the database
+- **seed_db.py**: Populates the database with initial data
+- **start.sh**: Starts the application within the container
+
+## Maintenance
+
+This repository has been cleaned to remove development artifacts and temporary files. The core application code, configuration files, and documentation have been preserved.
+
+### Documentation
+
+Detailed project documentation is available in the `memory-bank` directory:
+
+- **productContext.md**: Overview of the problem space and solution
+- **projectbrief.md**: Core requirements and project goals
+- **techContext.md**: Technical architecture and technology stack
+- **roadmap.md**: Future development plans
+- **systemPatterns.md**: Design patterns and architectural decisions
+

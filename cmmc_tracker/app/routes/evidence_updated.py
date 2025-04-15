@@ -172,23 +172,23 @@ def add_evidence(control_id):
                 # This is a chunked upload completion
                 from app.services.chunked_upload import assemble_file, cleanup_session
                 assembled_path, original_filename = assemble_file(upload_session_id)
-
+                
                 if not assembled_path:
                     flash('Failed to assemble uploaded file chunks.', 'danger')
                     return render_template('add_evidence.html', control=control.to_dict())
-
+                
                 # Validate the assembled file type
                 is_valid_type, detected_mime = validate_file_type_path(assembled_path)
                 if not is_valid_type:
                     cleanup_session(upload_session_id)
                     flash(f'File content validation failed. Detected type "{detected_mime}" is not allowed.', 'danger')
                     return render_template('add_evidence.html', control=control.to_dict())
-
+                
                 # Save the assembled file
                 file_path, saved_file_type, file_size = save_evidence_file(
                     None, control_id, detected_mime, assembled_path
                 )
-
+                
                 # Clean up the session directory (file has been copied to final location)
                 cleanup_session(upload_session_id)
             else:
@@ -218,7 +218,7 @@ def add_evidence(control_id):
 
                 # Save the file (use detected_mime if available, otherwise fallback)
                 file_path, saved_file_type, file_size = save_evidence_file(file, control_id, detected_mime or file.content_type)
-
+            
             if not file_path:
                 flash('Failed to save evidence file.', 'danger')
                 return render_template('add_evidence.html', control=control.to_dict())

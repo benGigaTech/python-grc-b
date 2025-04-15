@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Profiling{% endblock %}
+
+{% block content %}
+<h1>Dashboard Profiling Data</h1>
+
+<div class="dashboard-card">
+    <h2>Query Performance</h2>
+    <p>This page shows performance metrics for database queries used in the dashboard.</p>
+    
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Query Name</th>
+                    <th>Avg Time</th>
+                    <th>Max Time</th>
+                    <th>Min Time</th>
+                    <th>Calls</th>
+                    <th>Total Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in profiling_data %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.avg_time }}</td>
+                    <td>{{ item.max_time }}</td>
+                    <td>{{ item.min_time }}</td>
+                    <td>{{ item.calls }}</td>
+                    <td>{{ item.total_time }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="actions">
+        <a href="{{ url_for('controls.dashboard') }}" class="button-link">Back to Dashboard</a>
+    </div>
+</div>
+
+<div class="dashboard-card">
+    <h2>Optimization Tips</h2>
+    <ul>
+        <li>Queries taking more than 100ms should be optimized</li>
+        <li>Consider adding indexes for frequently queried columns</li>
+        <li>Use EXPLAIN ANALYZE to identify slow parts of queries</li>
+        <li>Consider caching results for queries that don't change frequently</li>
+    </ul>
+</div>
+
+{% endblock %}

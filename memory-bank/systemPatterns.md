@@ -107,6 +107,7 @@ graph TD
   - `audit.py`: Audit logging
   - `mfa.py`: Multi-factor authentication
   - `storage.py`: File storage operations
+  - `chunked_upload.py`: Chunked file upload handling
   - `scheduler.py`: Background task scheduling
 
 ### Repository Pattern
@@ -292,26 +293,72 @@ sequenceDiagram
     participant User
     participant Browser
     participant WebApp (Flask Routes/Services)
+    participant ChunkedUploadService
     participant StorageService
     participant EvidenceModel
     participant Database
     participant FileSystem
 
-    User->>Browser: Selects File, Submits Form
-    Browser->>WebApp: POST /control/.../evidence/add (with file data)
-    WebApp->>WebApp: Validate File (allowed_file, size, CSRF)
-    WebApp->>StorageService: save_evidence_file(file_stream, control_id)
-    StorageService->>StorageService: Generate Secure Filename
-    StorageService->>FileSystem: Save File to Uploads Directory
-    FileSystem-->>StorageService: Success
-    StorageService-->>WebApp: Saved File Path
-    WebApp->>EvidenceModel: create(control_id, title, ..., file_path, ...)
-    EvidenceModel->>Database: INSERT INTO evidence (...) VALUES (...)
-    Database-->>EvidenceModel: New Evidence ID
-    EvidenceModel-->>WebApp: Evidence Object
-    WebApp->>WebApp: Add Audit Log Entry
-    WebApp-->>Browser: Redirect to Evidence List (Success Message)
-    Browser->>User: Show Updated Evidence List
+    alt Regular Upload (Small Files)
+        User->>Browser: Selects File, Submits Form
+        Browser->>WebApp: POST /control/.../evidence/add (with file data)
+        WebApp->>WebApp: Validate File (allowed_file, size, CSRF)
+        WebApp->>StorageService: save_evidence_file(file_stream, control_id)
+        StorageService->>StorageService: Generate Secure Filename
+        StorageService->>FileSystem: Save File to Uploads Directory
+        FileSystem-->>StorageService: Success
+        StorageService-->>WebApp: Saved File Path
+        WebApp->>EvidenceModel: create(control_id, title, ..., file_path, ...)
+        EvidenceModel->>Database: INSERT INTO evidence (...) VALUES (...)
+        Database-->>EvidenceModel: New Evidence ID
+        EvidenceModel-->>WebApp: Evidence Object
+        WebApp->>WebApp: Add Audit Log Entry
+        WebApp-->>Browser: Redirect to Evidence List (Success Message)
+        Browser->>User: Show Updated Evidence List
+    else Chunked Upload (Large Files)
+        User->>Browser: Selects Large File, Submits Form
+        Browser->>Browser: Detect Large File Size (JavaScript)
+        Browser->>WebApp: POST /chunked-upload/create-session
+        WebApp->>ChunkedUploadService: create_session()
+        ChunkedUploadService->>FileSystem: Create Temporary Directory
+        ChunkedUploadService-->>WebApp: Session ID
+        WebApp-->>Browser: Session ID
+
+        loop For Each Chunk
+            Browser->>Browser: Slice File into Chunks
+            Browser->>WebApp: POST /chunked-upload/upload-chunk/{session_id}
+            WebApp->>ChunkedUploadService: save_chunk(session_id, chunk_index, chunk_data)
+            ChunkedUploadService->>FileSystem: Save Chunk to Temp Directory
+            FileSystem-->>ChunkedUploadService: Success
+            ChunkedUploadService-->>WebApp: Success
+            WebApp-->>Browser: Chunk Upload Success
+            Browser->>Browser: Update Progress Bar
+        end
+
+        Browser->>WebApp: POST /chunked-upload/complete-upload/{session_id}
+        WebApp->>ChunkedUploadService: assemble_file(session_id)
+        ChunkedUploadService->>FileSystem: Combine Chunks into Complete File
+        FileSystem-->>ChunkedUploadService: Assembled File Path
+        ChunkedUploadService-->>WebApp: Assembled File Path
+
+        Browser->>WebApp: POST /control/.../evidence/add (with form data + session_id)
+        WebApp->>ChunkedUploadService: get_assembled_file(session_id)
+        ChunkedUploadService-->>WebApp: Assembled File Path
+        WebApp->>StorageService: save_evidence_file(null, control_id, mime_type, assembled_path)
+        StorageService->>StorageService: Generate Secure Filename
+        StorageService->>FileSystem: Copy File to Final Location
+        FileSystem-->>StorageService: Success
+        StorageService-->>WebApp: Saved File Path
+        WebApp->>ChunkedUploadService: cleanup_session(session_id)
+        ChunkedUploadService->>FileSystem: Remove Temporary Files
+        WebApp->>EvidenceModel: create(control_id, title, ..., file_path, ...)
+        EvidenceModel->>Database: INSERT INTO evidence (...) VALUES (...)
+        Database-->>EvidenceModel: New Evidence ID
+        EvidenceModel-->>WebApp: Evidence Object
+        WebApp->>WebApp: Add Audit Log Entry
+        WebApp-->>Browser: Redirect to Evidence List (Success Message)
+        Browser->>User: Show Updated Evidence List
+    end
 ```
 
 ### Control Management Flow (Simplified CRUD)
@@ -351,6 +398,119 @@ sequenceDiagram
 14. **Progressive Timeouts**: Increasing lockout durations for repeated authentication failures
 15. **Administrative Override**: Admin capability to unlock accounts in legitimate cases
 16. **Connection Pooling**: Efficient database connection management for performance and security
+17. **Query Profiling**: Performance monitoring for database operations
+18. **In-memory Caching**: Temporary storage of frequently accessed data
+19. **Common Table Expressions**: SQL optimization technique for complex queries
+
+## Performance Optimization Patterns
+
+The application implements several patterns to optimize performance and provide visibility into system behavior:
+
+### Query Profiling Pattern
+
+A lightweight profiling system measures and logs database query execution times:
+
+1. **Timer Management**: The profiler maintains timers in Flask's `g` object, scoped to the current request.
+2. **Query Naming**: Each database query can be assigned a name for identification in profiling data.
+3. **Execution Timing**: Start and stop times are recorded for each query execution.
+4. **Threshold Logging**: Queries exceeding a configurable threshold (default: 100ms) are logged as slow queries.
+5. **Statistics Collection**: The profiler maintains running statistics (min, max, avg, count) for each query type.
+6. **Admin Dashboard**: A dedicated admin page displays profiling data for performance analysis.
+
+**Implementation:**
+
+```python
+# In profiler.py
+def start_timer(name):
+    if not hasattr(g, 'timers'):
+        g.timers = {}
+    g.timers[name] = time.time()
+
+def stop_timer(name):
+    if hasattr(g, 'timers') and name in g.timers:
+        elapsed = time.time() - g.timers[name]
+        # Store statistics
+        if elapsed > SLOW_QUERY_THRESHOLD:
+            logger.debug(f"Slow query: {name} took {elapsed:.4f}s")
+        return elapsed
+    return None
+
+# In database.py
+def execute_query(query, params=None, query_name=None, ...):
+    timer_name = f"db_query_{query_name or 'unnamed'}"
+    start_timer(timer_name)
+    # Execute query...
+    elapsed = stop_timer(timer_name)
+```
+
+### In-memory Caching Pattern
+
+The dashboard implements a simple in-memory caching mechanism to reduce database load:
+
+1. **Cache Storage**: Dashboard data is stored in a module-level dictionary.
+2. **Time-based Expiration**: Cache entries include a timestamp and are considered valid for a configurable TTL.
+3. **Transparent Access**: The dashboard route checks for valid cached data before executing database queries.
+4. **Automatic Refresh**: When cache is invalid or missing, fresh data is fetched and cached.
+
+**Implementation:**
+
+```python
+# In controls.py
+_dashboard_cache = {}
+_cache_timestamp = None
+_cache_ttl = 60  # seconds
+
+def dashboard():
+    # Check for valid cache
+    current_time = time.time()
+    if _cache_timestamp and (current_time - _cache_timestamp) < _cache_ttl:
+        return render_template('dashboard.html', **_dashboard_cache)
+
+    # Cache miss - fetch fresh data
+    # ... execute queries and prepare data ...
+
+    # Update cache
+    _dashboard_cache = {'metrics': metrics, 'activities': activities, ...}
+    _cache_timestamp = current_time
+
+    return render_template('dashboard.html', **_dashboard_cache)
+```
+
+### SQL Optimization Patterns
+
+The application uses several SQL optimization techniques:
+
+1. **Common Table Expressions (CTEs)**: Complex queries are structured using CTEs for readability and performance.
+2. **Aggregation Pushdown**: Calculations are performed in SQL rather than Python where possible.
+3. **Parameterized Queries**: All queries use parameters to enable query plan caching by the database.
+4. **Minimal Data Transfer**: Queries select only the specific columns needed rather than using `SELECT *`.
+
+**Example CTE Query:**
+
+```sql
+WITH domain_mapping AS (
+    SELECT
+        controlid,
+        CASE WHEN controlid LIKE 'AC-%' THEN 'Access Control' ... END as domain
+    FROM controls
+),
+control_status AS (
+    SELECT
+        c.controlid,
+        dm.domain,
+        CASE
+            WHEN COUNT(t.taskid) = 0 THEN 'Not Assessed'
+            WHEN SUM(CASE WHEN t.status IN ('Open', 'Pending Confirmation') THEN 1 ELSE 0 END) > 0 THEN 'In Progress'
+            WHEN SUM(CASE WHEN t.status = 'Completed' AND t.confirmed = 1 THEN 1 ELSE 0 END) > 0 THEN 'Compliant'
+            ELSE 'Non-Compliant'
+        END as status
+    FROM controls c
+    JOIN domain_mapping dm ON c.controlid = dm.controlid
+    LEFT JOIN tasks t ON c.controlid = t.controlid
+    GROUP BY c.controlid, dm.domain
+)
+SELECT domain, COUNT(*) as total, SUM(...) as compliant, ... FROM control_status GROUP BY domain;
+```
 
 ## Database Migration & Seeding Pattern
 

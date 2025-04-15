@@ -10,19 +10,19 @@
 <div class="form-container">
     <form action="{{ url_for('evidence.update_evidence', evidence_id=evidence.evidenceid) }}" method="post">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+
         <div class="form-group">
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" class="form-control" value="{{ evidence.title }}" required>
             <small class="form-text">A descriptive title for this evidence (required)</small>
         </div>
-        
+
         <div class="form-group">
             <label for="description">Description:</label>
             <textarea id="description" name="description" class="form-control" rows="3">{{ evidence.description }}</textarea>
             <small class="form-text">Additional details about this evidence</small>
         </div>
-        
+
         <div class="form-group">
             <label for="status">Status:</label>
             <select id="status" name="status" class="form-control">
@@ -32,26 +32,26 @@
             </select>
             <small class="form-text">Current status of this evidence</small>
         </div>
-        
+
         <div class="form-group">
             <label for="expiration_date">Expiration Date:</label>
             <input type="date" id="expiration_date" name="expiration_date" class="form-control" value="{{ evidence.expirationdate }}">
             <small class="form-text">Optional. Set if this evidence has an expiration date</small>
         </div>
-        
+
         <div class="file-metadata">
             <h3>File Information</h3>
             <p><strong>Uploaded By:</strong> {{ evidence.uploadedby }}</p>
             <p><strong>Upload Date:</strong> {{ evidence.uploaddate }}</p>
             <p><strong>File Type:</strong> {{ evidence.filetype or "Unknown" }}</p>
             <p><strong>File Size:</strong> {{ "%.2f"|format(evidence.filesize / 1024) if evidence.filesize else 0 }} KB</p>
-            
+
             <div class="info-note">
                 <span class="icon">ℹ️</span>
                 <span>To replace the file, please delete this evidence and upload a new one.</span>
             </div>
         </div>
-        
+
         <div class="form-buttons">
             <input type="submit" value="Update Evidence" class="form-button">
             <a href="{{ url_for('evidence.list_evidence', control_id=control.controlid) }}" class="button-link">Cancel</a>
@@ -59,76 +59,84 @@
     </form>
 </div>
 
-<style>
+<style nonce="{{ csp_nonce() }}">
     .form-container {
         max-width: 700px;
         margin: 2rem 0;
         padding: 1.5rem;
-        background-color: #f8fafc;
+        background-color: var(--form-bg);
         border-radius: 0.5rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 1px 3px var(--shadow-color);
     }
-    
+
     .form-group {
         margin-bottom: 1.5rem;
     }
-    
+
     .form-control {
         display: block;
         width: 100%;
         padding: 0.5rem;
         font-size: 1rem;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--form-border);
         border-radius: 0.25rem;
+        background-color: var(--form-bg);
+        color: var(--form-text);
     }
-    
+
     label {
         display: block;
         margin-bottom: 0.5rem;
         font-weight: 500;
+        color: var(--text-color);
     }
-    
+
     .form-text {
         display: block;
         margin-top: 0.25rem;
         font-size: 0.875rem;
-        color: #64748b;
+        color: var(--text-color);
+        opacity: 0.8;
     }
-    
+
     .form-buttons {
         display: flex;
         gap: 1rem;
         margin-top: 2rem;
     }
-    
+
     .file-metadata {
         margin-top: 2rem;
         padding: 1rem;
-        background-color: #f1f5f9;
+        background-color: var(--table-row-alt-bg);
         border-radius: 0.5rem;
+        border: 1px solid var(--border-color);
     }
-    
+
     .file-metadata h3 {
         margin-top: 0;
         font-size: 1.1rem;
-        color: #334155;
+        color: var(--heading-color);
     }
-    
+
     .file-metadata p {
         margin: 0.5rem 0;
+        color: var(--text-color);
     }
-    
+
     .info-note {
         display: flex;
         align-items: flex-start;
         margin-top: 1rem;
         padding: 0.75rem;
-        background-color: #e0f2fe;
+        background-color: var(--flash-info-bg, var(--flash-success-bg));
         border-radius: 0.25rem;
+        border: 1px solid var(--flash-info-border, var(--flash-success-border));
+        color: var(--flash-info-text, var(--flash-success-text));
     }
-    
+
     .info-note .icon {
         margin-right: 0.5rem;
     }
 </style>
-{% endblock %} 
+{% endblock %}

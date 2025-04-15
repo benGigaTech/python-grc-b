@@ -2,26 +2,62 @@
 
 {% block title %}Add Evidence - {{ control.controlid }}{% endblock %}
 
+{% block head %}
+{{ super() }}
+<style nonce="{{ csp_nonce() }}">
+    .progress-container {
+        margin-top: 10px;
+        display: none;
+    }
+    .progress {
+        height: 20px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        background-color: var(--table-row-alt-bg);
+        border-radius: 4px;
+    }
+    .progress-bar {
+        float: left;
+        width: 0;
+        height: 100%;
+        font-size: 12px;
+        line-height: 20px;
+        color: #fff;
+        text-align: center;
+        background-color: var(--primary-color);
+        transition: width .6s ease;
+    }
+    .upload-status {
+        font-size: 14px;
+        margin-top: 5px;
+    }
+    #chunked-upload-container {
+        display: none;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <h1>Add Evidence for Control: {{ control.controlid }}</h1>
 <p><strong>Control Name:</strong> {{ control.controlname }}</p>
 
 <div class="form-container">
-    <form action="{{ url_for('evidence.add_evidence', control_id=control.controlid) }}" method="post" enctype="multipart/form-data">
+    <form id="evidence-form" action="{{ url_for('evidence.add_evidence', control_id=control.controlid) }}" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        
+        <input type="hidden" id="upload_session_id" name="upload_session_id" value="">
+
         <div class="form-group">
             <label for="title">Title:</label>
             <input type="text" id="title" name="title" class="form-control" required>
             <small class="form-text">A descriptive title for this evidence (required)</small>
         </div>
-        
+
         <div class="form-group">
             <label for="description">Description:</label>
             <textarea id="description" name="description" class="form-control" rows="3"></textarea>
             <small class="form-text">Additional details about this evidence</small>
         </div>
-        
+
         <div class="form-group">
             <label for="evidence_file">Evidence File:</label>
             <input type="file" id="evidence_file" name="evidence_file" class="form-control-file" required>
@@ -29,19 +65,164 @@
             <div class="allowed-types">
                 Allowed file types: PDF, Images (PNG, JPG, GIF), Documents (DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT), CSV
             </div>
+
+            <!-- Progress bar for chunked uploads -->
+            <div id="progress-container" class="progress-container">
+                <div class="progress">
+                    <div id="progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div id="upload-status" class="upload-status">Preparing upload...</div>
+            </div>
         </div>
-        
+
         <div class="form-group">
             <label for="expiration_date">Expiration Date:</label>
             <input type="date" id="expiration_date" name="expiration_date" class="form-control">
             <small class="form-text">Optional. Set if this evidence has an expiration date</small>
         </div>
-        
+
         <div class="form-buttons">
-            <input type="submit" value="Upload Evidence" class="form-button">
+            <input type="submit" id="submit-button" value="Upload Evidence" class="form-button">
             <a href="{{ url_for('evidence.list_evidence', control_id=control.controlid) }}" class="button-link">Cancel</a>
         </div>
     </form>
 </div>
 
-{% endblock %} 
+<script nonce="{{ csp_nonce() }}">
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('evidence-form');
+        const fileInput = document.getElementById('evidence_file');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const uploadStatus = document.getElementById('upload-status');
+        const submitButton = document.getElementById('submit-button');
+        const uploadSessionIdInput = document.getElementById('upload_session_id');
+
+        // File size threshold for chunked upload (2MB)
+        const CHUNK_SIZE = 2 * 1024 * 1024; // 2MB chunks
+        const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024; // 5MB threshold
+
+        form.addEventListener('submit', function(e) {
+            const file = fileInput.files[0];
+
+            // If no file selected or file is small, use regular upload
+            if (!file || file.size <= LARGE_FILE_THRESHOLD) {
+                return true; // Continue with normal form submission
+            }
+
+            // For large files, use chunked upload
+            e.preventDefault();
+
+            // Show progress container
+            progressContainer.style.display = 'block';
+            submitButton.disabled = true;
+
+            // Start chunked upload process
+            startChunkedUpload(file);
+
+            return false;
+        });
+
+        async function startChunkedUpload(file) {
+            try {
+                // Create upload session
+                uploadStatus.textContent = 'Creating upload session...';
+                const sessionResponse = await fetch('{{ url_for("chunked_upload.create_session") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (!sessionResponse.ok) {
+                    throw new Error('Failed to create upload session');
+                }
+
+                const sessionData = await sessionResponse.json();
+                if (!sessionData.success) {
+                    throw new Error(sessionData.error || 'Failed to create upload session');
+                }
+
+                const sessionId = sessionData.session_id;
+                const chunkSize = sessionData.chunk_size || CHUNK_SIZE;
+
+                // Calculate total chunks
+                const totalChunks = Math.ceil(file.size / chunkSize);
+                uploadStatus.textContent = `Uploading file in ${totalChunks} chunks...`;
+
+                // Upload each chunk
+                for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+                    const start = chunkIndex * chunkSize;
+                    const end = Math.min(start + chunkSize, file.size);
+                    const chunk = file.slice(start, end);
+
+                    const formData = new FormData();
+                    formData.append('chunk_index', chunkIndex);
+                    formData.append('total_chunks', totalChunks);
+                    formData.append('file_chunk', chunk);
+
+                    if (chunkIndex === 0) {
+                        formData.append('filename', file.name);
+                    }
+
+                    const chunkResponse = await fetch(`{{ url_for("chunked_upload.upload_chunk", session_id="") }}${sessionId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        },
+                        body: formData
+                    });
+
+                    if (!chunkResponse.ok) {
+                        throw new Error(`Failed to upload chunk ${chunkIndex + 1}/${totalChunks}`);
+                    }
+
+                    const chunkData = await chunkResponse.json();
+                    if (!chunkData.success) {
+                        throw new Error(chunkData.error || `Failed to upload chunk ${chunkIndex + 1}/${totalChunks}`);
+                    }
+
+                    // Update progress
+                    const progress = Math.round((chunkIndex + 1) / totalChunks * 100);
+                    progressBar.style.width = `${progress}%`;
+                    progressBar.setAttribute('aria-valuenow', progress);
+                    uploadStatus.textContent = `Uploading: ${progress}% (${chunkIndex + 1}/${totalChunks} chunks)`;
+                }
+
+                // Complete the upload
+                uploadStatus.textContent = 'Finalizing upload...';
+                const completeResponse = await fetch(`{{ url_for("chunked_upload.complete_upload", session_id="") }}${sessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                });
+
+                if (!completeResponse.ok) {
+                    throw new Error('Failed to complete upload');
+                }
+
+                const completeData = await completeResponse.json();
+                if (!completeData.success) {
+                    throw new Error(completeData.error || 'Failed to complete upload');
+                }
+
+                // Set the session ID in the form and submit
+                uploadSessionIdInput.value = sessionId;
+                uploadStatus.textContent = 'Upload complete! Submitting form...';
+
+                // Submit the form
+                submitButton.disabled = false;
+                form.submit();
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                uploadStatus.textContent = `Error: ${error.message}`;
+                progressBar.style.backgroundColor = 'var(--flash-danger-bg)';
+                submitButton.disabled = false;
+            }
+        }
+    });
+</script>
+
+{% endblock %}

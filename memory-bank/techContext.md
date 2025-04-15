@@ -11,13 +11,17 @@
 - **threading**: Thread management for connection pooling
 - **atexit**: Cleanup registration for application shutdown
 - **Custom Database Service**: Abstraction layer for database operations
+- **Query Profiler**: Performance monitoring for database operations
+- **In-memory Cache**: Dashboard data caching for improved performance
 - **Jinja2**: Template engine for rendering HTML
 
 ### Frontend
 - **Bootstrap**: CSS framework for responsive design
 - **JavaScript**: Client-side interactivity
+- **Fetch API**: Modern AJAX for chunked file uploads
 - **jQuery**: Simplifies DOM manipulation and AJAX
 - **Chart.js**: Data visualization for dashboards
+- **Custom Progress UI**: Visual feedback for chunked uploads
 
 ### Database
 - **SQLite**: Development and testing database
@@ -71,8 +75,15 @@
 ### Performance
 - Optimized for organizations with up to 500 controls
 - Up to 100 concurrent users
-- Evidence file size limited to 10MB per upload (via `MAX_CONTENT_LENGTH` config)
+- Evidence file size limited to 50MB per upload (via `MAX_CONTENT_LENGTH` config)
+- Chunked upload support for large files with configurable chunk size
+- Client-side file size detection for automatic chunked uploads
+- Progress tracking for large file uploads
 - Database connection pool configured with min=5, max=25 connections
+- Query profiling system for performance monitoring and optimization
+- Dashboard caching with configurable TTL (60 seconds default)
+- Optimized SQL queries using Common Table Expressions (CTEs)
+- Admin dashboard for performance metrics visualization
 
 ### Security
 - HTTPS required for production deployment

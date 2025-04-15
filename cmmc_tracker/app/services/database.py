@@ -3,11 +3,13 @@
 import logging
 import threading
 import atexit
+import time
 import psycopg2
 from psycopg2.extras import DictCursor
 from psycopg2 import sql
 from psycopg2.pool import ThreadedConnectionPool
 from flask import current_app, g
+from app.utils.profiler import start_timer, stop_timer
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +125,7 @@ def has_app_context():
     except RuntimeError:
         return False
 
-def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=False):
+def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=False, query_name=None):
     """
     Execute a database query with standardized error handling.
 
@@ -133,11 +135,32 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=F
         fetch_one (bool): Whether to fetch one result
         fetch_all (bool): Whether to fetch all results
         commit (bool): Whether to commit the transaction
+        query_name (str, optional): Name for profiling the query
 
     Returns:
         The result of the query if fetch_one or fetch_all is True, otherwise None
     """
     conn = None
+    # Generate a query name for profiling if not provided
+    if query_name is None:
+        if isinstance(query, sql.Composable):
+            query_name = "sql_composable_query"
+        else:
+            # Extract first word after SELECT, INSERT, UPDATE, DELETE
+            query_str = str(query).strip().upper()
+            for stmt in ["SELECT", "INSERT", "UPDATE", "DELETE"]:
+                if query_str.startswith(stmt):
+                    parts = query_str[len(stmt):].strip().split()
+                    if parts:
+                        query_name = f"{stmt}_{parts[0]}"
+                        break
+            if not query_name:
+                query_name = query_str[:20].replace(" ", "_")
+
+    # Start timing the query
+    timer_name = f"db_query_{query_name}"
+    start_timer(timer_name)
+
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=DictCursor)
@@ -158,6 +181,11 @@ def execute_query(query, params=None, fetch_one=False, fetch_all=False, commit=F
 
         if commit:
             conn.commit()
+
+        # Stop timing and log
+        elapsed = stop_timer(timer_name)
+        if elapsed > 0.1:  # Log slow queries (> 100ms)
+            logger.debug(f"Slow query ({elapsed:.4f}s): {query_name}")
 
         return result
     except psycopg2.Error as e:

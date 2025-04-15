@@ -14,6 +14,10 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Settings system for application configuration
    - Database connection pooling for scalable concurrent access
    - Automated database migrations on startup via `docker-entrypoint.sh`
+   - Query profiling system for performance monitoring
+   - Dashboard caching with configurable TTL
+   - Optimized SQL queries using Common Table Expressions (CTEs)
+   - Admin dashboard for performance metrics visualization
 
 2. **User Authentication**
    - Login and registration with CSRF protection
@@ -42,7 +46,10 @@ Based on the codebase exploration, the following functionality appears to be ope
 
 4. **Evidence Management**
    - File upload mechanism with type validation (extension and magic number checks)
+   - Chunked upload support for large files to prevent timeouts
+   - Progress tracking for large file uploads
    - Metadata tracking including expiration dates
+   - Automatic expiration date calculation based on configurable settings
    - Status indicators (Current, Pending Review, Expired)
    - File download functionality with proper MIME types
    - Evidence organization by control
@@ -211,7 +218,7 @@ These features have been planned but do not appear to be implemented yet:
    - ~Clock synchronization issues can affect TOTP validation~ (MITIGATED: Increased valid_window to 1)
 
 2. **Performance**
-   - ~Large evidence uploads may cause timeouts~ (MITIGATED: Increased Gunicorn timeout to 120s)
+   - ~Large evidence uploads may cause timeouts~ (FIXED: Implemented chunked upload mechanism with progress tracking)
    - ~Dashboard loading can be slow with many controls~ (IMPROVED: Optimized domain/status queries)
    - Large audit log queries may cause timeout issues
    - Connection pool may need further tuning for optimal performance
@@ -355,7 +362,10 @@ These features have been planned but do not appear to be implemented yet:
 19. **[2025-04-04 13:32:08] Phase 2 Start**: Began work on the "Expanded Settings System" feature (Evidence Lifecycle, Email Templates, Branding, Notification Preferences).
 20. **[2025-04-04 13:48:10] Expanded Settings System**: Completed implementation and verification. Added settings for evidence validity/auto-expiration, email subject prefix, footer text, and favicon URL. Integrated settings into relevant services and templates.
 21. **[2025-04-05 10:15:22] Evidence Lifecycle Settings Improvements**: Enhanced the evidence lifecycle settings implementation with improved validation and error handling:
-    - Added client-side validation with `min="1"` attribute for the `evidence.default_validity_days` setting
-    - Implemented server-side validation in the admin settings route to ensure positive integer values
-    - Improved error handling in the evidence routes with clear user feedback when settings are invalid
-    - Added documentation for a future enhancement to automatically update evidence status when it expires
+22. **[2025-04-15 16:50:00] Dashboard Performance Optimization**: Implemented comprehensive performance improvements for the dashboard:
+    - Created a query profiling system to measure and log database query execution times
+    - Implemented in-memory caching for dashboard data with configurable TTL (60 seconds default)
+    - Optimized SQL queries using Common Table Expressions (CTEs) for better performance
+    - Added a dedicated admin dashboard for performance metrics visualization
+    - Fixed circular import issues between modules
+    - Added documentation for performance features and configuration options

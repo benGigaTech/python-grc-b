@@ -1,0 +1,40 @@
+services:
+  web:
+    build: .
+    environment:
+      - FLASK_CONFIG=testing
+      - DB_HOST=db_test
+      - DB_PORT=5432
+      - DB_NAME=cmmc_test_db
+      - DB_USER=cmmc_user
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis_test
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis_test:6379/0
+      - PYTHONPATH=/app:/app/cmmc_tracker
+      - RUN_FULL_SEED=false
+    depends_on:
+      - db_test
+      - redis_test
+    volumes:
+      - ./:/app
+
+  db_test:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=cmmc_user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cmmc_test_db
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./db:/docker-entrypoint-initdb.d
+
+  redis_test:
+    image: redis:7-alpine
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_test_data:/data
+
+volumes:
+  postgres_test_data:
+  redis_test_data:

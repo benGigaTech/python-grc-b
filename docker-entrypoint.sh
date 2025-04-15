@@ -11,12 +11,12 @@ log_message() {
     echo "$1" | tee -a "$LOG_FILE"
 }
 
-# Database connection details (replace with environment variables if needed)
-DB_HOST="db"
-DB_PORT="5432"
-DB_NAME="cmmc_db"
-DB_USER="cmmc_user"
-DB_PASSWORD="password"
+# Database connection details from environment variables
+DB_HOST=${DB_HOST:-"db"}
+DB_PORT=${DB_PORT:-"5432"}
+DB_NAME=${DB_NAME:-"cmmc_db"}
+DB_USER=${DB_USER:-"cmmc_user"}
+DB_PASSWORD=${DB_PASSWORD:-"password"}
 export PGPASSWORD="$DB_PASSWORD"
 
 # Function to execute SQL command using psql
@@ -73,10 +73,10 @@ for migration_file in "$MIGRATION_DIR"/0*.sql; do
     fi
 
     log_message "Checking migration: $migration_name"
-    
+
     # Check if migration is already applied
     applied_count=$(run_psql -tAc "SELECT COUNT(*) FROM migration_history WHERE migration_name = '$migration_name'")
-    
+
     if [ $? -ne 0 ]; then
         log_message "Error checking migration history for $migration_name. Exiting."
         exit 1
@@ -116,7 +116,7 @@ if [ "${RUN_FULL_SEED}" = "true" ] || [ "${RUN_FULL_SEED}" = "yes" ] || [ "${RUN
     log_message "RUN_FULL_SEED is set to true. Running full database seed..."
     # Ensure seed_db.py exists before trying to run it
     if [ -f "/app/seed_db.py" ]; then
-        python /app/seed_db.py >> "$LOG_FILE" 2>&1 
+        python /app/seed_db.py >> "$LOG_FILE" 2>&1
         seed_exit_code=$?
         log_message "Seed script (seed_db.py) finished with exit code $seed_exit_code"
         if [ $seed_exit_code -ne 0 ]; then

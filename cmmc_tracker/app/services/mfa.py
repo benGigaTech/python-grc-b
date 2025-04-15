@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def generate_totp_secret():
     """
     Generate a new TOTP secret key.
-    
+
     Returns:
         str: The generated secret key
     """
@@ -21,12 +21,12 @@ def generate_totp_secret():
 def get_totp_uri(username, secret, issuer="CMMC Tracker"):
     """
     Generate a TOTP URI for the user.
-    
+
     Args:
         username: The username
         secret: The TOTP secret key
         issuer: The issuer name for the TOTP
-        
+
     Returns:
         str: The TOTP URI for use with authenticator apps
     """
@@ -38,13 +38,16 @@ def get_totp_uri(username, secret, issuer="CMMC Tracker"):
 def generate_qr_code(totp_uri):
     """
     Generate a QR code image for the TOTP URI.
-    
+
     Args:
         totp_uri: The TOTP URI
-        
+
     Returns:
-        str: Base64 encoded QR code image data
+        str: Base64 encoded QR code image data or None if totp_uri is None or empty
     """
+    if not totp_uri:
+        return None
+
     try:
         qr = qrcode.QRCode(
             version=1,
@@ -54,14 +57,14 @@ def generate_qr_code(totp_uri):
         )
         qr.add_data(totp_uri)
         qr.make(fit=True)
-        
+
         img = qr.make_image(fill_color="black", back_color="white")
-        
+
         # Convert to base64
         buffered = io.BytesIO()
         img.save(buffered)
         img_str = base64.b64encode(buffered.getvalue()).decode()
-        
+
         return f"data:image/png;base64,{img_str}"
     except Exception as e:
         logger.error(f"Error generating QR code: {e}")
@@ -70,21 +73,21 @@ def generate_qr_code(totp_uri):
 def verify_totp(secret, token):
     """
     Verify a TOTP token against the secret.
-    
+
     Args:
         secret: The TOTP secret key
         token: The TOTP token to verify
-        
+
     Returns:
         bool: True if the token is valid, False otherwise
     """
     if not secret or not token:
         return False
-        
+
     try:
         totp = pyotp.TOTP(secret)
         # Check current, previous, and next interval (window=1) for clock skew tolerance
         return totp.verify(token, valid_window=1)
     except Exception as e:
         logger.error(f"Error verifying TOTP token: {e}")
-        return False 
+        return False

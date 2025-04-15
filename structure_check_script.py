@@ -32,19 +32,23 @@ def check_structure():
     # Get the project root (the directory containing this script)
     project_root = os.path.abspath(os.path.dirname(__file__))
     print(f"Project root: {project_root}")
-    
+
     # Check key directories
     directories = [
         "cmmc_tracker",
         "cmmc_tracker/app",
         "cmmc_tracker/app/models",
+        "tests",
+        "tests/unit",
+        "tests/integration",
+        "tests/functional",
         "cmmc_tracker/app/routes",
         "cmmc_tracker/app/services",
         "cmmc_tracker/app/utils",
         "cmmc_tracker/app/templates",
         "cmmc_tracker/app/static",
     ]
-    
+
     for directory in directories:
         dir_path = os.path.join(project_root, directory)
         if os.path.exists(dir_path) and os.path.isdir(dir_path):
@@ -56,7 +60,7 @@ def check_structure():
                 print(f"  Created directory: {directory}")
             except Exception as e:
                 print(f"  Error creating directory {directory}: {e}")
-    
+
     # Check key files
     files = [
         ("cmmc_tracker/__init__.py", ""),
@@ -70,11 +74,18 @@ def check_structure():
         ("Dockerfile", ""),
         ("docker-compose.yml", ""),
         ("requirements.txt", ""),
+        ("tests/__init__.py", ""),
+        ("tests/unit/__init__.py", ""),
+        ("tests/integration/__init__.py", ""),
+        ("tests/functional/__init__.py", ""),
+        ("tests/conftest.py", ""),
+        ("pytest.ini", ""),
+        (".coveragerc", ""),
     ]
-    
+
     for file_path, _ in files:
         check_file(os.path.join(project_root, file_path))
-    
+
     # Print out the directory structure
     print("\nDirectory structure:")
     for root, dirs, files in os.walk(project_root):

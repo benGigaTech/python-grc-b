@@ -61,6 +61,32 @@ The CMMC Compliance Tracker helps organizations manage their cybersecurity contr
 
 The database schema is automatically migrated on startup. Initial sample data (users, controls) is seeded if the `RUN_FULL_SEED` environment variable is set to `true` (default is `true` in `docker-compose.yml`).
 
+### Running Tests
+
+The application includes a testing framework with unit, integration, and functional tests. To run the tests:
+
+1. Start the test environment:
+   ```
+   docker compose -f docker-compose.test.yml up -d
+   ```
+
+2. Run the tests:
+   ```
+   docker compose -f docker-compose.test.yml exec web pytest -v tests/
+   ```
+
+3. Run specific test categories:
+   ```
+   # Run only unit tests
+   docker compose -f docker-compose.test.yml exec web pytest -v tests/unit/
+
+   # Run only tests for models
+   docker compose -f docker-compose.test.yml exec web pytest -v -m models
+
+   # Run only tests for utilities
+   docker compose -f docker-compose.test.yml exec web pytest -v -m utils
+   ```
+
 ### Database Migrations
 
 Database schema migrations are handled automatically when the `web` container starts. The `docker-entrypoint.sh` script performs the following steps:
@@ -173,6 +199,15 @@ The application supports industry-standard TOTP-based multi-factor authenticatio
      - Check if account is locked in the admin user management interface
      - Review audit logs for unauthorized login attempts
 
+8. **Testing Issues**:
+   - Symptoms: Tests failing with database connection errors
+   - Solutions:
+     - Ensure the test database container is running (`docker compose -f docker-compose.test.yml ps`)
+     - Check that the database host in docker-entrypoint.sh matches the service name in docker-compose.test.yml
+     - Verify that tests are using the app context when accessing the database
+     - For database-dependent tests, use the `init_database` fixture
+     - Skip tests that require complex database setup with `@pytest.mark.skip`
+
 ## Environment Variables
 
 The application can be configured using the following environment variables:
@@ -183,6 +218,17 @@ The application can be configured using the following environment variables:
 - `MAIL_*`: Email server configuration settings
 - `NOTIFICATION_ENABLED`: Enable/disable email notifications (true/false)
 - `NOTIFICATION_HOUR`: Hour of the day to send daily notifications (0-23)
+- `RUN_FULL_SEED`: Whether to seed the database with initial data (true/false)
+- `DB_MIN_CONNECTIONS`: Minimum number of database connections in the pool (default: 5)
+- `DB_MAX_CONNECTIONS`: Maximum number of database connections in the pool (default: 25)
+
+### Test Environment Variables
+
+The test environment can be configured using these additional variables in `docker-compose.test.yml`:
+
+- `FLASK_CONFIG`: Set to 'testing' for test-specific configuration
+- `DB_HOST`: Set to 'db_test' to use the test database container
+- `PYTHONPATH`: Set to '/app' to ensure proper module imports during testing
 
 ## Project Structure
 
@@ -202,7 +248,13 @@ The application follows a modular structure to maintain clean separation of conc
 │   └── run.py              # Application entry point
 ├── db/                     # Database migration scripts
 ├── memory-bank/            # Project documentation
+├── tests/                  # Test suite
+│   ├── unit/               # Unit tests
+│   ├── integration/        # Integration tests
+│   ├── functional/         # Functional tests
+│   └── conftest.py         # Test fixtures and configuration
 ├── docker-compose.yml      # Docker configuration
+├── docker-compose.test.yml # Test environment configuration
 ├── Dockerfile              # Container definition
 ├── requirements.txt        # Python dependencies
 └── seed_db.py              # Database seeding script

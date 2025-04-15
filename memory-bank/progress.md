@@ -130,6 +130,15 @@ Based on the codebase exploration, the following functionality appears to be ope
    - Proper connection release back to pool
    - Automated cleanup on application shutdown
 
+13. **Testing Framework**
+   - Pytest-based testing infrastructure
+   - Unit tests for models, utilities, and services
+   - Test fixtures for application, client, and database
+   - Test markers for categorizing tests
+   - Docker-based test environment with separate database
+   - Test database initialization and cleanup
+   - Skip markers for tests requiring complex setup
+
 ## In Progress
 
 The following features appear to be in active development:

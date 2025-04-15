@@ -25,7 +25,18 @@ Current focus is on **Expanded Settings System** (Evidence Lifecycle, Email Temp
 
 ## Recent Changes
 
-1. **Evidence Lifecycle Settings Improvements**:
+1. **Testing Framework Implementation**:
+   - Created a pytest-based testing infrastructure
+   - Implemented unit tests for models, utilities, and services
+   - Created test fixtures for application, client, and database
+   - Added test markers for categorizing tests
+   - Set up a Docker-based test environment with separate database
+   - Implemented test database initialization and cleanup
+   - Added skip markers for tests requiring complex setup
+   - Updated docker-entrypoint.sh to use environment variables for database connection
+   - Created documentation for the testing framework
+
+2. **Evidence Lifecycle Settings Improvements**:
    - Added client-side validation with `min="1"` attribute for the `evidence.default_validity_days` setting
    - Implemented server-side validation in the admin settings route to ensure positive integer values
    - Improved error handling in the evidence routes with clear user feedback when settings are invalid

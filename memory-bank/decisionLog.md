@@ -28,3 +28,19 @@ This log records significant decisions made during the project lifecycle, includ
 *   **Decision:** Document a future enhancement for automatically updating evidence status when it expires.
 *   **Rationale:** The current implementation only sets expiration dates at upload time but doesn't automatically change the status when that date is reached. A scheduled task would complement the auto-expiration setting.
 *   **Implications:** Provides a clear path for future development and ensures the feature can be properly completed in a subsequent iteration.
+
+---
+
+[2025-05-15 14:30:22] - **Testing Framework Implementation**
+*   **Decision:** Implement a pytest-based testing framework with unit, integration, and functional test categories.
+*   **Rationale:** A structured testing framework is essential for ensuring code quality, catching regressions, and facilitating future development. Pytest provides a modern, flexible testing infrastructure with powerful fixtures and parametrization capabilities.
+*   **Implications:** Requires creating test fixtures, setting up a test database, and implementing initial tests for core functionality. Will improve code quality and reduce regressions in the long term.
+*   **Decision:** Use Docker Compose for the test environment with a separate database container.
+*   **Rationale:** Isolates the test environment from development and production, preventing test data from affecting real data. Docker Compose provides a consistent, reproducible environment for testing.
+*   **Implications:** Requires creating a docker-compose.test.yml file and updating the docker-entrypoint.sh script to use environment variables for database connection details.
+*   **Decision:** Implement test fixtures for application, client, and database initialization.
+*   **Rationale:** Fixtures provide a consistent way to set up test prerequisites and clean up afterward. They reduce code duplication and ensure tests start with a known state.
+*   **Implications:** Requires creating a conftest.py file with fixture definitions and updating tests to use these fixtures.
+*   **Decision:** Use test markers to categorize tests by type and functionality.
+*   **Rationale:** Markers allow running specific subsets of tests, making it easier to focus on particular areas during development or debugging.
+*   **Implications:** Requires adding marker decorators to test functions and documenting available markers.

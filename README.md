@@ -207,6 +207,7 @@ The application supports industry-standard TOTP-based multi-factor authenticatio
      - Verify that tests are using the app context when accessing the database
      - For database-dependent tests, use the `init_database` fixture
      - Skip tests that require complex database setup with `@pytest.mark.skip`
+     - If you encounter hostname resolution issues, the database service now automatically tries to connect using the Docker container name format (e.g., `python-grc-b-db_test-1`) if the initial connection fails
 
 ## Environment Variables
 

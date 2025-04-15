@@ -129,6 +129,8 @@ graph TD
 - Automatic cleanup during application shutdown via atexit module
 - Avoids common connection leaks with proper teardown registration
 - Supports high-concurrency workloads with efficient connection reuse
+- Implements automatic Docker container name resolution for testing environments
+- Fallback mechanism attempts connection with Docker-generated container names (e.g., `python-grc-b-db_test-1`) if standard service name fails
 
 ## Key Components
 

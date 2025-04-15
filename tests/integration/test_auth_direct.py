@@ -1,4 +1,4 @@
-"""Integration tests for authentication routes."""
+"""Integration tests for authentication routes using direct database connections."""
 
 import pytest
 import psycopg2
@@ -25,14 +25,30 @@ def test_successful_login(client):
     try:
         # Connect to the database
         conn = psycopg2.connect(
-            host='db',
+            host='python-grc-b-db_test-1',
             port=5432,
-            database='cmmc_db',
+            database='cmmc_test_db',
             user='cmmc_user',
             password='password'
         )
         conn.autocommit = True
         cursor = conn.cursor(cursor_factory=DictCursor)
+
+        # Create the users table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                userid SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                isadmin INTEGER DEFAULT 0,
+                mfa_enabled BOOLEAN DEFAULT FALSE,
+                mfa_secret VARCHAR(255),
+                mfa_backup_codes TEXT,
+                failed_login_attempts INTEGER DEFAULT 0,
+                account_locked_until TIMESTAMP
+            )
+        """)
 
         # Create the user
         cursor.execute(
@@ -67,14 +83,30 @@ def test_failed_login(client):
     try:
         # Connect to the database
         conn = psycopg2.connect(
-            host='db',
+            host='python-grc-b-db_test-1',
             port=5432,
-            database='cmmc_db',
+            database='cmmc_test_db',
             user='cmmc_user',
             password='password'
         )
         conn.autocommit = True
         cursor = conn.cursor(cursor_factory=DictCursor)
+
+        # Create the users table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                userid SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                isadmin INTEGER DEFAULT 0,
+                mfa_enabled BOOLEAN DEFAULT FALSE,
+                mfa_secret VARCHAR(255),
+                mfa_backup_codes TEXT,
+                failed_login_attempts INTEGER DEFAULT 0,
+                account_locked_until TIMESTAMP
+            )
+        """)
 
         # Create the user
         cursor.execute(
@@ -109,14 +141,30 @@ def test_logout(client):
     try:
         # Connect to the database
         conn = psycopg2.connect(
-            host='db',
+            host='python-grc-b-db_test-1',
             port=5432,
-            database='cmmc_db',
+            database='cmmc_test_db',
             user='cmmc_user',
             password='password'
         )
         conn.autocommit = True
         cursor = conn.cursor(cursor_factory=DictCursor)
+
+        # Create the users table if it doesn't exist
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                userid SERIAL PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                isadmin INTEGER DEFAULT 0,
+                mfa_enabled BOOLEAN DEFAULT FALSE,
+                mfa_secret VARCHAR(255),
+                mfa_backup_codes TEXT,
+                failed_login_attempts INTEGER DEFAULT 0,
+                account_locked_until TIMESTAMP
+            )
+        """)
 
         # Create the user
         cursor.execute(

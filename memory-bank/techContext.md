@@ -24,6 +24,7 @@
 - **PostgreSQL**: Production database
 - **SQL Migrations**: Version-controlled schema changes
 - **Connection Pooling**: Efficient connection management for concurrent requests
+- **Automatic Container Name Resolution**: Fallback mechanism for Docker container name resolution in testing environments
 
 ### Authentication & Security
 - **Flask-Login**: User session management
@@ -160,4 +161,4 @@ Application configured through:
 ### Data Protection
 - Input validation and sanitization
 - Comprehensive audit logging
-- Secure file storage for evidence files 
+- Secure file storage for evidence files

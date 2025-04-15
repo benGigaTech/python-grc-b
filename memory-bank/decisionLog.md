@@ -44,3 +44,16 @@ This log records significant decisions made during the project lifecycle, includ
 *   **Decision:** Use test markers to categorize tests by type and functionality.
 *   **Rationale:** Markers allow running specific subsets of tests, making it easier to focus on particular areas during development or debugging.
 *   **Implications:** Requires adding marker decorators to test functions and documenting available markers.
+
+---
+
+[2025-05-20 09:45:33] - **Docker Container Name Resolution Enhancement**
+*   **Decision:** Enhance the database connection service to automatically handle Docker container name resolution in testing environments.
+*   **Rationale:** Docker Compose generates container names that include the project name and service name (e.g., `python-grc-b-db_test-1`), which can cause connection issues when tests reference the service name directly (e.g., `db_test`). This enhancement provides a fallback mechanism that tries the Docker-generated container name if the initial connection fails.
+*   **Implications:** Improves test reliability across different environments without requiring manual configuration changes. Tests can continue to use the logical service names while the connection service handles the resolution behind the scenes.
+*   **Decision:** Implement the fallback only for testing environments to avoid unnecessary connection attempts in production.
+*   **Rationale:** The issue primarily affects testing environments where container names are more likely to vary. Production environments typically use stable, well-defined hostnames.
+*   **Implications:** The database service now includes additional error handling and connection retry logic, but only when `TESTING` is set to `True` in the Flask configuration.
+*   **Decision:** Update documentation to reflect this enhancement.
+*   **Rationale:** Users should be aware of this feature when troubleshooting connection issues in testing environments.
+*   **Implications:** Documentation in README.md and memory-bank files has been updated to include information about this enhancement.
